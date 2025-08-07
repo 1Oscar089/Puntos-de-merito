@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda Virtual - Estudiantes</title>
+    <title>Gestión de Órdenes - Admin</title>
     <style>
         * {
             margin: 0;
@@ -32,7 +32,6 @@
             padding: 30px;
             text-align: center;
             color: white;
-            position: relative;
         }
 
         .header h1 {
@@ -41,350 +40,333 @@
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        .student-selector {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-        }
-
-        .student-selector select {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            background: white;
-            color: #333;
-        }
-
-        .student-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px 15px;
-            border-radius: 8px;
-        }
-
-        .points-display {
-            background: #28a745;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 1.1em;
-        }
-
-        .cart-icon {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            padding: 15px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 24px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .cart-icon:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
-        }
-
-        .cart-count {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
         }
 
         .content {
             padding: 30px;
         }
 
-        .products-grid {
+        .controls {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
+        }
+
+        .search-section {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-color: #4facfe;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .stats-section {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
             margin-bottom: 30px;
         }
 
-        .product-card {
+        .stat-card {
             background: white;
             border-radius: 15px;
             padding: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #4facfe;
             transition: all 0.3s ease;
-            border: 2px solid transparent;
         }
 
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-            border-color: #4facfe;
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
 
-        .product-image {
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3em;
-            color: white;
-            margin-bottom: 15px;
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 5px;
         }
 
-        .product-info h3 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 1.4em;
-        }
-
-        .product-info p {
+        .stat-label {
             color: #666;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-
-        .product-price {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
             font-weight: 600;
-            font-size: 1.2em;
-            display: inline-block;
-            margin-bottom: 15px;
         }
 
-        .product-actions {
+        .orders-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
+        }
+
+        .section-title {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #4facfe;
+            padding-bottom: 10px;
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
             align-items: center;
         }
 
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .quantity-btn {
-            background: #6c757d;
+        .refresh-btn {
+            background: #28a745;
             color: white;
             border: none;
-            width: 30px;
-            height: 30px;
+            padding: 8px 15px;
             border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+
+        .order-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4facfe;
+            transition: all 0.3s ease;
+            position: relative;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .order-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .order-info h3 {
+            color: #333;
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+
+        .order-info p {
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .complete-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             cursor: pointer;
             font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .quantity-btn:hover {
-            background: #545b62;
-        }
-
-        .quantity-display {
-            background: #f8f9fa;
-            padding: 8px 12px;
-            border-radius: 6px;
-            min-width: 40px;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .add-to-cart-btn {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
             transition: all 0.3s ease;
-            flex: 1;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
         }
 
-        .add-to-cart-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(79, 172, 254, 0.3);
+        .complete-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
         }
 
-        .cart-sidebar {
-            position: fixed;
-            top: 0;
-            right: -400px;
-            width: 400px;
-            height: 100vh;
-            background: white;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
-            transition: right 0.3s ease;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .cart-sidebar.open {
-            right: 0;
-        }
-
-        .cart-header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        .order-date {
+            background: #17a2b8;
             color: white;
-            padding: 20px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .order-total {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .order-items {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .order-items h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 5px;
+        }
+
+        .item-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .item-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f5f5f5;
         }
 
-        .cart-header h2 {
-            font-size: 1.5em;
-        }
-
-        .close-cart {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .cart-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .cart-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .cart-item-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5em;
-        }
-
-        .cart-item-info {
-            flex: 1;
-        }
-
-        .cart-item-info h4 {
+        .item-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
             color: #333;
-            margin-bottom: 5px;
+            border-top: 2px solid #e0e0e0;
+            margin-top: 5px;
+            padding-top: 10px;
         }
 
-        .cart-item-info p {
-            color: #666;
+        .item-name {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .item-details {
+            color: #777;
             font-size: 0.9em;
         }
 
-        .cart-item-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .remove-item {
-            background: #dc3545;
-            color: white;
-            border: none;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .cart-footer {
-            padding: 20px;
-            border-top: 2px solid #eee;
-            background: #f8f9fa;
-        }
-
-        .cart-total {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
             font-size: 1.2em;
-            font-weight: 600;
         }
 
-        .purchase-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1.1em;
-            transition: all 0.3s ease;
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
         }
 
-        .purchase-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(40, 167, 69, 0.3);
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .purchase-btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        .no-orders {
+            text-align: center;
+            padding: 60px;
+            color: #666;
         }
 
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            z-index: 999;
-        }
-
-        .overlay.active {
-            display: block;
+        .no-orders-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
         }
 
         .alert {
             padding: 15px;
-            margin: 15px 0;
+            margin-bottom: 20px;
             border-radius: 8px;
             font-weight: 500;
         }
@@ -401,40 +383,37 @@
             border: 1px solid #f5c6cb;
         }
 
-        .empty-cart {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-
-        .empty-cart-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
-        }
-
         @media (max-width: 768px) {
-            .cart-sidebar {
-                width: 100%;
-                right: -100%;
+            .content {
+                padding: 20px;
             }
 
-            .products-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .student-info {
+            .search-section {
                 flex-direction: column;
-                gap: 10px;
-                text-align: center;
+                align-items: stretch;
             }
 
-            .product-actions {
+            .search-input {
+                min-width: auto;
+            }
+
+            .order-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .order-actions {
+                align-self: flex-end;
+            }
+
+            .filter-options {
+                justify-content: center;
+            }
+
+            .section-title {
                 flex-direction: column;
                 gap: 15px;
-            }
-
-            .quantity-controls {
-                justify-content: center;
+                text-align: center;
             }
         }
     </style>
@@ -442,74 +421,81 @@
 <body>
     <div class="container">
         <div class="header">
-            <button class="cart-icon" onclick="toggleCart()">
-                🛒
-                <span class="cart-count" id="cartCount">0</span>
-            </button>
-            
-            <h1>🏪 Tienda Virtual</h1>
-            <p>Canjea tus puntos por increíbles productos</p>
-            
-            <div class="student-selector">
-                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
-                    <input type="text" id="nieInput" placeholder="Ingresa tu NIE" 
-                           style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
-                    <button onclick="loadStudentByNie()" 
-                            style="background: rgba(255,255,255,0.3); color: white; border: 2px solid white; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">
-                        Aceptar
-                    </button>
-                </div>
-                
-                <div class="student-info" id="studentInfo" style="display: none;">
-                    <div>
-                        <h3 id="studentName">Estudiante</h3>
-                        <p id="studentNie">NIE: </p>
-                    </div>
-                    <div class="points-display" id="studentPoints">0 puntos</div>
-                </div>
-            </div>
+            <h1>📋 Gestión de Órdenes</h1>
+            <p>Panel administrativo para el seguimiento de pedidos estudiantiles</p>
         </div>
 
         <div class="content">
-            <div class="products-grid" id="productsGrid">
-                <!-- Los productos se cargarán dinámicamente -->
+            <!-- Controles de búsqueda y filtrado -->
+            <div class="controls">
+                <div class="search-section">
+                    <input type="text" id="searchInput" class="search-input" 
+                           placeholder="Buscar por NIE o nombre del estudiante...">
+                    <button class="search-btn" onclick="searchOrders()">
+                        🔍 Buscar
+                    </button>
+                </div>
+                
+                <div class="filter-options">
+                    <span style="font-weight: 600; color: #666;">Filtrar por estado:</span>
+                    <button class="filter-btn active" data-status="all" onclick="filterByStatus('all')">
+                        Todas
+                    </button>
+                    <button class="filter-btn" data-status="pendiente" onclick="filterByStatus('pendiente')">
+                        Pendientes
+                    </button>
+                    <button class="filter-btn" data-status="completado" onclick="filterByStatus('completado')">
+                        Completadas
+                    </button>
+                </div>
             </div>
-            <div id="alerts"></div>
+
+            <!-- Estadísticas -->
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalOrders">0</div>
+                    <div class="stat-label">Total Órdenes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingOrders">0</div>
+                    <div class="stat-label">Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedOrders">0</div>
+                    <div class="stat-label">Completadas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalPoints">0</div>
+                    <div class="stat-label">Puntos Totales</div>
+                </div>
+            </div>
+
+            <!-- Lista de órdenes -->
+            <div class="orders-section">
+                <div class="section-title">
+                    📦 Órdenes Activas
+                    <button class="refresh-btn" onclick="loadOrders()">
+                        🔄 Actualizar
+                    </button>
+                </div>
+                
+                <div id="ordersContainer">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando órdenes...</p>
+                    </div>
+                </div>
+                
+                <div id="alerts"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Carrito lateral -->
-    <div class="overlay" id="overlay" onclick="toggleCart()"></div>
-    <div class="cart-sidebar" id="cartSidebar">
-        <div class="cart-header">
-            <h2>🛒 Mi Carrito</h2>
-            <button class="close-cart" onclick="toggleCart()">✕</button>
-        </div>
-        
-        <div class="cart-content" id="cartContent">
-            <div class="empty-cart">
-                <div class="empty-cart-icon">🛒</div>
-                <h3>Tu carrito está vacío</h3>
-                <p>Agrega algunos productos para comenzar</p>
-            </div>
-        </div>
-        
-        <div class="cart-footer">
-            <div class="cart-total">
-                <span>Total:</span>
-                <span id="cartTotal">0 puntos</span>
-            </div>
-            <button class="purchase-btn" id="purchaseBtn" onclick="processPurchase()" disabled>
-                Comprar 🎉
-            </button>
-        </div>
-    </div>
-
-    <!-- Firebase y EmailJS Scripts -->
+    <!-- Firebase Scripts -->
     <script type="module">
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -527,407 +513,223 @@
         const db = getFirestore(app);
 
         // Variables globales
-        let currentStudent = null;
-        let cart = [];
-        let products = [
-            {
-                id: 1,
-                name: "Libreta Premium",
-                description: "Libreta de 200 páginas con tapa dura y diseño exclusivo",
-                price: 150,
-                icon: "📓",
-                maxQuantity: 2
-            },
-            {
-                id: 2,
-                name: "Set de Bolígrafos",
-                description: "Pack de 5 bolígrafos de colores variados",
-                price: 80,
-                icon: "🖊️"
-            },
-            {
-                id: 3,
-                name: "Calculadora Científica",
-                description: "Calculadora científica para matemáticas avanzadas",
-                price: 300,
-                icon: "🧮",
-                maxQuantity: 1
-            },
-            {
-                id: 4,
-                name: "Mochila Escolar",
-                description: "Mochila resistente con múltiples compartimentos",
-                price: 500,
-                icon: "🎒",
-                maxQuantity: 1
-            },
-            {
-                id: 5,
-                name: "Auriculares",
-                description: "Auriculares bluetooth de alta calidad",
-                price: 400,
-                icon: "🎧",
-                maxQuantity: 1
-            },
-            {
-                id: 6,
-                name: "Snack Saludable",
-                description: "Mix de frutos secos y granola",
-                price: 25,
-                icon: "🥜"
-            },
-            {
-                id: 7,
-                name: "Botella de Agua",
-                description: "Botella térmica reutilizable 500ml",
-                price: 120,
-                icon: "🍶",
-                maxQuantity: 2
-            },
-            {
-                id: 8,
-                name: "Kit de Arte",
-                description: "Set completo con colores, pinceles y papel",
-                price: 200,
-                icon: "🎨",
-                maxQuantity: 1
-            }
-        ];
+        let allOrders = [];
+        let filteredOrders = [];
+        let currentFilter = 'all';
+        let searchTerm = '';
 
-        // Inicializar EmailJS
-        (function(){
-            emailjs.init("YOUR_EMAILJS_USER_ID"); // Reemplazar con tu User ID de EmailJS
-        })();
-
-        // Cargar estudiantes al inicio
-        window.addEventListener('load', async () => {
-            renderProducts();
-            // Agregar evento Enter al input del NIE
-            const nieInput = document.getElementById('nieInput');
-            nieInput.addEventListener('keypress', function(e) {
+        // Cargar órdenes al inicio
+        window.addEventListener('load', () => {
+            loadOrders();
+            setupRealTimeListener();
+            
+            // Agregar evento Enter al input de búsqueda
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
-                    loadStudentByNie();
+                    searchOrders();
                 }
+            });
+
+            // Búsqueda en tiempo real mientras escribe
+            searchInput.addEventListener('input', function() {
+                searchTerm = this.value.toLowerCase().trim();
+                applyFilters();
             });
         });
 
-        // Buscar estudiante por NIE
-        window.loadStudentByNie = async function() {
-            const nieInput = document.getElementById('nieInput');
-            const nieValue = nieInput.value.trim();
+        // Configurar listener en tiempo real
+        function setupRealTimeListener() {
+            const ordersRef = collection(db, 'orders');
+            const q = query(ordersRef, orderBy('orderDate', 'desc'));
             
-            if (!nieValue) {
-                showAlert('Por favor ingresa tu NIE', 'error');
-                return;
-            }
-
-            try {
-                // Buscar estudiante por NIE en Firebase
-                const studentsRef = collection(db, 'students');
-                const q = query(studentsRef, where('nie', '==', nieValue));
-                const querySnapshot = await getDocs(q);
+            onSnapshot(q, (snapshot) => {
+                allOrders = [];
+                snapshot.forEach((doc) => {
+                    const orderData = doc.data();
+                    allOrders.push({
+                        id: doc.id,
+                        ...orderData,
+                        orderDate: orderData.orderDate?.toDate() || new Date()
+                    });
+                });
                 
-                if (querySnapshot.empty) {
-                    showAlert('NIE no encontrado. Verifica que esté correctamente escrito.', 'error');
-                    document.getElementById('studentInfo').style.display = 'none';
-                    currentStudent = null;
-                    updateCartDisplay();
-                    return;
-                }
-
-                // Obtener datos del estudiante
-                const studentDoc = querySnapshot.docs[0];
-                const studentData = studentDoc.data();
-                
-                currentStudent = {
-                    id: studentDoc.id,
-                    nie: studentData.nie,
-                    name: studentData.name,
-                    points: studentData.points || 0
-                };
-
-                // Mostrar información del estudiante
-                document.getElementById('studentName').textContent = currentStudent.name;
-                document.getElementById('studentNie').textContent = `NIE: ${currentStudent.nie}`;
-                document.getElementById('studentPoints').textContent = `${currentStudent.points} puntos`;
-                document.getElementById('studentInfo').style.display = 'flex';
-                
-                // Actualizar estado del carrito
-                updateCartDisplay();
-                
-                showAlert(`¡Bienvenido/a ${currentStudent.name}!`, 'success');
-                
-            } catch (error) {
-                console.error('Error loading student:', error);
-                showAlert('Error al buscar el estudiante. Inténtalo de nuevo.', 'error');
-            }
-        };
-
-        // Renderizar productos
-        function renderProducts() {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '';
-
-            products.forEach(product => {
-                const productCard = document.createElement('div');
-                productCard.className = 'product-card';
-                productCard.innerHTML = `
-                    <div class="product-image">${product.icon}</div>
-                    <div class="product-info">
-                        <h3>${product.name}</h3>
-                        <p>${product.description}</p>
-                        <div class="product-price">${product.price} puntos</div>
-                        <div class="product-actions">
-                            <div class="quantity-controls">
-                                <button class="quantity-btn" onclick="changeQuantity(${product.id}, -1)">-</button>
-                                <div class="quantity-display" id="qty-${product.id}">1</div>
-                                <button class="quantity-btn" onclick="changeQuantity(${product.id}, 1)">+</button>
-                            </div>
-                            <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
-                                Agregar al carrito
-                            </button>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(productCard);
+                applyFilters();
+                updateStats();
+            }, (error) => {
+                console.error('Error en listener de órdenes:', error);
+                showAlert('Error al conectar con la base de datos', 'error');
             });
         }
 
-        // Cambiar cantidad de producto
-        window.changeQuantity = function(productId, change) {
-            const qtyElement = document.getElementById(`qty-${productId}`);
-            let currentQty = parseInt(qtyElement.textContent);
-            let newQty = currentQty + change;
-            
-            const product = products.find(p => p.id === productId);
-            const maxQty = product.maxQuantity || 10;
-            
-            if (newQty < 1) newQty = 1;
-            if (newQty > maxQty) newQty = maxQty;
-            
-            qtyElement.textContent = newQty;
-        };
-
-        // Agregar al carrito
-        window.addToCart = function(productId) {
-            if (!currentStudent) {
-                showAlert('Por favor selecciona tu NIE primero', 'error');
-                return;
-            }
-
-            const product = products.find(p => p.id === productId);
-            const quantity = parseInt(document.getElementById(`qty-${productId}`).textContent);
-            
-            // Verificar si ya existe en el carrito
-            const existingItem = cart.find(item => item.id === productId);
-            
-            if (existingItem) {
-                const newQuantity = existingItem.quantity + quantity;
-                const maxAllowed = product.maxQuantity || 100;
+        // Cargar órdenes desde Firebase
+        window.loadOrders = async function() {
+            try {
+                const ordersRef = collection(db, 'orders');
+                const q = query(ordersRef, orderBy('orderDate', 'desc'));
+                const querySnapshot = await getDocs(q);
                 
-                if (newQuantity > maxAllowed) {
-                    showAlert(`Solo puedes agregar máximo ${maxAllowed} unidades de ${product.name}`, 'error');
-                    return;
-                }
-                
-                existingItem.quantity = newQuantity;
-            } else {
-                cart.push({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    quantity: quantity,
-                    icon: product.icon
+                allOrders = [];
+                querySnapshot.forEach((doc) => {
+                    const orderData = doc.data();
+                    allOrders.push({
+                        id: doc.id,
+                        ...orderData,
+                        orderDate: orderData.orderDate?.toDate() || new Date()
+                    });
                 });
+
+                applyFilters();
+                updateStats();
+                showAlert('Órdenes actualizadas correctamente', 'success');
+
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showAlert('Error al cargar las órdenes', 'error');
             }
-
-            updateCartDisplay();
-            showAlert(`${product.name} agregado al carrito`, 'success');
-            
-            // Reset quantity to 1
-            document.getElementById(`qty-${productId}`).textContent = '1';
         };
 
-        // Toggle carrito
-        window.toggleCart = function() {
-            const sidebar = document.getElementById('cartSidebar');
-            const overlay = document.getElementById('overlay');
-            
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
-        };
-
-        // Actualizar display del carrito
-        function updateCartDisplay() {
-            const cartCount = document.getElementById('cartCount');
-            const cartContent = document.getElementById('cartContent');
-            const cartTotal = document.getElementById('cartTotal');
-            const purchaseBtn = document.getElementById('purchaseBtn');
-            
-            // Contar items
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            cartCount.textContent = totalItems;
-            
-            // Calcular total
-            const totalPoints = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            cartTotal.textContent = `${totalPoints} puntos`;
-            
-            // Renderizar items del carrito
-            if (cart.length === 0) {
-                cartContent.innerHTML = `
-                    <div class="empty-cart">
-                        <div class="empty-cart-icon">🛒</div>
-                        <h3>Tu carrito está vacío</h3>
-                        <p>Agrega algunos productos para comenzar</p>
-                    </div>
-                `;
-                purchaseBtn.disabled = true;
-            } else {
-                cartContent.innerHTML = cart.map(item => `
-                    <div class="cart-item">
-                        <div class="cart-item-icon">${item.icon}</div>
-                        <div class="cart-item-info">
-                            <h4>${item.name}</h4>
-                            <p>${item.price} puntos c/u × ${item.quantity}</p>
-                        </div>
-                        <div class="cart-item-actions">
-                            <div class="quantity-controls">
-                                <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, -1)">-</button>
-                                <div class="quantity-display">${item.quantity}</div>
-                                <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, 1)">+</button>
-                            </div>
-                            <button class="remove-item" onclick="removeFromCart(${item.id})">✕</button>
-                        </div>
-                    </div>
-                `).join('');
+        // Aplicar filtros
+        function applyFilters() {
+            filteredOrders = allOrders.filter(order => {
+                // Filtro por estado
+                const statusMatch = currentFilter === 'all' || 
+                                  (order.status || 'pendiente') === currentFilter;
                 
-                // Habilitar/deshabilitar botón de compra
-                if (currentStudent && totalPoints <= currentStudent.points) {
-                    purchaseBtn.disabled = false;
-                } else {
-                    purchaseBtn.disabled = true;
-                }
-            }
+                // Filtro por búsqueda
+                const searchMatch = searchTerm === '' ||
+                                  order.studentName.toLowerCase().includes(searchTerm) ||
+                                  order.studentNie.toLowerCase().includes(searchTerm);
+                
+                return statusMatch && searchMatch;
+            });
+
+            renderOrders();
         }
 
-        // Actualizar cantidad en carrito
-        window.updateCartQuantity = function(productId, change) {
-            const item = cart.find(item => item.id === productId);
-            const product = products.find(p => p.id === productId);
-            
-            if (item) {
-                const newQuantity = item.quantity + change;
-                const maxAllowed = product.maxQuantity || 100;
-                
-                if (newQuantity < 1) {
-                    removeFromCart(productId);
-                    return;
-                }
-                
-                if (newQuantity > maxAllowed) {
-                    showAlert(`Solo puedes tener máximo ${maxAllowed} unidades de ${product.name}`, 'error');
-                    return;
-                }
-                
-                item.quantity = newQuantity;
-                updateCartDisplay();
-            }
+        // Buscar órdenes
+        window.searchOrders = function() {
+            const input = document.getElementById('searchInput');
+            searchTerm = input.value.toLowerCase().trim();
+            applyFilters();
         };
 
-        // Remover del carrito
-        window.removeFromCart = function(productId) {
-            cart = cart.filter(item => item.id !== productId);
-            updateCartDisplay();
+        // Filtrar por estado
+        window.filterByStatus = function(status) {
+            currentFilter = status;
+            
+            // Actualizar botones activos
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-status="${status}"]`).classList.add('active');
+            
+            applyFilters();
         };
 
-        // Procesar compra
-        window.processPurchase = async function() {
-            if (!currentStudent) {
-                showAlert('Error: No hay estudiante seleccionado', 'error');
-                return;
-            }
-
-            if (cart.length === 0) {
-                showAlert('El carrito está vacío', 'error');
-                return;
-            }
-
-            const totalPoints = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        // Renderizar órdenes
+        function renderOrders() {
+            const container = document.getElementById('ordersContainer');
             
-            if (totalPoints > currentStudent.points) {
-                showAlert('No tienes suficientes puntos para esta compra', 'error');
+            if (filteredOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="no-orders">
+                        <div class="no-orders-icon">📭</div>
+                        <h3>No hay órdenes</h3>
+                        <p>${searchTerm ? 'No se encontraron órdenes con ese criterio de búsqueda' : 'No hay órdenes registradas'}</p>
+                    </div>
+                `;
                 return;
             }
 
+            const ordersHTML = filteredOrders.map(order => {
+                const isCompleted = (order.status || 'pendiente') === 'completado';
+                const itemsHTML = order.items.map(item => `
+                    <div class="item-row">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-details">
+                            ${item.quantity}x ${item.unitPrice}pts = ${item.totalPrice}pts
+                        </span>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="order-card ${isCompleted ? 'completed' : ''}" style="opacity: ${isCompleted ? '0.7' : '1'}">
+                        <div class="order-header">
+                            <div class="order-info">
+                                <h3>${order.studentName}</h3>
+                                <p><strong>NIE:</strong> ${order.studentNie}</p>
+                                <p><strong>Estado:</strong> <span style="color: ${isCompleted ? '#28a745' : '#dc3545'}; font-weight: 600;">
+                                    ${isCompleted ? '✅ Completado' : '⏳ Pendiente'}
+                                </span></p>
+                            </div>
+                            <div class="order-actions">
+                                <div class="order-date">
+                                    ${order.orderDate.toLocaleDateString('es-ES', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </div>
+                                <div class="order-total">
+                                    ${order.totalPoints} puntos
+                                </div>
+                                ${!isCompleted ? `
+                                    <button class="complete-btn" onclick="completeOrder('${order.id}')" 
+                                            title="Marcar como completado">
+                                        ✓
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="order-items">
+                            <h4>📦 Productos solicitados:</h4>
+                            <div class="item-list">
+                                ${itemsHTML}
+                                <div class="item-row">
+                                    <strong>Total:</strong>
+                                    <strong>${order.totalPoints} puntos</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = ordersHTML;
+        }
+
+        // Completar orden
+        window.completeOrder = async function(orderId) {
             try {
-                // Actualizar puntos del estudiante
-                const newPoints = currentStudent.points - totalPoints;
-                const studentRef = doc(db, 'students', currentStudent.id);
-                
-                await updateDoc(studentRef, {
-                    points: newPoints,
-                    lastUpdated: new Date()
+                const orderRef = doc(db, 'orders', orderId);
+                await updateDoc(orderRef, {
+                    status: 'completado',
+                    completedAt: new Date()
                 });
 
-                // Crear registro de pedido
-                const order = {
-                    studentName: currentStudent.name,
-                    studentNie: currentStudent.nie,
-                    items: cart.map(item => ({
-                        name: item.name,
-                        quantity: item.quantity,
-                        unitPrice: item.price,
-                        totalPrice: item.price * item.quantity
-                    })),
-                    totalPoints: totalPoints,
-                    orderDate: new Date(),
-                    status: 'pendiente'
-                };
-
-                await addDoc(collection(db, 'orders'), order);
-
-                // Enviar correo
-                await sendOrderEmail(order);
-
-                // Actualizar datos locales
-                currentStudent.points = newPoints;
-                document.getElementById('studentPoints').textContent = `${newPoints} puntos`;
-
-                // Limpiar carrito
-                cart = [];
-                updateCartDisplay();
-                toggleCart();
-
-                showAlert('¡Compra realizada exitosamente! Recibirás tu pedido pronto.', 'success');
+                showAlert('✅ Orden marcada como completada', 'success');
 
             } catch (error) {
-                console.error('Error processing purchase:', error);
-                showAlert('Error al procesar la compra. Inténtalo de nuevo.', 'error');
+                console.error('Error completing order:', error);
+                showAlert('Error al completar la orden', 'error');
             }
         };
 
-        // Enviar email
-        async function sendOrderEmail(order) {
-            try {
-                const itemsList = order.items.map(item => 
-                    `• ${item.name} - Cantidad: ${item.quantity} - Puntos: ${item.totalPrice}`
-                ).join('\n');
+        // Actualizar estadísticas
+        function updateStats() {
+            const totalOrders = allOrders.length;
+            const pendingOrders = allOrders.filter(order => (order.status || 'pendiente') === 'pendiente').length;
+            const completedOrders = allOrders.filter(order => (order.status || 'pendiente') === 'completado').length;
+            const totalPoints = allOrders.reduce((sum, order) => sum + (order.totalPoints || 0), 0);
 
-                const templateParams = {
-                    to_email: 'compraestudiantes@gmail.com',
-                    student_name: order.studentName,
-                    student_nie: order.studentNie,
-                    order_items: itemsList,
-                    total_points: order.totalPoints,
-                    order_date: order.orderDate.toLocaleString('es-ES')
-                };
-
-                await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams);
-                console.log('Email enviado exitosamente');
-            } catch (error) {
-                console.error('Error enviando email:', error);
-                // No mostramos error al usuario para no interrumpir la compra exitosa
-            }
+            document.getElementById('totalOrders').textContent = totalOrders;
+            document.getElementById('pendingOrders').textContent = pendingOrders;
+            document.getElementById('completedOrders').textContent = completedOrders;
+            document.getElementById('totalPoints').textContent = totalPoints.toLocaleString();
         }
 
         // Mostrar alertas
@@ -944,8 +746,5 @@
             }, 5000);
         }
     </script>
-
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </body>
 </html>
