@@ -152,11 +152,38 @@
             margin-bottom: 15px;
             border-left: 4px solid #4facfe;
             transition: all 0.3s ease;
+            position: relative;
         }
 
         .student-card:hover {
             transform: translateX(5px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.5);
         }
 
         .student-info {
@@ -165,6 +192,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
+            margin-top: 10px;
         }
 
         .student-details h4 {
@@ -182,6 +210,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .points-display {
@@ -217,6 +246,22 @@
             transform: scale(1.05);
         }
 
+        .remove-points-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .remove-points-btn:hover {
+            transform: scale(1.05);
+        }
+
         .loading {
             text-align: center;
             padding: 20px;
@@ -242,6 +287,79 @@
             border: 1px solid #f5c6cb;
         }
 
+        .delete-confirmation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .confirmation-dialog {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .confirmation-dialog h3 {
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .confirmation-dialog p {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .confirmation-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .cancel-btn:hover {
+            background: #545b62;
+            transform: scale(1.05);
+        }
+
         @media (max-width: 768px) {
             .content {
                 padding: 20px;
@@ -254,6 +372,23 @@
             
             .grade-tabs {
                 flex-direction: column;
+            }
+
+            .points-section {
+                justify-content: flex-start;
+                width: 100%;
+            }
+
+            .delete-btn {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-bottom: 10px;
+                width: auto;
+                height: auto;
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-size: 14px;
             }
         }
     </style>
@@ -271,12 +406,12 @@
                 <h2>➕ Agregar Nuevo Estudiante</h2>
                 <form id="studentForm">
                     <div class="form-group">
-                        <label for="studentName">Nombre del Estudiante:</label>
-                        <input type="text" id="studentName" class="form-control" required>
-                    </div>
-                    <div class="form-group">
                         <label for="studentNie">NIE:</label>
                         <input type="text" id="studentNie" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentName">Nombre del Estudiante:</label>
+                        <input type="text" id="studentName" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label for="studentGrade">Grado:</label>
@@ -317,11 +452,23 @@
         </div>
     </div>
 
+    <!-- Modal de confirmación para eliminar -->
+    <div id="deleteConfirmation" class="delete-confirmation">
+        <div class="confirmation-dialog">
+            <h3>⚠️ Confirmar eliminación</h3>
+            <p id="deleteMessage">¿Estás seguro de que deseas eliminar este estudiante? Esta acción no se puede deshacer y se perderán todos los puntos acumulados.</p>
+            <div class="confirmation-buttons">
+                <button id="confirmDelete" class="confirm-btn">Sí, eliminar</button>
+                <button id="cancelDelete" class="cancel-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase Scripts -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -342,10 +489,15 @@
         const studentForm = document.getElementById('studentForm');
         const tabs = document.querySelectorAll('.tab');
         const studentLists = document.querySelectorAll('.student-list');
+        const deleteConfirmation = document.getElementById('deleteConfirmation');
+        const confirmDelete = document.getElementById('confirmDelete');
+        const cancelDelete = document.getElementById('cancelDelete');
+        const deleteMessage = document.getElementById('deleteMessage');
 
         // Variables globales
         let students = {};
         let currentGrade = 'septimo';
+        let studentToDelete = null;
 
         // Función para mostrar alertas
         function showAlert(message, type, containerId) {
@@ -357,7 +509,7 @@
         }
 
         // Función para agregar estudiante
-        async function addStudent(name, nie, grade) {
+        async function addStudent(nie, name, grade) {
             try {
                 // Verificar si el NIE ya existe
                 const studentsRef = collection(db, 'students');
@@ -370,8 +522,8 @@
                 }
 
                 const docRef = await addDoc(collection(db, 'students'), {
-                    name: name,
                     nie: nie,
+                    name: name,
                     grade: grade,
                     points: 0,
                     createdAt: new Date()
@@ -391,6 +543,35 @@
                 showAlert('❌ Error al agregar estudiante', 'error', 'addStudentAlert');
                 return false;
             }
+        }
+
+        // Función para eliminar estudiante
+        async function deleteStudent(studentId, studentName) {
+            try {
+                await deleteDoc(doc(db, 'students', studentId));
+                
+                // Recargar la lista actual
+                loadStudents(currentGrade);
+                
+                return true;
+            } catch (error) {
+                console.error('Error deleting student: ', error);
+                alert('Error al eliminar estudiante');
+                return false;
+            }
+        }
+
+        // Función para mostrar confirmación de eliminación
+        function showDeleteConfirmation(studentId, studentName, studentNie) {
+            studentToDelete = { id: studentId, name: studentName, nie: studentNie };
+            deleteMessage.innerHTML = `¿Estás seguro de que deseas eliminar a <strong>${studentName}</strong> (NIE: ${studentNie})? Esta acción no se puede deshacer y se perderán todos los puntos acumulados.`;
+            deleteConfirmation.style.display = 'flex';
+        }
+
+        // Función para ocultar confirmación de eliminación
+        function hideDeleteConfirmation() {
+            deleteConfirmation.style.display = 'none';
+            studentToDelete = null;
         }
 
         // Función para cargar estudiantes por grado
@@ -413,10 +594,13 @@
                     const student = doc.data();
                     studentsHTML += `
                         <div class="student-card">
+                            <button class="delete-btn" onclick="showDeleteConfirmation('${doc.id}', '${student.name}', '${student.nie}')" title="Eliminar estudiante">
+                                ✕
+                            </button>
                             <div class="student-info">
                                 <div class="student-details">
-                                    <h4>${student.name}</h4>
-                                    <p><strong>NIE:</strong> ${student.nie}</p>
+                                    <h4>NIE: ${student.nie}</h4>
+                                    <p><strong>Nombre:</strong> ${student.name}</p>
                                 </div>
                                 <div class="points-section">
                                     <div class="points-display">
@@ -425,6 +609,9 @@
                                     <input type="number" class="points-input" placeholder="Puntos" min="0">
                                     <button class="add-points-btn" onclick="addPoints('${doc.id}', this)">
                                         Agregar
+                                    </button>
+                                    <button class="remove-points-btn" onclick="removePoints('${doc.id}', this)">
+                                        Quitar
                                     </button>
                                 </div>
                             </div>
@@ -482,15 +669,60 @@
             }
         };
 
+        // Función para quitar puntos
+        window.removePoints = async function(studentId, button) {
+            const pointsInput = button.parentElement.querySelector('.points-input');
+            const pointsToRemove = parseInt(pointsInput.value);
+            
+            if (!pointsToRemove || pointsToRemove <= 0) {
+                alert('Por favor ingresa una cantidad válida de puntos a quitar');
+                return;
+            }
+
+            try {
+                const studentRef = doc(db, 'students', studentId);
+                const studentDoc = await getDoc(studentRef);
+                
+                if (studentDoc.exists()) {
+                    const currentPoints = studentDoc.data().points || 0;
+                    const newPoints = Math.max(0, currentPoints - pointsToRemove); // No permitir puntos negativos
+                    
+                    await updateDoc(studentRef, {
+                        points: newPoints,
+                        lastUpdated: new Date()
+                    });
+
+                    // Actualizar la visualización
+                    const pointsDisplay = button.parentElement.querySelector('.points-display');
+                    pointsDisplay.textContent = `${newPoints} puntos`;
+                    pointsInput.value = '';
+                    
+                    // Animación de éxito
+                    button.textContent = '✓';
+                    button.style.background = '#28a745';
+                    setTimeout(() => {
+                        button.textContent = 'Quitar';
+                        button.style.background = '';
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Error removing points: ', error);
+                alert('Error al quitar puntos');
+            }
+        };
+
+        // Función para mostrar confirmación de eliminación (disponible globalmente)
+        window.showDeleteConfirmation = showDeleteConfirmation;
+
         // Event listeners
         studentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const name = document.getElementById('studentName').value;
             const nie = document.getElementById('studentNie').value;
+            const name = document.getElementById('studentName').value;
             const grade = document.getElementById('studentGrade').value;
             
-            await addStudent(name, nie, grade);
+            await addStudent(nie, name, grade);
         });
 
         // Cambio entre pestañas
@@ -509,6 +741,32 @@
                 currentGrade = grade;
                 loadStudents(grade);
             });
+        });
+
+        // Event listeners para modal de eliminación
+        confirmDelete.addEventListener('click', async () => {
+            if (studentToDelete) {
+                const success = await deleteStudent(studentToDelete.id, studentToDelete.name);
+                if (success) {
+                    hideDeleteConfirmation();
+                }
+            }
+        });
+
+        cancelDelete.addEventListener('click', hideDeleteConfirmation);
+
+        // Cerrar modal al hacer clic fuera
+        deleteConfirmation.addEventListener('click', (e) => {
+            if (e.target === deleteConfirmation) {
+                hideDeleteConfirmation();
+            }
+        });
+
+        // Cerrar modal con tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideDeleteConfirmation();
+            }
         });
 
         // Cargar estudiantes iniciales
