@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Virtual - Estudiantes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .student-selector {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .student-selector select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            color: #333;
+        }
+
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .points-display {
+            background: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .cart-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .cart-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            border-color: #4facfe;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .product-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        .product-info p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .product-price {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.2em;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quantity-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quantity-btn:hover {
+            background: #545b62;
+        }
+
+        .quantity-display {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .add-to-cart-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .cart-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-sidebar.open {
+            right: 0;
+        }
+
+        .cart-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-header h2 {
+            font-size: 1.5em;
+        }
+
+        .close-cart {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .cart-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-info h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .cart-item-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .remove-item {
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .cart-footer {
+            padding: 20px;
+            border-top: 2px solid #eee;
+            background: #f8f9fa;
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .purchase-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .purchase-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .purchase-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-cart-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .cart-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .student-info {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .product-actions {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .quantity-controls {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="cart-icon" onclick="toggleCart()">
+                🛒
+                <span class="cart-count" id="cartCount">0</span>
+            </button>
+            
+            <h1>🏪 Tienda Virtual</h1>
+            <p>Canjea tus puntos por increíbles productos</p>
+            
+            <div class="student-selector">
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                    <input type="text" id="nieInput" placeholder="Ingresa tu NIE" 
+                           style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
+                    <button onclick="loadStudentByNie()" 
+                            style="background: rgba(255,255,255,0.3); color: white; border: 2px solid white; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">
+                        Aceptar
+                    </button>
+                </div>
+                
+                <div class="student-info" id="studentInfo" style="display: none;">
+                    <div>
+                        <h3 id="studentName">Estudiante</h3>
+                        <p id="studentNie">NIE: </p>
+                    </div>
+                    <div class="points-display" id="studentPoints">0 puntos</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="products-grid" id="productsGrid">
+                <!-- Los productos se cargarán dinámicamente -->
+            </div>
+            <div id="alerts"></div>
+        </div>
+    </div>
+
+    <!-- Carrito lateral -->
+    <div class="overlay" id="overlay" onclick="toggleCart()"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h2>🛒 Mi Carrito</h2>
+            <button class="close-cart" onclick="toggleCart()">✕</button>
+        </div>
+        
+        <div class="cart-content" id="cartContent">
+            <div class="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <h3>Tu carrito está vacío</h3>
+                <p>Agrega algunos productos para comenzar</p>
+            </div>
+        </div>
+        
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotal">0 puntos</span>
+            </div>
+            <button class="purchase-btn" id="purchaseBtn" onclick="processPurchase()" disabled>
+                Comprar 🎉
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase y EmailJS Scripts -->
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
+            authDomain: "puntos-de-merito.firebaseapp.com",
+            projectId: "puntos-de-merito",
+            storageBucket: "puntos-de-merito.firebasestorage.app",
+            messagingSenderId: "793336144671",
+            appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
+            measurementId: "G-CZ340GE3T7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Variables globales
+        let currentStudent = null;
+        let cart = [];
+        let products = [
+            {
+                id: 1,
+                name: "Libreta Premium",
+                description: "Libreta de 200 páginas con tapa dura y diseño exclusivo",
+                price: 150,
+                icon: "📓",
+                maxQuantity: 2
+            },
+            {
+                id: 2,
+                name: "Set de Bolígrafos",
+                description: "Pack de 5 bolígrafos de colores variados",
+                price: 80,
+                icon: "🖊️"
+            },
+            {
+                id: 3,
+                name: "Calculadora Científica",
+                description: "Calculadora científica para matemáticas avanzadas",
+                price: 300,
+                icon: "🧮",
+                maxQuantity: 1
+            },
+            {
+                id: 4,
+                name: "Mochila Escolar",
+                description: "Mochila resistente con múltiples compartimentos",
+                price: 500,
+                icon: "🎒",
+                maxQuantity: 1
+            },
+            {
+                id: 5,
+                name: "Auriculares",
+                description: "Auriculares bluetooth de alta calidad",
+                price: 400,
+                icon: "🎧",
+                maxQuantity: 1
+            },
+            {
+                id: 6,
+                name: "Snack Saludable",
+                description: "Mix de frutos secos y granola",
+                price: 25,
+                icon: "🥜"
+            },
+            {
+                id: 7,
+                name: "Botella de Agua",
+                description: "Botella térmica reutilizable 500ml",
+                price: 120,
+                icon: "🍶",
+                maxQuantity: 2
+            },
+            {
+                id: 8,
+                name: "Kit de Arte",
+                description: "Set completo con colores, pinceles y papel",
+                price: 200,
+                icon: "🎨",
+                maxQuantity: 1
+            }
+        ];
+
+        // Inicializar EmailJS
+        (function(){
+            emailjs.init("YOUR_EMAILJS_USER_ID"); // Reemplazar con tu User ID de EmailJS
+        })();
+
+        // Cargar estudiantes al inicio
+        window.addEventListener('load', async () => {
+            renderProducts();
+            // Agregar evento Enter al input del NIE
+            const nieInput = document.getElementById('nieInput');
+            nieInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loadStudentByNie();
+                }
+            });
+        });
+
+        // Buscar estudiante por NIE
+        window.loadStudentByNie = async function() {
+            const nieInput = document.getElementById('nieInput');
+            const nieValue = nieInput.value.trim();
+            
+            if (!nieValue) {
+                showAlert('Por favor ingresa tu NIE', 'error');
+                return;
+            }
+
+            try {
+                // Buscar estudiante por NIE en Firebase
+                const studentsRef = collection(db, 'students');
+                const q = query(studentsRef, where('nie', '==', nieValue));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    showAlert('NIE no encontrado. Verifica que esté correctamente escrito.', 'error');
+                    document.getElementById('studentInfo').style.display = 'none';
+                    currentStudent = null;
+                    updateCartDisplay();
+                    return;
+                }
+
+                // Obtener datos del estudiante
+                const studentDoc = querySnapshot.docs[0];
+                const studentData = studentDoc.data();
+                
+                currentStudent = {
+                    id: studentDoc.id,
+                    nie: studentData.nie,
+                    name: studentData.name,
+                    points: studentData.points || 0
+                };
+
+                // Mostrar información del estudiante
+                document.getElementById('studentName').textContent = currentStudent.name;
+                document.getElementById('studentNie').textContent = `NIE: ${currentStudent.nie}`;
+                document.getElementById('studentPoints').textContent = `${currentStudent.points} puntos`;
+                document.getElementById('studentInfo').style.display = 'flex';
+                
+                // Actualizar estado del carrito
+                updateCartDisplay();
+                
+                showAlert(`¡Bienvenido/a ${currentStudent.name}!`, 'success');
+                
+            } catch (error) {
+                console.error('Error loading student:', error);
+                showAlert('Error al buscar el estudiante. Inténtalo de nuevo.', 'error');
+            }
+        };
+
+        // Renderizar productos
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.innerHTML = `
+                    <div class="product-image">${product.icon}</div>
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <p>${product.description}</p>
+                        <div class="product-price">${product.price} puntos</div>
+                        <div class="product-actions">
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="changeQuantity(${product.id}, -1)">-</button>
+                                <div class="quantity-display" id="qty-${product.id}">1</div>
+                                <button class="quantity-btn" onclick="changeQuantity(${product.id}, 1)">+</button>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
+                                Agregar al carrito
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(productCard);
+            });
+        }
+
+        // Cambiar cantidad de producto
+        window.changeQuantity = function(productId, change) {
+            const qtyElement = document.getElementById(`qty-${productId}`);
+            let currentQty = parseInt(qtyElement.textContent);
+            let newQty = currentQty + change;
+            
+            const product = products.find(p => p.id === productId);
+            const maxQty = product.maxQuantity || 10;
+            
+            if (newQty < 1) newQty = 1;
+            if (newQty > maxQty) newQty = maxQty;
+            
+            qtyElement.textContent = newQty;
+        };
+
+        // Agregar al carrito
+        window.addToCart = function(productId) {
+            if (!currentStudent) {
+                showAlert('Por favor selecciona tu NIE primero', 'error');
+                return;
+            }
+
+            const product = products.find(p => p.id === productId);
+            const quantity = parseInt(document.getElementById(`qty-${productId}`).textContent);
+            
+            // Verificar si ya existe en el carrito
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                const newQuantity = existingItem.quantity + quantity;
+                const maxAllowed = product.maxQuantity || 100;
+                
+                if (newQuantity > maxAllowed) {
+                    showAlert(`Solo puedes agregar máximo ${maxAllowed} unidades de ${product.name}`, 'error');
+                    return;
+                }
+                
+                existingItem.quantity = newQuantity;
+            } else {
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    quantity: quantity,
+                    icon: product.icon
+                });
+            }
+
+            updateCartDisplay();
+            showAlert(`${product.name} agregado al carrito`, 'success');
+            
+            // Reset quantity to 1
+            document.getElementById(`qty-${productId}`).textContent = '1';
+        };
+
+        // Toggle carrito
+        window.toggleCart = function() {
+            const sidebar = document.getElementById('cartSidebar');
+            const overlay = document.getElementById('overlay');
+            
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        };
+
+        // Actualizar display del carrito
+        function updateCartDisplay() {
+            const cartCount = document.getElementById('cartCount');
+            const cartContent = document.getElementById('cartContent');
+            const cartTotal = document.getElementById('cartTotal');
+            const purchaseBtn = document.getElementById('purchaseBtn');
+            
+            // Contar items
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount.textContent = totalItems;
+            
+            // Calcular total
+            const totalPoints = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            cartTotal.textContent = `${totalPoints} puntos`;
+            
+            // Renderizar items del carrito
+            if (cart.length === 0) {
+                cartContent.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">🛒</div>
+                        <h3>Tu carrito está vacío</h3>
+                        <p>Agrega algunos productos para comenzar</p>
+                    </div>
+                `;
+                purchaseBtn.disabled = true;
+            } else {
+                cartContent.innerHTML = cart.map(item => `
+                    <div class="cart-item">
+                        <div class="cart-item-icon">${item.icon}</div>
+                        <div class="cart-item-info">
+                            <h4>${item.name}</h4>
+                            <p>${item.price} puntos c/u × ${item.quantity}</p>
+                        </div>
+                        <div class="cart-item-actions">
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, -1)">-</button>
+                                <div class="quantity-display">${item.quantity}</div>
+                                <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, 1)">+</button>
+                            </div>
+                            <button class="remove-item" onclick="removeFromCart(${item.id})">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Habilitar/deshabilitar botón de compra
+                if (currentStudent && totalPoints <= currentStudent.points) {
+                    purchaseBtn.disabled = false;
+                } else {
+                    purchaseBtn.disabled = true;
+                }
+            }
+        }
+
+        // Actualizar cantidad en carrito
+        window.updateCartQuantity = function(productId, change) {
+            const item = cart.find(item => item.id === productId);
+            const product = products.find(p => p.id === productId);
+            
+            if (item) {
+                const newQuantity = item.quantity + change;
+                const maxAllowed = product.maxQuantity || 100;
+                
+                if (newQuantity < 1) {
+                    removeFromCart(productId);
+                    return;
+                }
+                
+                if (newQuantity > maxAllowed) {
+                    showAlert(`Solo puedes tener máximo ${maxAllowed} unidades de ${product.name}`, 'error');
+                    return;
+                }
+                
+                item.quantity = newQuantity;
+                updateCartDisplay();
+            }
+        };
+
+        // Remover del carrito
+        window.removeFromCart = function(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCartDisplay();
+        };
+
+        // Procesar compra
+        window.processPurchase = async function() {
+            if (!currentStudent) {
+                showAlert('Error: No hay estudiante seleccionado', 'error');
+                return;
+            }
+
+            if (cart.length === 0) {
+                showAlert('El carrito está vacío', 'error');
+                return;
+            }
+
+            const totalPoints = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            if (totalPoints > currentStudent.points) {
+                showAlert('No tienes suficientes puntos para esta compra', 'error');
+                return;
+            }
+
+            try {
+                // Actualizar puntos del estudiante
+                const newPoints = currentStudent.points - totalPoints;
+                const studentRef = doc(db, 'students', currentStudent.id);
+                
+                await updateDoc(studentRef, {
+                    points: newPoints,
+                    lastUpdated: new Date()
+                });
+
+                // Crear registro de pedido
+                const order = {
+                    studentName: currentStudent.name,
+                    studentNie: currentStudent.nie,
+                    items: cart.map(item => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        unitPrice: item.price,
+                        totalPrice: item.price * item.quantity
+                    })),
+                    totalPoints: totalPoints,
+                    orderDate: new Date(),
+                    status: 'pendiente'
+                };
+
+                await addDoc(collection(db, 'orders'), order);
+
+                // Enviar correo
+                await sendOrderEmail(order);
+
+                // Actualizar datos locales
+                currentStudent.points = newPoints;
+                document.getElementById('studentPoints').textContent = `${newPoints} puntos`;
+
+                // Limpiar carrito
+                cart = [];
+                updateCartDisplay();
+                toggleCart();
+
+                showAlert('¡Compra realizada exitosamente! Recibirás tu pedido pronto.', 'success');
+
+            } catch (error) {
+                console.error('Error processing purchase:', error);
+                showAlert('Error al procesar la compra. Inténtalo de nuevo.', 'error');
+            }
+        };
+
+        // Enviar email
+        async function sendOrderEmail(order) {
+            try {
+                const itemsList = order.items.map(item => 
+                    `• ${item.name} - Cantidad: ${item.quantity} - Puntos: ${item.totalPrice}`
+                ).join('\n');
+
+                const templateParams = {
+                    to_email: 'compraestudiantes@gmail.com',
+                    student_name: order.studentName,
+                    student_nie: order.studentNie,
+                    order_items: itemsList,
+                    total_points: order.totalPoints,
+                    order_date: order.orderDate.toLocaleString('es-ES')
+                };
+
+                await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams);
+                console.log('Email enviado exitosamente');
+            } catch (error) {
+                console.error('Error enviando email:', error);
+                // No mostramos error al usuario para no interrumpir la compra exitosa
+            }
+        }
+
+        // Mostrar alertas
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertsContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</body>
+</html>
