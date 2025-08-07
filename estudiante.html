@@ -451,9 +451,14 @@
             <p>Canjea tus puntos por increíbles productos</p>
             
             <div class="student-selector">
-                <select id="studentSelect" onchange="loadStudentInfo()">
-                    <option value="">Selecciona tu NIE</option>
-                </select>
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                    <input type="text" id="nieInput" placeholder="Ingresa tu NIE" 
+                           style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
+                    <button onclick="loadStudentByNie()" 
+                            style="background: rgba(255,255,255,0.3); color: white; border: 2px solid white; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">
+                        Aceptar
+                    </button>
+                </div>
                 
                 <div class="student-info" id="studentInfo" style="display: none;">
                     <div>
@@ -596,45 +601,52 @@
 
         // Cargar estudiantes al inicio
         window.addEventListener('load', async () => {
-            await loadStudents();
             renderProducts();
+            // Agregar evento Enter al input del NIE
+            const nieInput = document.getElementById('nieInput');
+            nieInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loadStudentByNie();
+                }
+            });
         });
 
-        // Cargar estudiantes desde Firebase
-        async function loadStudents() {
-            try {
-                const studentsRef = collection(db, 'students');
-                const querySnapshot = await getDocs(studentsRef);
-                
-                const select = document.getElementById('studentSelect');
-                select.innerHTML = '<option value="">Selecciona tu NIE</option>';
-                
-                querySnapshot.forEach((doc) => {
-                    const student = doc.data();
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = `${student.nie} - ${student.name}`;
-                    option.dataset.student = JSON.stringify({
-                        id: doc.id,
-                        nie: student.nie,
-                        name: student.name,
-                        points: student.points || 0
-                    });
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading students:', error);
-                showAlert('Error al cargar estudiantes', 'error');
-            }
-        }
-
-        // Cargar información del estudiante seleccionado
-        window.loadStudentInfo = function() {
-            const select = document.getElementById('studentSelect');
-            const selectedOption = select.selectedOptions[0];
+        // Buscar estudiante por NIE
+        window.loadStudentByNie = async function() {
+            const nieInput = document.getElementById('nieInput');
+            const nieValue = nieInput.value.trim();
             
-            if (selectedOption && selectedOption.dataset.student) {
-                currentStudent = JSON.parse(selectedOption.dataset.student);
+            if (!nieValue) {
+                showAlert('Por favor ingresa tu NIE', 'error');
+                return;
+            }
+
+            try {
+                // Buscar estudiante por NIE en Firebase
+                const studentsRef = collection(db, 'students');
+                const q = query(studentsRef, where('nie', '==', nieValue));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    showAlert('NIE no encontrado. Verifica que esté correctamente escrito.', 'error');
+                    document.getElementById('studentInfo').style.display = 'none';
+                    currentStudent = null;
+                    updateCartDisplay();
+                    return;
+                }
+
+                // Obtener datos del estudiante
+                const studentDoc = querySnapshot.docs[0];
+                const studentData = studentDoc.data();
+                
+                currentStudent = {
+                    id: studentDoc.id,
+                    nie: studentData.nie,
+                    name: studentData.name,
+                    points: studentData.points || 0
+                };
+
+                // Mostrar información del estudiante
                 document.getElementById('studentName').textContent = currentStudent.name;
                 document.getElementById('studentNie').textContent = `NIE: ${currentStudent.nie}`;
                 document.getElementById('studentPoints').textContent = `${currentStudent.points} puntos`;
@@ -642,9 +654,12 @@
                 
                 // Actualizar estado del carrito
                 updateCartDisplay();
-            } else {
-                document.getElementById('studentInfo').style.display = 'none';
-                currentStudent = null;
+                
+                showAlert(`¡Bienvenido/a ${currentStudent.name}!`, 'success');
+                
+            } catch (error) {
+                console.error('Error loading student:', error);
+                showAlert('Error al buscar el estudiante. Inténtalo de nuevo.', 'error');
             }
         };
 
