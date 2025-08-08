@@ -267,6 +267,72 @@
             gap: 5px;
         }
 
+        .student-info {
+            margin-top: 8px;
+            min-height: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .student-found {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #155724;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .student-not-found {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #721c24;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .student-searching {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #856404;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.6; }
+            to { opacity: 1; }
+        }
+
+        .student-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .student-name {
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .student-points {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
         .icon {
             font-size: 1.2em;
         }
@@ -354,8 +420,10 @@
                         maxlength="10"
                         pattern="[0-9A-Za-z]+"
                     >
-                    <div class="form-help">
-                        <span>💡</span> Ingresa tu NIE sin guiones ni espacios
+                    <div class="student-info" id="senderInfo">
+                        <div class="form-help">
+                            <span>💡</span> Ingresa tu NIE sin guiones ni espacios
+                        </div>
                     </div>
                 </div>
 
@@ -372,8 +440,10 @@
                         maxlength="10"
                         pattern="[0-9A-Za-z]+"
                     >
-                    <div class="form-help">
-                        <span>📝</span> NIE del estudiante que recibirá los puntos
+                    <div class="student-info" id="receiverInfo">
+                        <div class="form-help">
+                            <span>📝</span> NIE del estudiante que recibirá los puntos
+                        </div>
                     </div>
                 </div>
 
@@ -414,11 +484,11 @@
                 <div class="transfer-summary" id="transferSummary" style="display: none;">
                     <h3><span class="icon">📋</span> Resumen de Transferencia</h3>
                     <div class="transfer-detail">
-                        <span>De (NIE):</span>
+                        <span>De:</span>
                         <span id="summaryFrom">-</span>
                     </div>
                     <div class="transfer-detail">
-                        <span>Para (NIE):</span>
+                        <span>Para:</span>
                         <span id="summaryTo">-</span>
                     </div>
                     <div class="transfer-detail">
@@ -439,7 +509,7 @@
     <script type="module">
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -456,6 +526,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Cache for student data
+        let studentsCache = new Map();
+        let lastCacheUpdate = 0;
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
         // Form elements
         const form = document.getElementById('transferForm');
         const senderNieInput = document.getElementById('senderNie');
@@ -467,6 +542,10 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
         const transferSummary = document.getElementById('transferSummary');
 
+        // Student info elements
+        const senderInfo = document.getElementById('senderInfo');
+        const receiverInfo = document.getElementById('receiverInfo');
+
         // Summary elements
         const summaryFrom = document.getElementById('summaryFrom');
         const summaryTo = document.getElementById('summaryTo');
@@ -477,27 +556,193 @@
         
         // Update summary in real time
         [senderNieInput, receiverNieInput, pointsAmountInput].forEach(input => {
-            input.addEventListener('input', updateSummary);
+            input.addEventListener('input', debounce(updateSummary, 500));
         });
 
-        // Format NIE inputs
-        [senderNieInput, receiverNieInput].forEach(input => {
-            input.addEventListener('input', function(e) {
-                e.target.value = e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
-            });
+        // Real-time student lookup
+        senderNieInput.addEventListener('input', debounce(() => updateStudentInfo('sender'), 800));
+        receiverNieInput.addEventListener('input', debounce(() => updateStudentInfo('receiver'), 800));
+
+        // Format NIE inputs and clear student info when typing
+        senderNieInput.addEventListener('input', function(e) {
+            const oldValue = e.target.value;
+            e.target.value = e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+            
+            // If value changed significantly, clear student info immediately
+            if (oldValue !== e.target.value || e.target.value.length < 6) {
+                showDefaultHelp('sender');
+            }
         });
+
+        receiverNieInput.addEventListener('input', function(e) {
+            const oldValue = e.target.value;
+            e.target.value = e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+            
+            // If value changed significantly, clear student info immediately
+            if (oldValue !== e.target.value || e.target.value.length < 6) {
+                showDefaultHelp('receiver');
+            }
+        });
+
+        // Debounce function to limit API calls
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Show default help text
+        function showDefaultHelp(type) {
+            const infoElement = type === 'sender' ? senderInfo : receiverInfo;
+            const helpText = type === 'sender' 
+                ? '<div class="form-help"><span>💡</span> Ingresa tu NIE sin guiones ni espacios</div>'
+                : '<div class="form-help"><span>📝</span> NIE del estudiante que recibirá los puntos</div>';
+            
+            infoElement.innerHTML = helpText;
+        }
+
+        // Update student info display
+        async function updateStudentInfo(type) {
+            const nie = type === 'sender' ? senderNieInput.value.trim() : receiverNieInput.value.trim();
+            const infoElement = type === 'sender' ? senderInfo : receiverInfo;
+            
+            if (!nie || nie.length < 6) {
+                showDefaultHelp(type);
+                return;
+            }
+
+            // Show searching state
+            infoElement.innerHTML = `
+                <div class="student-searching">
+                    <span>🔍</span>
+                    <span>Buscando estudiante...</span>
+                </div>
+            `;
+
+            // Get student data
+            const studentData = await getStudentData(nie);
+            
+            if (studentData) {
+                // Student found
+                infoElement.innerHTML = `
+                    <div class="student-found">
+                        <span>✅</span>
+                        <div class="student-details">
+                            <div class="student-name">${studentData.name}</div>
+                            <div class="student-points">Puntos disponibles: ${studentData.points.toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Student not found
+                infoElement.innerHTML = `
+                    <div class="student-not-found">
+                        <span>❌</span>
+                        <div class="student-details">
+                            <div class="student-name">NIE no encontrado</div>
+                            <div class="student-points">Verifica que el NIE esté correcto</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Get student data from Firebase
+        async function getStudentData(nie) {
+            if (!nie || nie.length < 6) return null;
+            
+            // Check cache first
+            const now = Date.now();
+            if (studentsCache.has(nie) && (now - lastCacheUpdate) < CACHE_DURATION) {
+                return studentsCache.get(nie);
+            }
+
+            try {
+                // Query students collection by NIE
+                const q = query(collection(db, 'students'), where('nie', '==', nie));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    const studentDoc = querySnapshot.docs[0];
+                    const studentData = {
+                        name: studentDoc.data().name,
+                        nie: nie,
+                        points: studentDoc.data().points || 0
+                    };
+                    
+                    // Update cache
+                    studentsCache.set(nie, studentData);
+                    lastCacheUpdate = now;
+                    
+                    return studentData;
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Error fetching student data:', error);
+                return null;
+            }
+        }
 
         // Update summary
-        function updateSummary() {
+        async function updateSummary() {
             const sender = senderNieInput.value.trim();
             const receiver = receiverNieInput.value.trim();
             const points = pointsAmountInput.value;
 
             if (sender && receiver && points) {
-                summaryFrom.textContent = sender;
-                summaryTo.textContent = receiver;
+                // Show loading state in summary
+                summaryFrom.innerHTML = '<span style="color: #666;">🔄 Buscando...</span>';
+                summaryTo.innerHTML = '<span style="color: #666;">🔄 Buscando...</span>';
                 summaryPoints.textContent = `${parseInt(points).toLocaleString()} puntos`;
                 transferSummary.style.display = 'block';
+
+                // Get student data
+                const [senderData, receiverData] = await Promise.all([
+                    getStudentData(sender),
+                    getStudentData(receiver)
+                ]);
+
+                // Update summary with names or NIEs
+                if (senderData) {
+                    summaryFrom.innerHTML = `
+                        <div style="text-align: right;">
+                            <div style="font-weight: 600; color: #333;">${senderData.name}</div>
+                            <div style="font-size: 0.85em; color: #666;">NIE: ${senderData.nie}</div>
+                            <div style="font-size: 0.85em; color: #28a745;">Puntos: ${senderData.points.toLocaleString()}</div>
+                        </div>
+                    `;
+                } else {
+                    summaryFrom.innerHTML = `
+                        <div style="text-align: right; color: #dc3545;">
+                            <div style="font-weight: 600;">⚠️ NIE no encontrado</div>
+                            <div style="font-size: 0.85em;">NIE: ${sender}</div>
+                        </div>
+                    `;
+                }
+
+                if (receiverData) {
+                    summaryTo.innerHTML = `
+                        <div style="text-align: right;">
+                            <div style="font-weight: 600; color: #333;">${receiverData.name}</div>
+                            <div style="font-size: 0.85em; color: #666;">NIE: ${receiverData.nie}</div>
+                            <div style="font-size: 0.85em; color: #28a745;">Puntos: ${receiverData.points.toLocaleString()}</div>
+                        </div>
+                    `;
+                } else {
+                    summaryTo.innerHTML = `
+                        <div style="text-align: right; color: #dc3545;">
+                            <div style="font-weight: 600;">⚠️ NIE no encontrado</div>
+                            <div style="font-size: 0.85em;">NIE: ${receiver}</div>
+                        </div>
+                    `;
+                }
             } else {
                 transferSummary.style.display = 'none';
             }
@@ -513,7 +758,9 @@
             const transferNote = transferNoteInput.value.trim();
 
             // Validation
-            if (!validateForm(senderNie, receiverNie, pointsAmount)) {
+            const validationResult = await validateForm(senderNie, receiverNie, pointsAmount);
+            if (!validationResult.isValid) {
+                showAlert(validationResult.message, 'warning');
                 return;
             }
 
@@ -521,10 +768,18 @@
             setLoading(true);
 
             try {
+                // Get student names for the transfer request
+                const [senderData, receiverData] = await Promise.all([
+                    getStudentData(senderNie),
+                    getStudentData(receiverNie)
+                ]);
+
                 // Create transfer request
                 const transferRequest = {
                     senderNie: senderNie,
+                    senderName: senderData ? senderData.name : 'Estudiante no encontrado',
                     receiverNie: receiverNie,
+                    receiverName: receiverData ? receiverData.name : 'Estudiante no encontrado',
                     pointsAmount: pointsAmount,
                     transferNote: transferNote || null,
                     status: 'pendiente', // pendiente, aprobada, rechazada
@@ -555,33 +810,51 @@
         }
 
         // Validation function
-        function validateForm(senderNie, receiverNie, pointsAmount) {
+        async function validateForm(senderNie, receiverNie, pointsAmount) {
             // Check if NIEs are different
             if (senderNie === receiverNie) {
-                showAlert('No puedes enviarte puntos a ti mismo.', 'warning');
-                return false;
+                return { isValid: false, message: 'No puedes enviarte puntos a ti mismo.' };
             }
 
             // Check NIE format (basic validation)
             const niePattern = /^[0-9A-Z]+$/;
             if (!niePattern.test(senderNie) || !niePattern.test(receiverNie)) {
-                showAlert('Los NIEs deben contener solo números y letras, sin espacios ni símbolos.', 'warning');
-                return false;
+                return { isValid: false, message: 'Los NIEs deben contener solo números y letras, sin espacios ni símbolos.' };
             }
 
             // Check NIE length
             if (senderNie.length < 6 || receiverNie.length < 6) {
-                showAlert('Los NIEs deben tener al menos 6 caracteres.', 'warning');
-                return false;
+                return { isValid: false, message: 'Los NIEs deben tener al menos 6 caracteres.' };
             }
 
             // Check points amount
             if (pointsAmount < 1 || pointsAmount > 10000) {
-                showAlert('La cantidad de puntos debe estar entre 1 y 10,000.', 'warning');
-                return false;
+                return { isValid: false, message: 'La cantidad de puntos debe estar entre 1 y 10,000.' };
             }
 
-            return true;
+            // Check if both students exist
+            const [senderData, receiverData] = await Promise.all([
+                getStudentData(senderNie),
+                getStudentData(receiverNie)
+            ]);
+
+            if (!senderData) {
+                return { isValid: false, message: `El NIE del remitente (${senderNie}) no está registrado en el sistema.` };
+            }
+
+            if (!receiverData) {
+                return { isValid: false, message: `El NIE del destinatario (${receiverNie}) no está registrado en el sistema.` };
+            }
+
+            // Check if sender has enough points
+            if (senderData.points < pointsAmount) {
+                return { 
+                    isValid: false, 
+                    message: `No tienes suficientes puntos. Tienes ${senderData.points.toLocaleString()} puntos, pero intentas enviar ${pointsAmount.toLocaleString()}.` 
+                };
+            }
+
+            return { isValid: true };
         }
 
         // Set loading state
