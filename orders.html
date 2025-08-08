@@ -595,27 +595,36 @@
             
             allOrders.forEach(order => {
                 if (order.items && order.items.length > 0) {
+                    let globalProductIndex = 0; // Índice global para todos los productos expandidos
+                    
                     order.items.forEach((item, itemIndex) => {
-                        // Usar el estado individual del producto si existe, sino usar 'pendiente'
-                        const productStatus = (order.itemsStatus && order.itemsStatus[itemIndex]) ? 
-                                            order.itemsStatus[itemIndex].status : 'pendiente';
-                        const completedAt = (order.itemsStatus && order.itemsStatus[itemIndex]) ? 
-                                          order.itemsStatus[itemIndex].completedAt : null;
-                        
-                        allProducts.push({
-                            id: `${order.id}_${itemIndex}`, // ID único para cada producto
-                            originalOrderId: order.id,
-                            itemIndex: itemIndex, // Índice del producto en la orden original
-                            studentName: order.studentName,
-                            studentNie: order.studentNie,
-                            orderDate: order.orderDate,
-                            status: productStatus,
-                            completedAt: completedAt,
-                            productName: item.name,
-                            quantity: item.quantity,
-                            unitPrice: item.unitPrice,
-                            totalPrice: item.totalPrice
-                        });
+                        // Expandir cada producto según su cantidad
+                        for (let unitIndex = 0; unitIndex < item.quantity; unitIndex++) {
+                            // Usar el estado individual del producto si existe, sino usar 'pendiente'
+                            const productStatus = (order.itemsStatus && order.itemsStatus[globalProductIndex]) ? 
+                                                order.itemsStatus[globalProductIndex].status : 'pendiente';
+                            const completedAt = (order.itemsStatus && order.itemsStatus[globalProductIndex]) ? 
+                                              order.itemsStatus[globalProductIndex].completedAt : null;
+                            
+                            allProducts.push({
+                                id: `${order.id}_${globalProductIndex}`, // ID único para cada unidad individual
+                                originalOrderId: order.id,
+                                itemIndex: itemIndex, // Índice del producto original en la orden
+                                globalIndex: globalProductIndex, // Índice global en el array expandido
+                                unitIndex: unitIndex, // Índice de esta unidad específica (0, 1, 2...)
+                                studentName: order.studentName,
+                                studentNie: order.studentNie,
+                                orderDate: order.orderDate,
+                                status: productStatus,
+                                completedAt: completedAt,
+                                productName: item.name,
+                                originalQuantity: item.quantity, // Cantidad original del producto
+                                unitPrice: item.unitPrice,
+                                totalPrice: item.unitPrice // Precio por unidad individual
+                            });
+                            
+                            globalProductIndex++;
+                        }
                     });
                 }
             });
@@ -732,8 +741,8 @@
                                     ${product.totalPrice} puntos
                                 </div>
                                 ${!isCompleted ? `
-                                    <button class="complete-btn" onclick="completeIndividualProduct('${product.originalOrderId}', ${product.itemIndex})" 
-                                            title="Marcar este producto como completado">
+                                    <button class="complete-btn" onclick="completeIndividualProduct('${product.originalOrderId}', ${product.globalIndex})" 
+                                            title="Marcar esta unidad como completada">
                                         ✓
                                     </button>
                                 ` : ''}
@@ -743,10 +752,14 @@
                         <div class="product-info">
                             <h4>🛍️ Producto solicitado:</h4>
                             <div class="product-details">
-                                <div class="product-name">${product.productName}</div>
+                                <div class="product-name">
+                                    ${product.productName}
+                                    ${product.originalQuantity > 1 ? `<span style="color: #666; font-size: 0.9em;"> (Unidad ${product.unitIndex + 1} de ${product.originalQuantity})</span>` : ''}
+                                </div>
                                 <div class="product-price">${product.totalPrice} puntos</div>
                                 <div class="quantity-info">
-                                    <strong>Cantidad:</strong> ${product.quantity} unidad${product.quantity > 1 ? 'es' : ''} × ${product.unitPrice} puntos c/u
+                                    <strong>Precio unitario:</strong> ${product.unitPrice} puntos
+                                    ${product.originalQuantity > 1 ? `<br><strong>Del total:</strong> ${product.originalQuantity} unidades solicitadas` : ''}
                                 </div>
                             </div>
                         </div>
@@ -758,7 +771,7 @@
         }
 
         // Completar producto individual
-        window.completeIndividualProduct = async function(originalOrderId, itemIndex) {
+        window.completeIndividualProduct = async function(originalOrderId, globalIndex) {
             try {
                 const orderRef = doc(db, 'orders', originalOrderId);
                 
@@ -773,22 +786,22 @@
                 // Inicializar itemsStatus si no existe
                 const itemsStatus = orderData.itemsStatus || [];
                 
-                // Actualizar el estado del producto específico
-                itemsStatus[itemIndex] = {
+                // Actualizar el estado de la unidad específica
+                itemsStatus[globalIndex] = {
                     status: 'completado',
                     completedAt: new Date()
                 };
                 
-                // Actualizar la orden con el nuevo estado del producto
+                // Actualizar la orden con el nuevo estado de la unidad
                 await updateDoc(orderRef, {
                     itemsStatus: itemsStatus
                 });
 
-                showAlert('✅ Producto marcado como completado', 'success');
+                showAlert('✅ Unidad del producto marcada como completada', 'success');
 
             } catch (error) {
-                console.error('Error completing individual product:', error);
-                showAlert('Error al completar el producto', 'error');
+                console.error('Error completing individual product unit:', error);
+                showAlert('Error al completar la unidad del producto', 'error');
             }
         };
 
