@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transferencia de Puntos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-input:valid {
+            border-color: #28a745;
+        }
+
+        .nie-input {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .points-input {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .transfer-summary {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+            border-left: 4px solid #4facfe;
+        }
+
+        .transfer-summary h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .transfer-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .transfer-detail:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            color: #4facfe;
+            font-size: 1.1em;
+        }
+
+        .transfer-detail span:first-child {
+            color: #666;
+        }
+
+        .transfer-detail span:last-child {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.5);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .form-help {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+
+        .nie-format {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #495057;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+
+            .header {
+                padding: 25px 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-element {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+        .floating-element:nth-child(2) { top: 60%; right: 10%; animation-delay: 2s; }
+        .floating-element:nth-child(3) { bottom: 20%; left: 20%; animation-delay: 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-element">💰</div>
+        <div class="floating-element">📊</div>
+        <div class="floating-element">🎯</div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>💸 Transferencia de Puntos</h1>
+            <p>Envía puntos de mérito a otros estudiantes</p>
+        </div>
+
+        <div class="content">
+            <div id="alerts"></div>
+
+            <form id="transferForm">
+                <div class="form-group">
+                    <label class="form-label" for="senderNie">
+                        <span class="icon">👤</span> Tu NIE (Remitente)
+                    </label>
+                    <input 
+                        type="text" 
+                        id="senderNie" 
+                        class="form-input nie-input" 
+                        placeholder="Ej: 12345678"
+                        required
+                        maxlength="10"
+                        pattern="[0-9A-Za-z]+"
+                    >
+                    <div class="form-help">
+                        <span>💡</span> Ingresa tu NIE sin guiones ni espacios
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="receiverNie">
+                        <span class="icon">🎯</span> NIE del Destinatario
+                    </label>
+                    <input 
+                        type="text" 
+                        id="receiverNie" 
+                        class="form-input nie-input" 
+                        placeholder="Ej: 87654321"
+                        required
+                        maxlength="10"
+                        pattern="[0-9A-Za-z]+"
+                    >
+                    <div class="form-help">
+                        <span>📝</span> NIE del estudiante que recibirá los puntos
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="pointsAmount">
+                        <span class="icon">💎</span> Cantidad de Puntos
+                    </label>
+                    <input 
+                        type="number" 
+                        id="pointsAmount" 
+                        class="form-input points-input" 
+                        placeholder="0"
+                        required
+                        min="1"
+                        max="10000"
+                    >
+                    <div class="form-help">
+                        <span>⚡</span> Mínimo 1 punto, máximo 10,000 puntos
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="transferNote">
+                        <span class="icon">💬</span> Nota o Mensaje (Opcional)
+                    </label>
+                    <input 
+                        type="text" 
+                        id="transferNote" 
+                        class="form-input" 
+                        placeholder="Ej: Por ayudarme con el proyecto..."
+                        maxlength="100"
+                    >
+                    <div class="form-help">
+                        <span>✏️</span> Máximo 100 caracteres
+                    </div>
+                </div>
+
+                <div class="transfer-summary" id="transferSummary" style="display: none;">
+                    <h3><span class="icon">📋</span> Resumen de Transferencia</h3>
+                    <div class="transfer-detail">
+                        <span>De (NIE):</span>
+                        <span id="summaryFrom">-</span>
+                    </div>
+                    <div class="transfer-detail">
+                        <span>Para (NIE):</span>
+                        <span id="summaryTo">-</span>
+                    </div>
+                    <div class="transfer-detail">
+                        <span>Puntos a transferir:</span>
+                        <span id="summaryPoints">0 puntos</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span id="submitText">🚀 Enviar Solicitud</span>
+                    <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
+            authDomain: "puntos-de-merito.firebaseapp.com",
+            projectId: "puntos-de-merito",
+            storageBucket: "puntos-de-merito.firebasestorage.app",
+            messagingSenderId: "793336144671",
+            appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
+            measurementId: "G-CZ340GE3T7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Form elements
+        const form = document.getElementById('transferForm');
+        const senderNieInput = document.getElementById('senderNie');
+        const receiverNieInput = document.getElementById('receiverNie');
+        const pointsAmountInput = document.getElementById('pointsAmount');
+        const transferNoteInput = document.getElementById('transferNote');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitText = document.getElementById('submitText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const transferSummary = document.getElementById('transferSummary');
+
+        // Summary elements
+        const summaryFrom = document.getElementById('summaryFrom');
+        const summaryTo = document.getElementById('summaryTo');
+        const summaryPoints = document.getElementById('summaryPoints');
+
+        // Event listeners
+        form.addEventListener('submit', handleSubmit);
+        
+        // Update summary in real time
+        [senderNieInput, receiverNieInput, pointsAmountInput].forEach(input => {
+            input.addEventListener('input', updateSummary);
+        });
+
+        // Format NIE inputs
+        [senderNieInput, receiverNieInput].forEach(input => {
+            input.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+            });
+        });
+
+        // Update summary
+        function updateSummary() {
+            const sender = senderNieInput.value.trim();
+            const receiver = receiverNieInput.value.trim();
+            const points = pointsAmountInput.value;
+
+            if (sender && receiver && points) {
+                summaryFrom.textContent = sender;
+                summaryTo.textContent = receiver;
+                summaryPoints.textContent = `${parseInt(points).toLocaleString()} puntos`;
+                transferSummary.style.display = 'block';
+            } else {
+                transferSummary.style.display = 'none';
+            }
+        }
+
+        // Handle form submission
+        async function handleSubmit(e) {
+            e.preventDefault();
+            
+            const senderNie = senderNieInput.value.trim().toUpperCase();
+            const receiverNie = receiverNieInput.value.trim().toUpperCase();
+            const pointsAmount = parseInt(pointsAmountInput.value);
+            const transferNote = transferNoteInput.value.trim();
+
+            // Validation
+            if (!validateForm(senderNie, receiverNie, pointsAmount)) {
+                return;
+            }
+
+            // Show loading
+            setLoading(true);
+
+            try {
+                // Create transfer request
+                const transferRequest = {
+                    senderNie: senderNie,
+                    receiverNie: receiverNie,
+                    pointsAmount: pointsAmount,
+                    transferNote: transferNote || null,
+                    status: 'pendiente', // pendiente, aprobada, rechazada
+                    requestDate: serverTimestamp(),
+                    approvedBy: null,
+                    approvedDate: null,
+                    processedDate: null
+                };
+
+                // Save to Firebase
+                const docRef = await addDoc(collection(db, 'transfer_requests'), transferRequest);
+
+                // Show success message
+                showAlert('¡Solicitud enviada exitosamente! 🎉 La transferencia será procesada una vez que un profesor la apruebe.', 'success');
+                
+                // Reset form
+                form.reset();
+                transferSummary.style.display = 'none';
+
+                console.log('Transfer request created with ID: ', docRef.id);
+
+            } catch (error) {
+                console.error('Error creating transfer request:', error);
+                showAlert('Error al enviar la solicitud. Por favor intenta nuevamente.', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Validation function
+        function validateForm(senderNie, receiverNie, pointsAmount) {
+            // Check if NIEs are different
+            if (senderNie === receiverNie) {
+                showAlert('No puedes enviarte puntos a ti mismo.', 'warning');
+                return false;
+            }
+
+            // Check NIE format (basic validation)
+            const niePattern = /^[0-9A-Z]+$/;
+            if (!niePattern.test(senderNie) || !niePattern.test(receiverNie)) {
+                showAlert('Los NIEs deben contener solo números y letras, sin espacios ni símbolos.', 'warning');
+                return false;
+            }
+
+            // Check NIE length
+            if (senderNie.length < 6 || receiverNie.length < 6) {
+                showAlert('Los NIEs deben tener al menos 6 caracteres.', 'warning');
+                return false;
+            }
+
+            // Check points amount
+            if (pointsAmount < 1 || pointsAmount > 10000) {
+                showAlert('La cantidad de puntos debe estar entre 1 y 10,000.', 'warning');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Set loading state
+        function setLoading(loading) {
+            if (loading) {
+                submitBtn.disabled = true;
+                submitText.style.display = 'none';
+                loadingSpinner.style.display = 'inline-block';
+            } else {
+                submitBtn.disabled = false;
+                submitText.style.display = 'inline';
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Show alert function
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            
+            const icon = type === 'success' ? '✅' : 
+                        type === 'error' ? '❌' : 
+                        type === 'warning' ? '⚠️' : 'ℹ️';
+            
+            alert.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+            
+            alertsContainer.appendChild(alert);
+            
+            // Remove alert after 6 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 6000);
+
+            // Scroll to alert
+            alert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Auto-hide alerts when clicking
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.alert')) {
+                e.target.closest('.alert').remove();
+            }
+        });
+
+        console.log('Transfer Request System Initialized');
+    </script>
+</body>
+</html>
