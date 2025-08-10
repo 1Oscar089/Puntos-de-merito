@@ -360,6 +360,25 @@
             transform: scale(1.05);
         }
 
+        /* Formulario oculto por defecto */
+        #studentFormContainer {
+            display: none;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px dashed #4facfe;
+        }
+
+        #showFormBtn {
+            background: #28a745;
+            margin-bottom: 20px;
+        }
+
+        #showFormBtn:hover {
+            background: #218838;
+        }
+
         @media (max-width: 768px) {
             .content {
                 padding: 20px;
@@ -395,11 +414,12 @@
 </head>
 <body>
     <a href="estudiante.html">Estudiantes</a>
-    <a href="orders.html">Ordenes</a>
+    <a href="orders.html">Órdenes</a>
     <a href="transferencia.html">Transferencias</a>
     <a href="solicitudes.html">Solicitudes</a>
     <a href="cmisiones.html">Crear Misiones</a>
     <a href="amisiones.html">Asignar Misiones</a>
+
     <div class="container">
         <div class="header">
             <h1>🏆 Sistema de Puntos de Mérito</h1>
@@ -407,30 +427,40 @@
         </div>
 
         <div class="content">
-            <!-- Sección para agregar estudiantes -->
-            <div class="section">
-                <h2>➕ Agregar Nuevo Estudiante</h2>
-                <form id="studentForm">
-                    <div class="form-group">
-                        <label for="studentNie">NIE:</label>
-                        <input type="text" id="studentNie" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="studentName">Nombre del Estudiante:</label>
-                        <input type="text" id="studentName" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="studentGrade">Grado:</label>
-                        <select id="studentGrade" class="form-control" required>
-                            <option value="">Seleccionar grado</option>
-                            <option value="septimo">Séptimo Grado</option>
-                            <option value="octavo">Octavo Grado</option>
-                            <option value="noveno">Noveno Grado</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn">Agregar Estudiante</button>
-                </form>
-                <div id="addStudentAlert"></div>
+            <!-- Botón para mostrar formulario -->
+            <button id="showFormBtn" class="btn">➕ Nuevo Estudiante</button>
+
+            <!-- Formulario para agregar estudiantes (oculto por defecto) -->
+            <div id="studentFormContainer">
+                <div class="section">
+                    <h2>📝 Agregar Nuevo Estudiante</h2>
+                    <form id="studentForm">
+                        <div class="form-group">
+                            <label for="studentNie">NIE:</label>
+                            <input type="text" id="studentNie" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="studentName">Nombre del Estudiante:</label>
+                            <input type="text" id="studentName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="studentGrade">Grado:</label>
+                            <select id="studentGrade" class="form-control" required>
+                                <option value="">Seleccionar grado</option>
+                                <option value="septimo">Séptimo Grado</option>
+                                <option value="octavo">Octavo Grado</option>
+                                <option value="noveno">Noveno Grado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="studentPassword">Contraseña (generada automáticamente):</label>
+                            <input type="text" id="studentPassword" class="form-control" readonly>
+                        </div>
+                        <button type="submit" class="btn">Guardar Estudiante</button>
+                        <button type="button" id="cancelFormBtn" class="btn" style="background: #6c757d; margin-left: 10px;">Cancelar</button>
+                    </form>
+                    <div id="addStudentAlert"></div>
+                </div>
             </div>
 
             <!-- Sección para ver y gestionar estudiantes -->
@@ -462,7 +492,7 @@
     <div id="deleteConfirmation" class="delete-confirmation">
         <div class="confirmation-dialog">
             <h3>⚠️ Confirmar eliminación</h3>
-            <p id="deleteMessage">¿Estás seguro de que deseas eliminar este estudiante? Esta acción no se puede deshacer y se perderán todos los puntos acumulados.</p>
+            <p id="deleteMessage">¿Estás seguro de que deseas eliminar este estudiante? Esta acción no se puede deshacer.</p>
             <div class="confirmation-buttons">
                 <button id="confirmDelete" class="confirm-btn">Sí, eliminar</button>
                 <button id="cancelDelete" class="cancel-btn">Cancelar</button>
@@ -472,11 +502,11 @@
 
     <!-- Firebase Scripts -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
+        // Importar Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
+        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
             authDomain: "puntos-de-merito.firebaseapp.com",
@@ -487,11 +517,14 @@
             measurementId: "G-CZ340GE3T7"
         };
 
-        // Initialize Firebase
+        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
         // Referencias a elementos DOM
+        const showFormBtn = document.getElementById('showFormBtn');
+        const studentFormContainer = document.getElementById('studentFormContainer');
+        const cancelFormBtn = document.getElementById('cancelFormBtn');
         const studentForm = document.getElementById('studentForm');
         const tabs = document.querySelectorAll('.tab');
         const studentLists = document.querySelectorAll('.student-list');
@@ -501,17 +534,33 @@
         const deleteMessage = document.getElementById('deleteMessage');
 
         // Variables globales
-        let students = {};
-        let currentGrade = 'septimo';
         let studentToDelete = null;
+        let usedPasswords = new Set();
 
         // Función para mostrar alertas
-        function showAlert(message, type, containerId) {
+        function showAlert(message, type, containerId = 'addStudentAlert') {
             const container = document.getElementById(containerId);
             container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
             setTimeout(() => {
                 container.innerHTML = '';
             }, 3000);
+        }
+
+        // Generar contraseña única (4 dígitos, no repetida)
+        async function generateUniquePassword() {
+            const studentsRef = collection(db, 'students');
+            const querySnapshot = await getDocs(studentsRef);
+            usedPasswords = new Set();
+            querySnapshot.forEach(doc => {
+                const password = doc.data().password;
+                if (password) usedPasswords.add(password);
+            });
+
+            let password;
+            do {
+                password = Math.floor(1000 + Math.random() * 9000); // 1000-9999
+            } while (usedPasswords.has(password));
+            return password;
         }
 
         // Función para agregar estudiante
@@ -523,61 +572,39 @@
                 const querySnapshot = await getDocs(q);
                 
                 if (!querySnapshot.empty) {
-                    showAlert('❌ El NIE ya existe en el sistema', 'error', 'addStudentAlert');
+                    showAlert('❌ El NIE ya existe en el sistema', 'error');
                     return false;
                 }
 
-                const docRef = await addDoc(collection(db, 'students'), {
+                // Generar contraseña única
+                const password = await generateUniquePassword();
+
+                // Guardar en Firebase
+                await addDoc(studentsRef, {
                     nie: nie,
                     name: name,
                     grade: grade,
+                    password: password,
                     points: 0,
                     createdAt: new Date()
                 });
 
-                showAlert('✅ Estudiante agregado exitosamente', 'success', 'addStudentAlert');
+                showAlert('✅ Estudiante agregado exitosamente', 'success');
                 
-                // Limpiar formulario
+                // Limpiar formulario y ocultar
                 studentForm.reset();
+                document.getElementById('studentPassword').value = '';
+                studentFormContainer.style.display = 'none';
                 
-                // Recargar la lista del grado correspondiente
+                // Recargar la lista del grado
                 loadStudents(grade);
                 
                 return true;
             } catch (error) {
                 console.error('Error adding student: ', error);
-                showAlert('❌ Error al agregar estudiante', 'error', 'addStudentAlert');
+                showAlert('❌ Error al agregar estudiante', 'error');
                 return false;
             }
-        }
-
-        // Función para eliminar estudiante
-        async function deleteStudent(studentId, studentName) {
-            try {
-                await deleteDoc(doc(db, 'students', studentId));
-                
-                // Recargar la lista actual
-                loadStudents(currentGrade);
-                
-                return true;
-            } catch (error) {
-                console.error('Error deleting student: ', error);
-                alert('Error al eliminar estudiante');
-                return false;
-            }
-        }
-
-        // Función para mostrar confirmación de eliminación
-        function showDeleteConfirmation(studentId, studentName, studentNie) {
-            studentToDelete = { id: studentId, name: studentName, nie: studentNie };
-            deleteMessage.innerHTML = `¿Estás seguro de que deseas eliminar a <strong>${studentName}</strong> (NIE: ${studentNie})? Esta acción no se puede deshacer y se perderán todos los puntos acumulados.`;
-            deleteConfirmation.style.display = 'flex';
-        }
-
-        // Función para ocultar confirmación de eliminación
-        function hideDeleteConfirmation() {
-            deleteConfirmation.style.display = 'none';
-            studentToDelete = null;
         }
 
         // Función para cargar estudiantes por grado
@@ -607,6 +634,7 @@
                                 <div class="student-details">
                                     <h4>NIE: ${student.nie}</h4>
                                     <p><strong>Nombre:</strong> ${student.name}</p>
+                                    <p><strong>Contraseña:</strong> ${student.password}</p>
                                 </div>
                                 <div class="points-section">
                                     <div class="points-display">
@@ -626,7 +654,6 @@
                 });
 
                 listContainer.innerHTML = studentsHTML;
-                students[grade] = querySnapshot.docs;
             } catch (error) {
                 console.error('Error loading students: ', error);
                 listContainer.innerHTML = '<div class="loading">Error al cargar estudiantes</div>';
@@ -656,12 +683,10 @@
                         lastUpdated: new Date()
                     });
 
-                    // Actualizar la visualización
                     const pointsDisplay = button.parentElement.querySelector('.points-display');
                     pointsDisplay.textContent = `${newPoints} puntos`;
                     pointsInput.value = '';
                     
-                    // Animación de éxito
                     button.textContent = '✓';
                     button.style.background = '#28a745';
                     setTimeout(() => {
@@ -691,19 +716,17 @@
                 
                 if (studentDoc.exists()) {
                     const currentPoints = studentDoc.data().points || 0;
-                    const newPoints = Math.max(0, currentPoints - pointsToRemove); // No permitir puntos negativos
+                    const newPoints = Math.max(0, currentPoints - pointsToRemove);
                     
                     await updateDoc(studentRef, {
                         points: newPoints,
                         lastUpdated: new Date()
                     });
 
-                    // Actualizar la visualización
                     const pointsDisplay = button.parentElement.querySelector('.points-display');
                     pointsDisplay.textContent = `${newPoints} puntos`;
                     pointsInput.value = '';
                     
-                    // Animación de éxito
                     button.textContent = '✓';
                     button.style.background = '#28a745';
                     setTimeout(() => {
@@ -717,17 +740,34 @@
             }
         };
 
-        // Función para mostrar confirmación de eliminación (disponible globalmente)
-        window.showDeleteConfirmation = showDeleteConfirmation;
+        // Mostrar formulario
+        showFormBtn.addEventListener('click', async () => {
+            studentFormContainer.style.display = 'block';
+            showFormBtn.style.display = 'none';
+            // Generar contraseña al abrir el formulario
+            const password = await generateUniquePassword();
+            document.getElementById('studentPassword').value = password;
+        });
 
-        // Event listeners
+        // Cancelar formulario
+        cancelFormBtn.addEventListener('click', () => {
+            studentFormContainer.style.display = 'none';
+            showFormBtn.style.display = 'block';
+            studentForm.reset();
+        });
+
+        // Enviar formulario
         studentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const nie = document.getElementById('studentNie').value;
-            const name = document.getElementById('studentName').value;
+            const nie = document.getElementById('studentNie').value.trim();
+            const name = document.getElementById('studentName').value.trim();
             const grade = document.getElementById('studentGrade').value;
             
+            if (!nie || !name || !grade) {
+                showAlert('❌ Completa todos los campos', 'error');
+                return;
+            }
+
             await addStudent(nie, name, grade);
         });
 
@@ -736,46 +776,52 @@
             tab.addEventListener('click', () => {
                 const grade = tab.dataset.grade;
                 
-                // Actualizar pestañas activas
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
-                // Mostrar lista correspondiente
                 studentLists.forEach(list => list.classList.remove('active'));
                 document.getElementById(`${grade}-list`).classList.add('active');
                 
-                currentGrade = grade;
                 loadStudents(grade);
             });
         });
 
-        // Event listeners para modal de eliminación
+        // Eliminar estudiante
+        window.showDeleteConfirmation = function(studentId, studentName, studentNie) {
+            studentToDelete = { id: studentId, name: studentName, nie: studentNie };
+            deleteMessage.innerHTML = `¿Estás seguro de que deseas eliminar a <strong>${studentName}</strong> (NIE: ${studentNie})? Esta acción no se puede deshacer.`;
+            deleteConfirmation.style.display = 'flex';
+        };
+
         confirmDelete.addEventListener('click', async () => {
             if (studentToDelete) {
-                const success = await deleteStudent(studentToDelete.id, studentToDelete.name);
-                if (success) {
+                try {
+                    await deleteDoc(doc(db, 'students', studentToDelete.id));
+                    showAlert('✅ Estudiante eliminado', 'success');
+                    loadStudents(document.querySelector('.tab.active').dataset.grade);
                     hideDeleteConfirmation();
+                } catch (error) {
+                    console.error('Error deleting student:', error);
+                    showAlert('❌ Error al eliminar estudiante', 'error');
                 }
             }
         });
 
-        cancelDelete.addEventListener('click', hideDeleteConfirmation);
-
-        // Cerrar modal al hacer clic fuera
+        cancelDelete.addEventListener('click', () => hideDeleteConfirmation());
         deleteConfirmation.addEventListener('click', (e) => {
-            if (e.target === deleteConfirmation) {
-                hideDeleteConfirmation();
-            }
+            if (e.target === deleteConfirmation) hideDeleteConfirmation();
         });
 
-        // Cerrar modal con tecla Escape
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                hideDeleteConfirmation();
-            }
+            if (e.key === 'Escape') hideDeleteConfirmation();
         });
 
-        // Cargar estudiantes iniciales
+        function hideDeleteConfirmation() {
+            deleteConfirmation.style.display = 'none';
+            studentToDelete = null;
+        }
+
+        // Cargar estudiantes al inicio
         window.addEventListener('load', () => {
             loadStudents('septimo');
         });
