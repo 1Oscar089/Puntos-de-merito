@@ -53,6 +53,7 @@
             gap: 10px;
             margin-bottom: 15px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .login-fields input {
@@ -62,6 +63,26 @@
             border: none;
             border-radius: 8px;
             font-size: 16px;
+        }
+
+        .toggle-password {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-password:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
         }
 
         .login-btn {
@@ -246,12 +267,7 @@
             flex: 1;
         }
 
-        .add-to-cart-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .add-to-cart-btn:hover:not(:disabled) {
+        .add-to-cart-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 15px rgba(79, 172, 254, 0.3);
         }
@@ -484,6 +500,9 @@
                 <div class="login-fields">
                     <input type="text" id="nieInput" placeholder="Ingresa tu NIE">
                     <input type="password" id="passwordInput" placeholder="Ingresa tu contraseña">
+                    <button class="toggle-password" onclick="togglePassword()" title="Mostrar/ocultar contraseña">
+                        👁️
+                    </button>
                     <button class="login-btn" onclick="authenticateStudent()">Aceptar</button>
                 </div>
                 
@@ -499,7 +518,7 @@
 
         <div class="content">
             <div class="products-grid" id="productsGrid">
-                <!-- Los productos se cargarán dinámicamente -->
+                <!-- Productos cargados dinámicamente -->
             </div>
             <div id="alerts"></div>
         </div>
@@ -532,13 +551,12 @@
         </div>
     </div>
 
-    <!-- Firebase y EmailJS Scripts -->
+    <!-- Firebase Scripts -->
     <script type="module">
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
             authDomain: "puntos-de-merito.firebaseapp.com",
@@ -549,13 +567,14 @@
             measurementId: "G-CZ340GE3T7"
         };
 
-        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Variables globales
+        // Variables
         let currentStudent = null;
         let cart = [];
+        let passwordVisible = false;
+
         let products = [
             { id: 1, name: "Ticket de limpieza", description: "Puedes NO hacer la limpieza por un día", price: 270, icon: "🧹" },
             { id: 2, name: "Ticket para baño", description: "Puedes usarlo para solicitar ir al baño", price: 12, icon: "🚽" },
@@ -572,20 +591,35 @@
             { id: 13, name: "Ticket para ver una pelicula", description: "Se podra ver una pelicula en hora de clase (puede tenerlo solo un estudiante)", price: 1250, icon: "📽️" }
         ];
 
-        // Inicializar EmailJS (opcional - puedes activarlo después)
-        // emailjs.init("YOUR_USER_ID");
-
         // Cargar productos al inicio
         window.addEventListener('load', () => {
             renderProducts();
-            // Evento Enter en los campos
-            document.getElementById('nieInput').addEventListener('keypress', e => {
-                if (e.key === 'Enter') authenticateStudent();
-            });
-            document.getElementById('passwordInput').addEventListener('keypress', e => {
-                if (e.key === 'Enter') authenticateStudent();
-            });
+            setupInputEnter();
         });
+
+        function setupInputEnter() {
+            const nieInput = document.getElementById('nieInput');
+            const passwordInput = document.getElementById('passwordInput');
+            
+            nieInput.addEventListener('keypress', e => { if (e.key === 'Enter') authenticateStudent(); });
+            passwordInput.addEventListener('keypress', e => { if (e.key === 'Enter') authenticateStudent(); });
+        }
+
+        // Alternar visibilidad de contraseña
+        window.togglePassword = function() {
+            const passwordInput = document.getElementById('passwordInput');
+            const toggleBtn = document.querySelector('.toggle-password');
+            
+            if (passwordVisible) {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+                passwordVisible = false;
+            } else {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🕶️';
+                passwordVisible = true;
+            }
+        };
 
         // Autenticar estudiante
         window.authenticateStudent = async function() {
@@ -598,25 +632,28 @@
             }
 
             try {
-                const studentsRef = collection(db, 'students');
-                const q = query(studentsRef, where('nie', '==', nie));
+                const q = query(collection(db, 'students'), where('nie', '==', nie));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    showAlert('NIE no encontrado', 'error');
+                    showAlert('❌ NIE no encontrado. Verifica tu número de identificación.', 'error');
                     return;
                 }
 
                 const studentDoc = querySnapshot.docs[0];
                 const studentData = studentDoc.data();
 
-                // Verificar contraseña
-                if (studentData.password !== parseInt(password)) {
-                    showAlert('Contraseña incorrecta', 'error');
+                const enteredPassword = parseInt(password);
+                if (isNaN(enteredPassword)) {
+                    showAlert('❌ La contraseña debe ser un número', 'error');
                     return;
                 }
 
-                // Autenticación exitosa
+                if (studentData.password !== enteredPassword) {
+                    showAlert('❌ Contraseña incorrecta. Inténtalo de nuevo.', 'error');
+                    return;
+                }
+
                 currentStudent = {
                     id: studentDoc.id,
                     nie: studentData.nie,
@@ -624,20 +661,19 @@
                     points: studentData.points || 0
                 };
 
-                // Mostrar info del estudiante
                 document.getElementById('studentName').textContent = currentStudent.name;
                 document.getElementById('studentNie').textContent = `NIE: ${currentStudent.nie}`;
                 document.getElementById('studentPoints').textContent = `${currentStudent.points} puntos`;
                 document.getElementById('studentInfo').style.display = 'flex';
 
-                // Habilitar carrito
                 document.querySelector('.cart-icon').disabled = false;
 
-                showAlert(`¡Bienvenido/a ${currentStudent.name}!`, 'success');
+                renderProducts();
 
+                showAlert(`✅ ¡Bienvenido/a ${currentStudent.name}!`, 'success');
             } catch (error) {
                 console.error('Error al autenticar:', error);
-                showAlert('Error en el sistema. Inténtalo más tarde.', 'error');
+                showAlert('⚠️ Error en el sistema. Intenta más tarde.', 'error');
             }
         };
 
@@ -661,7 +697,7 @@
                                 <div class="quantity-display" id="qty-${product.id}">1</div>
                                 <button class="quantity-btn" onclick="changeQuantity(${product.id}, 1)">+</button>
                             </div>
-                            <button class="add-to-cart-btn" onclick="addToCart(${product.id})" ${!currentStudent ? 'disabled' : ''}>
+                            <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
                                 Agregar al carrito
                             </button>
                         </div>
@@ -675,9 +711,8 @@
         window.changeQuantity = function(productId, change) {
             const qtyElement = document.getElementById(`qty-${productId}`);
             let currentQty = parseInt(qtyElement.textContent);
-            let newQty = currentQty + change;
-            if (newQty < 1) newQty = 1;
-            if (newQty > 10) newQty = 10; // Límite por producto
+            let newQty = Math.max(1, currentQty + change);
+            if (newQty > 10) newQty = 10;
             qtyElement.textContent = newQty;
         };
 
@@ -691,21 +726,15 @@
             const product = products.find(p => p.id === productId);
             const quantity = parseInt(document.getElementById(`qty-${productId}`).textContent);
 
-            const existingItem = cart.find(item => item.id === productId);
-            if (existingItem) {
-                if (existingItem.quantity + quantity > 10) {
-                    showAlert(`Máximo 10 unidades de ${product.name}`, 'error');
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                if (existing.quantity + quantity > 10) {
+                    showAlert('Máximo 10 unidades por producto', 'error');
                     return;
                 }
-                existingItem.quantity += quantity;
+                existing.quantity += quantity;
             } else {
-                cart.push({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    quantity: quantity,
-                    icon: product.icon
-                });
+                cart.push({ id: product.id, name: product.name, price: product.price, quantity, icon: product.icon });
             }
 
             updateCartDisplay();
@@ -715,12 +744,12 @@
 
         // Toggle carrito
         window.toggleCart = function() {
-            const sidebar = document.getElementById('cartSidebar');
-            const overlay = document.getElementById('overlay');
-            if (!sidebar.classList.contains('open') && !currentStudent) {
-                showAlert('Debes iniciar sesión para ver el carrito', 'error');
+            if (!currentStudent) {
+                showAlert('Inicia sesión para ver el carrito', 'error');
                 return;
             }
+            const sidebar = document.getElementById('cartSidebar');
+            const overlay = document.getElementById('overlay');
             sidebar.classList.toggle('open');
             overlay.classList.toggle('active');
         };
@@ -735,17 +764,11 @@
             const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
             cartCount.textContent = totalItems;
 
-            const totalPoints = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const totalPoints = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
             cartTotal.textContent = `${totalPoints} puntos`;
 
             if (cart.length === 0) {
-                cartContent.innerHTML = `
-                    <div class="empty-cart">
-                        <div class="empty-cart-icon">🛒</div>
-                        <h3>Tu carrito está vacío</h3>
-                        <p>Agrega algunos productos para comenzar</p>
-                    </div>
-                `;
+                cartContent.innerHTML = `<div class="empty-cart"><div class="empty-cart-icon">🛒</div><h3>Vacío</h3><p>Agrega productos</p></div>`;
                 purchaseBtn.disabled = true;
             } else {
                 cartContent.innerHTML = cart.map(item => `
@@ -765,17 +788,16 @@
                         </div>
                     </div>
                 `).join('');
-
-                purchaseBtn.disabled = !currentStudent || totalPoints > currentStudent.points;
+                purchaseBtn.disabled = totalPoints > currentStudent.points;
             }
         }
 
         // Actualizar cantidad en carrito
-        window.updateCartQuantity = function(productId, change) {
-            const item = cart.find(i => i.id === productId);
+        window.updateCartQuantity = function(id, change) {
+            const item = cart.find(i => i.id === id);
             if (!item) return;
             const newQty = item.quantity + change;
-            if (newQty < 1) removeFromCart(productId);
+            if (newQty < 1) removeFromCart(id);
             else if (newQty <= 10) {
                 item.quantity = newQty;
                 updateCartDisplay();
@@ -785,8 +807,8 @@
         };
 
         // Remover del carrito
-        window.removeFromCart = function(productId) {
-            cart = cart.filter(i => i.id !== productId);
+        window.removeFromCart = function(id) {
+            cart = cart.filter(i => i.id !== id);
             updateCartDisplay();
         };
 
@@ -794,18 +816,17 @@
         window.processPurchase = async function() {
             if (!currentStudent) return;
 
-            const totalPoints = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-            if (totalPoints > currentStudent.points) {
-                showAlert('No tienes suficientes puntos', 'error');
+            const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            if (total > currentStudent.points) {
+                showAlert('No tienes suficientes puntos para esta compra', 'error');
                 return;
             }
 
             try {
-                const newPoints = currentStudent.points - totalPoints;
-                const studentRef = doc(db, 'students', currentStudent.id);
-                await updateDoc(studentRef, { points: newPoints });
+                const newPoints = currentStudent.points - total;
+                await updateDoc(doc(db, 'students', currentStudent.id), { points: newPoints });
 
-                const order = {
+                await addDoc(collection(db, 'orders'), {
                     studentName: currentStudent.name,
                     studentNie: currentStudent.nie,
                     items: cart.map(i => ({
@@ -814,39 +835,32 @@
                         unitPrice: i.price,
                         totalPrice: i.price * i.quantity
                     })),
-                    totalPoints,
+                    totalPoints: total,
                     orderDate: new Date(),
                     status: 'pendiente'
-                };
-
-                await addDoc(collection(db, 'orders'), order);
+                });
 
                 currentStudent.points = newPoints;
                 document.getElementById('studentPoints').textContent = `${newPoints} puntos`;
-
                 cart = [];
                 updateCartDisplay();
                 toggleCart();
-
-                showAlert('¡Compra realizada exitosamente!', 'success');
+                showAlert('🎉 ¡Compra realizada con éxito! Recibirás tu pedido pronto.', 'success');
             } catch (error) {
-                console.error('Error:', error);
-                showAlert('Error al procesar la compra', 'error');
+                console.error('Error al procesar la compra:', error);
+                showAlert('⚠️ Error al procesar tu compra. Contacta al administrador.', 'error');
             }
         };
 
         // Mostrar alertas
-        function showAlert(message, type) {
+        function showAlert(msg, type) {
             const alerts = document.getElementById('alerts');
             const alert = document.createElement('div');
             alert.className = `alert alert-${type}`;
-            alert.textContent = message;
+            alert.textContent = msg;
             alerts.appendChild(alert);
             setTimeout(() => alert.remove(), 5000);
         }
     </script>
-
-    <!-- EmailJS SDK (opcional - descomenta si lo usas) -->
-    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script> -->
 </body>
 </html>
