@@ -218,11 +218,6 @@
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
 
-        .order-card.completed {
-            opacity: 0.7;
-            border-left-color: #28a745;
-        }
-
         .order-header {
             display: flex;
             justify-content: space-between;
@@ -469,9 +464,6 @@
                     <button class="filter-btn" data-status="pendiente" onclick="filterByStatus('pendiente')">
                         Pendientes
                     </button>
-                    <button class="filter-btn" data-status="completado" onclick="filterByStatus('completado')">
-                        Completadas
-                    </button>
                 </div>
             </div>
 
@@ -484,10 +476,6 @@
                 <div class="stat-card">
                     <div class="stat-number" id="pendingProducts">0</div>
                     <div class="stat-label">Pendientes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="completedProducts">0</div>
-                    <div class="stat-label">Completados</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="totalPoints">0</div>
@@ -539,7 +527,7 @@
 
         // Variables globales
         let allOrders = [];
-        let allProducts = []; // Array de productos individuales
+        let allProducts = []; // Productos individuales (cada unidad)
         let filteredProducts = [];
         let currentFilter = 'all';
         let searchTerm = '';
@@ -549,7 +537,6 @@
             loadOrders();
             setupRealTimeListener();
             
-            // Agregar evento Enter al input de búsqueda
             const searchInput = document.getElementById('searchInput');
             searchInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -557,7 +544,6 @@
                 }
             });
 
-            // Búsqueda en tiempo real mientras escribe
             searchInput.addEventListener('input', function() {
                 searchTerm = this.value.toLowerCase().trim();
                 applyFilters();
@@ -589,48 +575,35 @@
             });
         }
 
-        // Procesar órdenes para convertirlas en productos individuales
+        // Procesar órdenes: cada unidad de producto es un ítem individual
         function processOrdersToProducts() {
             allProducts = [];
-            
+            let globalIndex = 0;
+
             allOrders.forEach(order => {
                 if (order.items && order.items.length > 0) {
-                    let globalProductIndex = 0; // Índice global para todos los productos expandidos
-                    
                     order.items.forEach((item, itemIndex) => {
-                        // Expandir cada producto según su cantidad
-                        for (let unitIndex = 0; unitIndex < item.quantity; unitIndex++) {
-                            // Usar el estado individual del producto si existe, sino usar 'pendiente'
-                            const productStatus = (order.itemsStatus && order.itemsStatus[globalProductIndex]) ? 
-                                                order.itemsStatus[globalProductIndex].status : 'pendiente';
-                            const completedAt = (order.itemsStatus && order.itemsStatus[globalProductIndex]) ? 
-                                              order.itemsStatus[globalProductIndex].completedAt : null;
-                            
+                        for (let i = 0; i < item.quantity; i++) {
                             allProducts.push({
-                                id: `${order.id}_${globalProductIndex}`, // ID único para cada unidad individual
+                                id: `${order.id}_${globalIndex}`,
                                 originalOrderId: order.id,
-                                itemIndex: itemIndex, // Índice del producto original en la orden
-                                globalIndex: globalProductIndex, // Índice global en el array expandido
-                                unitIndex: unitIndex, // Índice de esta unidad específica (0, 1, 2...)
+                                itemIndex: itemIndex,
+                                globalIndex: globalIndex,
                                 studentName: order.studentName,
                                 studentNie: order.studentNie,
                                 orderDate: order.orderDate,
-                                status: productStatus,
-                                completedAt: completedAt,
                                 productName: item.name,
-                                originalQuantity: item.quantity, // Cantidad original del producto
                                 unitPrice: item.unitPrice,
-                                totalPrice: item.unitPrice // Precio por unidad individual
+                                totalPrice: item.unitPrice
                             });
-                            
-                            globalProductIndex++;
+                            globalIndex++;
                         }
                     });
                 }
             });
         }
 
-        // Cargar órdenes desde Firebase
+        // Cargar órdenes
         window.loadOrders = async function() {
             try {
                 const ordersRef = collection(db, 'orders');
@@ -650,7 +623,6 @@
                 processOrdersToProducts();
                 applyFilters();
                 updateStats();
-                showAlert('Productos actualizados correctamente', 'success');
 
             } catch (error) {
                 console.error('Error loading orders:', error);
@@ -661,15 +633,11 @@
         // Aplicar filtros
         function applyFilters() {
             filteredProducts = allProducts.filter(product => {
-                // Filtro por estado
-                const statusMatch = currentFilter === 'all' || product.status === currentFilter;
-                
-                // Filtro por búsqueda
+                const statusMatch = currentFilter === 'all' || true; // Todos son "pendientes" hasta eliminarse
                 const searchMatch = searchTerm === '' ||
                                   product.studentName.toLowerCase().includes(searchTerm) ||
                                   product.studentNie.toLowerCase().includes(searchTerm) ||
                                   product.productName.toLowerCase().includes(searchTerm);
-                
                 return statusMatch && searchMatch;
             });
 
@@ -683,20 +651,15 @@
             applyFilters();
         };
 
-        // Filtrar por estado
+        // Filtrar por estado (solo "todas" y "pendientes")
         window.filterByStatus = function(status) {
             currentFilter = status;
-            
-            // Actualizar botones activos
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`[data-status="${status}"]`).classList.add('active');
-            
             applyFilters();
         };
 
-        // Renderizar productos individuales
+        // Renderizar productos
         function renderProducts() {
             const container = document.getElementById('ordersContainer');
             
@@ -705,116 +668,102 @@
                     <div class="no-orders">
                         <div class="no-orders-icon">📭</div>
                         <h3>No hay productos</h3>
-                        <p>${searchTerm ? 'No se encontraron productos con ese criterio de búsqueda' : 'No hay productos registrados'}</p>
+                        <p>${searchTerm ? 'No se encontraron productos con ese criterio de búsqueda' : 'No hay productos pendientes'}</p>
                     </div>
                 `;
                 return;
             }
 
-            const productsHTML = filteredProducts.map(product => {
-                const isCompleted = product.status === 'completado';
-
-                return `
-                    <div class="order-card ${isCompleted ? 'completed' : ''}">
-                        <div class="order-header">
-                            <div class="order-info">
-                                <h3>
-                                    ${product.studentName}
-                                    <span class="order-id-badge">#${product.originalOrderId.slice(-6)}</span>
-                                </h3>
-                                <p><strong>NIE:</strong> ${product.studentNie}</p>
-                                <p><strong>Estado:</strong> <span style="color: ${isCompleted ? '#28a745' : '#dc3545'}; font-weight: 600;">
-                                    ${isCompleted ? '✅ Completado' : '⏳ Pendiente'}
-                                </span></p>
-                            </div>
-                            <div class="order-actions">
-                                <div class="order-date">
-                                    ${product.orderDate.toLocaleDateString('es-ES', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
-                                </div>
-                                <div class="order-total">
-                                    ${product.totalPrice} puntos
-                                </div>
-                                ${!isCompleted ? `
-                                    <button class="complete-btn" onclick="completeIndividualProduct('${product.originalOrderId}', ${product.globalIndex})" 
-                                            title="Marcar esta unidad como completada">
-                                        ✓
-                                    </button>
-                                ` : ''}
-                            </div>
+            const productsHTML = filteredProducts.map(product => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-info">
+                            <h3>
+                                ${product.studentName}
+                                <span class="order-id-badge">#${product.originalOrderId.slice(-6)}</span>
+                            </h3>
+                            <p><strong>NIE:</strong> ${product.studentNie}</p>
                         </div>
-                        
-                        <div class="product-info">
-                            <h4>🛍️ Producto solicitado:</h4>
-                            <div class="product-details">
-                                <div class="product-name">
-                                    ${product.productName}
-                                    ${product.originalQuantity > 1 ? `<span style="color: #666; font-size: 0.9em;"> (Unidad ${product.unitIndex + 1} de ${product.originalQuantity})</span>` : ''}
-                                </div>
-                                <div class="product-price">${product.totalPrice} puntos</div>
-                                <div class="quantity-info">
-                                    <strong>Precio unitario:</strong> ${product.unitPrice} puntos
-                                    ${product.originalQuantity > 1 ? `<br><strong>Del total:</strong> ${product.originalQuantity} unidades solicitadas` : ''}
-                                </div>
+                        <div class="order-actions">
+                            <div class="order-date">
+                                ${product.orderDate.toLocaleDateString('es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </div>
+                            <div class="order-total">
+                                ${product.totalPrice} puntos
+                            </div>
+                            <button class="complete-btn" onclick="completeIndividualProduct('${product.originalOrderId}', ${product.itemIndex})" 
+                                    title="Eliminar esta unidad del producto">
+                                ✓
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="product-info">
+                        <h4>🛍️ Producto solicitado:</h4>
+                        <div class="product-details">
+                            <div class="product-name">${product.productName}</div>
+                            <div class="product-price">${product.totalPrice} puntos</div>
+                            <div class="quantity-info">
+                                <strong>Precio unitario:</strong> ${product.unitPrice} puntos
                             </div>
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
 
             container.innerHTML = productsHTML;
         }
 
-        // Completar producto individual
-        window.completeIndividualProduct = async function(originalOrderId, globalIndex) {
+        // Eliminar una unidad de producto de la orden
+        window.completeIndividualProduct = async function(orderId, itemIndex) {
             try {
-                const orderRef = doc(db, 'orders', originalOrderId);
-                
-                // Obtener la orden actual para mantener los estados existentes
+                const orderRef = doc(db, 'orders', orderId);
                 const orderDoc = await getDoc(orderRef);
+
                 if (!orderDoc.exists()) {
                     throw new Error('Orden no encontrada');
                 }
-                
-                const orderData = orderDoc.data();
-                
-                // Inicializar itemsStatus si no existe
-                const itemsStatus = orderData.itemsStatus || [];
-                
-                // Actualizar el estado de la unidad específica
-                itemsStatus[globalIndex] = {
-                    status: 'completado',
-                    completedAt: new Date()
-                };
-                
-                // Actualizar la orden con el nuevo estado de la unidad
-                await updateDoc(orderRef, {
-                    itemsStatus: itemsStatus
-                });
 
-                showAlert('✅ Unidad del producto marcada como completada', 'success');
+                const orderData = orderDoc.data();
+                const items = [...orderData.items];
+
+                if (!items[itemIndex]) {
+                    throw new Error('Producto no encontrado en la orden');
+                }
+
+                // Restar una unidad
+                if (items[itemIndex].quantity > 1) {
+                    items[itemIndex].quantity -= 1;
+                } else {
+                    // Si es la última unidad, eliminar el producto del array
+                    items.splice(itemIndex, 1);
+                }
+
+                // Actualizar la orden
+                await updateDoc(orderRef, { items });
+
+                showAlert('✅ Producto eliminado de la orden', 'success');
 
             } catch (error) {
-                console.error('Error completing individual product unit:', error);
-                showAlert('Error al completar la unidad del producto', 'error');
+                console.error('Error eliminando producto:', error);
+                showAlert('Error al eliminar el producto', 'error');
             }
         };
 
         // Actualizar estadísticas
         function updateStats() {
             const totalProducts = allProducts.length;
-            const pendingProducts = allProducts.filter(product => product.status === 'pendiente').length;
-            const completedProducts = allProducts.filter(product => product.status === 'completado').length;
+            const pendingProducts = allProducts.length; // Todos son pendientes
             const totalPoints = allProducts.reduce((sum, product) => sum + (product.totalPrice || 0), 0);
 
             document.getElementById('totalProducts').textContent = totalProducts;
             document.getElementById('pendingProducts').textContent = pendingProducts;
-            document.getElementById('completedProducts').textContent = completedProducts;
             document.getElementById('totalPoints').textContent = totalPoints.toLocaleString();
         }
 
