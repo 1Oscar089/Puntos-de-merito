@@ -382,18 +382,23 @@
                     </div>
                 </div>
 
-                <!-- 🔴 CAMBIO: quitado 'required' del input de contraseña -->
                 <div class="form-group password-field" id="passwordField">
                     <label class="form-label" for="password">
                         <span class="icon">🔒</span> Tu Contraseña
                     </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        class="form-input" 
-                        placeholder="Ingresa tu contraseña"
-                        <!-- 🔻 'required' fue eliminado aquí -->
-                    >
+                    <div style="position: relative;">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="form-input" 
+                            placeholder="Ingresa tu contraseña"
+                        >
+                        <span 
+                            id="togglePassword" 
+                            style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.2em;">
+                            👁️
+                        </span>
+                    </div>
                     <div class="form-help">
                         <span>🔑</span> Necesaria para confirmar la transferencia
                     </div>
@@ -455,7 +460,8 @@
         const receiverNieInput = document.getElementById('receiverNie');
         const pointsAmountInput = document.getElementById('pointsAmount');
         const passwordField = document.getElementById('passwordField');
-        const passwordInput = document.getElementById('password'); // 🔴 Referencia al input
+        const passwordInput = document.getElementById('password');
+        const togglePassword = document.getElementById('togglePassword');
         const submitBtn = document.getElementById('submitBtn');
         const submitText = document.getElementById('submitText');
         const loadingSpinner = document.getElementById('loadingSpinner');
@@ -489,6 +495,13 @@
         // Actualizar resumen
         [senderNieInput, receiverNieInput, pointsAmountInput].forEach(input => {
             input.addEventListener('input', debounce(updateSummary, 500));
+        });
+
+        // Toggle password visibility
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? '👁️' : '🙈';
         });
 
         // Debounce
@@ -604,7 +617,7 @@
             const senderNie = senderNieInput.value.trim().toUpperCase();
             const receiverNie = receiverNieInput.value.trim().toUpperCase();
             const pointsAmount = parseInt(pointsAmountInput.value);
-            const password = passwordInput.value;
+            const passwordInputValue = passwordInput.value.trim(); // entrada del usuario
 
             // Validación básica
             if (senderNie === receiverNie) {
@@ -617,11 +630,11 @@
                 return;
             }
 
-            // 🔴 Mostrar campo de contraseña si está oculto
+            // Mostrar campo de contraseña si está oculto
             if (passwordField.style.display !== 'block') {
                 passwordField.style.display = 'block';
-                passwordInput.setAttribute('required', ''); // ✅ Añadir 'required' solo cuando se muestra
-                passwordInput.focus(); // 🔥 Enfocar automáticamente
+                passwordInput.setAttribute('required', '');
+                passwordInput.focus();
                 showAlert('Por favor, ingresa tu contraseña para confirmar.', 'warning');
                 return;
             }
@@ -634,21 +647,27 @@
 
                 if (!senderData) {
                     showAlert('Remitente no encontrado.', 'error');
+                    setLoading(false);
                     return;
                 }
 
                 if (!receiverData) {
                     showAlert('Destinatario no encontrado.', 'error');
+                    setLoading(false);
                     return;
                 }
 
                 if (senderData.points < pointsAmount) {
                     showAlert(`No tienes suficientes puntos. Tienes ${senderData.points.toLocaleString()}, pero intentas enviar ${pointsAmount.toLocaleString()}.`, 'error');
+                    setLoading(false);
                     return;
                 }
 
-                // 🔴 Validar contraseña
-                if (password !== senderData.password) {
+                // 🔢 Convertir entrada a número para comparar con contraseña numérica
+                const enteredPassword = parseInt(passwordInputValue);
+                const correctPassword = senderData.password; // ya es número en Firebase
+
+                if (isNaN(enteredPassword) || enteredPassword !== correctPassword) {
                     showAlert('❌ Contraseña incorrecta.', 'error');
                     setLoading(false);
                     return;
@@ -671,7 +690,6 @@
                 form.reset();
                 transferSummary.style.display = 'none';
                 passwordField.style.display = 'none';
-                // No es necesario quitar 'required' porque se vuelve a ocultar
 
             } catch (error) {
                 console.error('Error en la transferencia:', error);
@@ -687,10 +705,10 @@
             const q = query(messagesRef, where('nie', '==', nie));
             const snapshot = await getDocs(q);
             const messages = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-                .sort((a, b) => a.timestamp - b.timestamp); // Más antiguo primero
+                .sort((a, b) => a.timestamp - b.timestamp);
 
             if (messages.length >= 30) {
-                await deleteDoc(doc(db, 'messages', messages[0].id)); // Eliminar más antiguo
+                await deleteDoc(doc(db, 'messages', messages[0].id));
             }
 
             await addDoc(messagesRef, {
