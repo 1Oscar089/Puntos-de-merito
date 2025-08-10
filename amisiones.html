@@ -237,7 +237,7 @@
 
         .type-normal { background: #e8f5e8; color: #2e7d32; }
         .type-question { background: #fff3e0; color: #f57c00; }
-        .type-multiple { background: #f3e5f5; color: #7b1fa2; }
+        .type-multiple-choice { background: #f3e5f5; color: #7b1fa2; }
 
         @media (max-width: 768px) {
             .student-card {
@@ -283,7 +283,7 @@
     <script type="module">
         // Firebase Configuration
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, query, where, arrayUnion } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
@@ -299,6 +299,7 @@
         const db = getFirestore(app);
 
         let students = [];
+        let allMissions = [];
         let currentMissions = [];
         let newMissions = [];
 
@@ -316,18 +317,31 @@
             }
         }
 
-        // Cargar misiones
+        // Cargar misiones desde daily_missions
         async function loadMissions() {
             try {
-                const missionsSnapshot = await getDocs(collection(db, 'missions'));
-                const allMissions = missionsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                const dailyMissionsSnapshot = await getDocs(collection(db, 'daily_missions'));
+                allMissions = [];
+                
+                dailyMissionsSnapshot.docs.forEach(doc => {
+                    const docData = doc.data();
+                    if (docData.missions && Array.isArray(docData.missions)) {
+                        docData.missions.forEach((mission, index) => {
+                            allMissions.push({
+                                ...mission,
+                                docId: doc.id, // ID del documento daily_missions
+                                missionIndex: index, // Índice de la misión en el array
+                                batchDate: docData.date
+                            });
+                        });
+                    }
+                });
 
+                // Separar misiones asignadas y no asignadas
                 currentMissions = allMissions.filter(mission => mission.assigned === true);
                 newMissions = allMissions.filter(mission => mission.assigned !== true);
 
+                console.log('Misiones cargadas:', allMissions);
                 console.log('Misiones actuales:', currentMissions);
                 console.log('Misiones nuevas:', newMissions);
 
@@ -335,6 +349,8 @@
                 renderNewMissions();
             } catch (error) {
                 console.error('Error cargando misiones:', error);
+                document.getElementById('current-missions').innerHTML = '<div class="no-missions">Error al cargar las misiones</div>';
+                document.getElementById('new-missions').innerHTML = '<div class="no-missions">Error al cargar las misiones</div>';
             }
         }
 
@@ -381,14 +397,14 @@
             card.className = 'mission-card';
 
             const typeClass = mission.type === 'normal' ? 'type-normal' : 
-                             mission.type === 'question' ? 'type-question' : 'type-multiple';
+                             mission.type === 'question' ? 'type-question' : 'type-multiple-choice';
             const typeText = mission.type === 'normal' ? 'Normal' : 
                             mission.type === 'question' ? 'Pregunta' : 'Opción Múltiple';
 
             card.innerHTML = `
                 <div class="mission-header" onclick="toggleMission('${mission.id}')">
                     <div>
-                        <h3>${mission.title}</h3>
+                        <h3>${mission.name}</h3>
                         <span class="mission-type ${typeClass}">${typeText}</span>
                     </div>
                     <div class="mission-points">${mission.points} pts</div>
@@ -397,9 +413,9 @@
                     <div class="mission-info">
                         <p><strong>Descripción:</strong> ${mission.description}</p>
                         ${mission.question ? `<p><strong>Pregunta:</strong> ${mission.question}</p>` : ''}
-                        ${mission.options ? `<p><strong>Opciones:</strong> ${mission.options.join(', ')}</p>` : ''}
+                        ${mission.options ? `<p><strong>Opciones:</strong> A) ${mission.options.a}, B) ${mission.options.b}, C) ${mission.options.c}, D) ${mission.options.d}</p>` : ''}
                     </div>
-                    ${isAssigned ? createStudentsGrid(mission) : `<button class="btn btn-assign" onclick="assignMission('${mission.id}')">📝 Asignar Misión</button>`}
+                    ${isAssigned ? createStudentsGrid(mission) : `<button class="btn btn-assign" onclick="assignMission('${mission.docId}', ${mission.missionIndex})">📝 Asignar Misión</button>`}
                 </div>
             `;
 
@@ -411,7 +427,7 @@
             let studentsHtml = '<div class="students-grid">';
 
             students.forEach(student => {
-                const studentResponse = mission.responses ? mission.responses[student.id] : null;
+                const studentResponse = mission.responses && mission.responses[student.id] ? mission.responses[student.id] : null;
                 const isCompleted = mission.completed && mission.completed.includes(student.id);
 
                 studentsHtml += `
@@ -425,7 +441,7 @@
                                 <input type="checkbox" 
                                        id="check-${mission.id}-${student.id}" 
                                        ${isCompleted ? 'checked' : ''}
-                                       onchange="toggleStudentCompletion('${mission.id}', '${student.id}', ${mission.points})">
+                                       onchange="toggleStudentCompletion('${mission.docId}', ${mission.missionIndex}, '${student.id}', ${mission.points})">
                                 <label for="check-${mission.id}-${student.id}">Completado</label>
                             </div>
                         </div>
@@ -449,7 +465,7 @@
                 </div>`;
             }
 
-            if (mission.type === 'multiple') {
+            if (mission.type === 'multiple-choice') {
                 return `<div class="student-response">
                     ${response ? `Opción seleccionada: ${response}` : 'Sin selección aún'}
                 </div>`;
@@ -465,17 +481,29 @@
         }
 
         // Asignar misión
-        window.assignMission = async function(missionId) {
+        window.assignMission = async function(docId, missionIndex) {
             try {
-                const missionRef = doc(db, 'missions', missionId);
-                await updateDoc(missionRef, {
-                    assigned: true,
-                    assignedAt: new Date()
-                });
+                const docRef = doc(db, 'daily_missions', docId);
+                
+                // Obtener el documento actual para actualizar la misión específica
+                const docSnapshot = await docRef.get();
+                if (docSnapshot.exists()) {
+                    const docData = docSnapshot.data();
+                    const missions = docData.missions;
+                    
+                    // Actualizar la misión específica
+                    missions[missionIndex].assigned = true;
+                    missions[missionIndex].assignedAt = new Date().toISOString();
+                    
+                    // Actualizar en Firebase
+                    await updateDoc(docRef, {
+                        missions: missions
+                    });
 
-                // Recargar misiones
-                await loadMissions();
-                alert('¡Misión asignada correctamente!');
+                    // Recargar misiones
+                    await loadMissions();
+                    alert('¡Misión asignada correctamente!');
+                }
             } catch (error) {
                 console.error('Error asignando misión:', error);
                 alert('Error al asignar la misión');
@@ -483,28 +511,41 @@
         }
 
         // Toggle completado del estudiante
-        window.toggleStudentCompletion = async function(missionId, studentId, points) {
+        window.toggleStudentCompletion = async function(docId, missionIndex, studentId, points) {
             try {
-                const missionRef = doc(db, 'missions', missionId);
-                const mission = currentMissions.find(m => m.id === missionId);
+                const docRef = doc(db, 'daily_missions', docId);
                 
-                let completed = mission.completed || [];
-                
-                if (completed.includes(studentId)) {
-                    // Remover de completados y quitar puntos
-                    completed = completed.filter(id => id !== studentId);
-                    await updateStudentPoints(studentId, -points);
-                } else {
-                    // Agregar a completados y dar puntos
-                    completed.push(studentId);
-                    await updateStudentPoints(studentId, points);
+                // Obtener el documento actual
+                const docSnapshot = await docRef.get();
+                if (docSnapshot.exists()) {
+                    const docData = docSnapshot.data();
+                    const missions = docData.missions;
+                    const mission = missions[missionIndex];
+                    
+                    let completed = mission.completed || [];
+                    
+                    if (completed.includes(studentId)) {
+                        // Remover de completados y quitar puntos
+                        completed = completed.filter(id => id !== studentId);
+                        await updateStudentPoints(studentId, -points);
+                    } else {
+                        // Agregar a completados y dar puntos
+                        completed.push(studentId);
+                        await updateStudentPoints(studentId, points);
+                    }
+
+                    // Actualizar la misión
+                    missions[missionIndex].completed = completed;
+                    
+                    // Guardar en Firebase
+                    await updateDoc(docRef, { missions: missions });
+                    
+                    // Actualizar en memoria
+                    const missionInMemory = currentMissions.find(m => m.docId === docId && m.missionIndex === missionIndex);
+                    if (missionInMemory) {
+                        missionInMemory.completed = completed;
+                    }
                 }
-
-                await updateDoc(missionRef, { completed });
-                
-                // Actualizar la misión en memoria
-                mission.completed = completed;
-
             } catch (error) {
                 console.error('Error actualizando completado:', error);
                 alert('Error al actualizar el estado');
@@ -536,9 +577,18 @@
             }
 
             try {
-                // Eliminar todas las misiones actuales
-                const deletePromises = currentMissions.map(mission => 
-                    deleteDoc(doc(db, 'missions', mission.id))
+                // Agrupar misiones por documento
+                const docGroups = {};
+                currentMissions.forEach(mission => {
+                    if (!docGroups[mission.docId]) {
+                        docGroups[mission.docId] = [];
+                    }
+                    docGroups[mission.docId].push(mission);
+                });
+
+                // Eliminar cada documento de daily_missions que tiene misiones asignadas
+                const deletePromises = Object.keys(docGroups).map(docId => 
+                    deleteDoc(doc(db, 'daily_missions', docId))
                 );
                 
                 await Promise.all(deletePromises);
