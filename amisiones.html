@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista del Docente - Gestión de Misiones</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .mission-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .mission-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .mission-header {
+            background: #667eea;
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .mission-header:hover {
+            background: #5a67d8;
+        }
+
+        .mission-header h3 {
+            font-size: 1.2rem;
+        }
+
+        .mission-points {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .mission-content {
+            display: none;
+            padding: 20px;
+            background: white;
+        }
+
+        .mission-content.active {
+            display: block;
+        }
+
+        .mission-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .students-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .student-card {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background-color 0.3s ease;
+        }
+
+        .student-card:hover {
+            background: #eeeeee;
+        }
+
+        .student-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .student-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .student-response {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 8px;
+            color: #666;
+            font-style: italic;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+
+        .student-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            transform: scale(1.5);
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            font-weight: 500;
+            color: #4caf50;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-assign {
+            background: #4caf50;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .btn-assign:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76,175,80,0.4);
+        }
+
+        .btn-finish {
+            background: #f44336;
+            color: white;
+            display: block;
+            margin: 30px auto 0;
+            font-size: 1.1rem;
+            padding: 15px 40px;
+        }
+
+        .btn-finish:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244,67,54,0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        .no-missions {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+            font-size: 1.1rem;
+        }
+
+        .mission-type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .type-normal { background: #e8f5e8; color: #2e7d32; }
+        .type-question { background: #fff3e0; color: #f57c00; }
+        .type-multiple { background: #f3e5f5; color: #7b1fa2; }
+
+        @media (max-width: 768px) {
+            .student-card {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .student-actions {
+                justify-content: center;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Gestión de Misiones</h1>
+
+        <!-- Misiones Actuales -->
+        <div class="section">
+            <h2>📋 Misiones Actuales</h2>
+            <div id="current-missions">
+                <div class="loading">Cargando misiones actuales...</div>
+            </div>
+            <button id="finish-missions-btn" class="btn btn-finish" style="display: none;">
+                🏁 Finalizar Todas las Misiones
+            </button>
+        </div>
+
+        <!-- Misiones Nuevas -->
+        <div class="section">
+            <h2>🆕 Misiones Nuevas Sin Asignar</h2>
+            <div id="new-missions">
+                <div class="loading">Cargando misiones nuevas...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase Configuration
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
+            authDomain: "puntos-de-merito.firebaseapp.com",
+            projectId: "puntos-de-merito",
+            storageBucket: "puntos-de-merito.firebasestorage.app",
+            messagingSenderId: "793336144671",
+            appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
+            measurementId: "G-CZ340GE3T7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let students = [];
+        let currentMissions = [];
+        let newMissions = [];
+
+        // Cargar estudiantes
+        async function loadStudents() {
+            try {
+                const studentsSnapshot = await getDocs(collection(db, 'students'));
+                students = studentsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log('Estudiantes cargados:', students);
+            } catch (error) {
+                console.error('Error cargando estudiantes:', error);
+            }
+        }
+
+        // Cargar misiones
+        async function loadMissions() {
+            try {
+                const missionsSnapshot = await getDocs(collection(db, 'missions'));
+                const allMissions = missionsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                currentMissions = allMissions.filter(mission => mission.assigned === true);
+                newMissions = allMissions.filter(mission => mission.assigned !== true);
+
+                console.log('Misiones actuales:', currentMissions);
+                console.log('Misiones nuevas:', newMissions);
+
+                renderCurrentMissions();
+                renderNewMissions();
+            } catch (error) {
+                console.error('Error cargando misiones:', error);
+            }
+        }
+
+        // Renderizar misiones actuales
+        function renderCurrentMissions() {
+            const container = document.getElementById('current-missions');
+            const finishBtn = document.getElementById('finish-missions-btn');
+
+            if (currentMissions.length === 0) {
+                container.innerHTML = '<div class="no-missions">No hay misiones asignadas actualmente</div>';
+                finishBtn.style.display = 'none';
+                return;
+            }
+
+            finishBtn.style.display = 'block';
+            container.innerHTML = '';
+
+            currentMissions.forEach(mission => {
+                const missionCard = createMissionCard(mission, true);
+                container.appendChild(missionCard);
+            });
+        }
+
+        // Renderizar misiones nuevas
+        function renderNewMissions() {
+            const container = document.getElementById('new-missions');
+
+            if (newMissions.length === 0) {
+                container.innerHTML = '<div class="no-missions">No hay misiones nuevas disponibles</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            newMissions.forEach(mission => {
+                const missionCard = createMissionCard(mission, false);
+                container.appendChild(missionCard);
+            });
+        }
+
+        // Crear tarjeta de misión
+        function createMissionCard(mission, isAssigned) {
+            const card = document.createElement('div');
+            card.className = 'mission-card';
+
+            const typeClass = mission.type === 'normal' ? 'type-normal' : 
+                             mission.type === 'question' ? 'type-question' : 'type-multiple';
+            const typeText = mission.type === 'normal' ? 'Normal' : 
+                            mission.type === 'question' ? 'Pregunta' : 'Opción Múltiple';
+
+            card.innerHTML = `
+                <div class="mission-header" onclick="toggleMission('${mission.id}')">
+                    <div>
+                        <h3>${mission.title}</h3>
+                        <span class="mission-type ${typeClass}">${typeText}</span>
+                    </div>
+                    <div class="mission-points">${mission.points} pts</div>
+                </div>
+                <div class="mission-content" id="content-${mission.id}">
+                    <div class="mission-info">
+                        <p><strong>Descripción:</strong> ${mission.description}</p>
+                        ${mission.question ? `<p><strong>Pregunta:</strong> ${mission.question}</p>` : ''}
+                        ${mission.options ? `<p><strong>Opciones:</strong> ${mission.options.join(', ')}</p>` : ''}
+                    </div>
+                    ${isAssigned ? createStudentsGrid(mission) : `<button class="btn btn-assign" onclick="assignMission('${mission.id}')">📝 Asignar Misión</button>`}
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Crear grid de estudiantes
+        function createStudentsGrid(mission) {
+            let studentsHtml = '<div class="students-grid">';
+
+            students.forEach(student => {
+                const studentResponse = mission.responses ? mission.responses[student.id] : null;
+                const isCompleted = mission.completed && mission.completed.includes(student.id);
+
+                studentsHtml += `
+                    <div class="student-card">
+                        <div class="student-info">
+                            <div class="student-name">👤 ${student.name}</div>
+                            ${createResponseField(mission, student.id, studentResponse)}
+                        </div>
+                        <div class="student-actions">
+                            <div class="checkbox-container">
+                                <input type="checkbox" 
+                                       id="check-${mission.id}-${student.id}" 
+                                       ${isCompleted ? 'checked' : ''}
+                                       onchange="toggleStudentCompletion('${mission.id}', '${student.id}', ${mission.points})">
+                                <label for="check-${mission.id}-${student.id}">Completado</label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            studentsHtml += '</div>';
+            return studentsHtml;
+        }
+
+        // Crear campo de respuesta según el tipo de misión
+        function createResponseField(mission, studentId, response) {
+            if (mission.type === 'normal') {
+                return '';
+            }
+
+            if (mission.type === 'question') {
+                return `<div class="student-response">
+                    ${response ? `Respuesta: "${response}"` : 'Sin respuesta aún'}
+                </div>`;
+            }
+
+            if (mission.type === 'multiple') {
+                return `<div class="student-response">
+                    ${response ? `Opción seleccionada: ${response}` : 'Sin selección aún'}
+                </div>`;
+            }
+
+            return '';
+        }
+
+        // Toggle misión desplegable
+        window.toggleMission = function(missionId) {
+            const content = document.getElementById(`content-${missionId}`);
+            content.classList.toggle('active');
+        }
+
+        // Asignar misión
+        window.assignMission = async function(missionId) {
+            try {
+                const missionRef = doc(db, 'missions', missionId);
+                await updateDoc(missionRef, {
+                    assigned: true,
+                    assignedAt: new Date()
+                });
+
+                // Recargar misiones
+                await loadMissions();
+                alert('¡Misión asignada correctamente!');
+            } catch (error) {
+                console.error('Error asignando misión:', error);
+                alert('Error al asignar la misión');
+            }
+        }
+
+        // Toggle completado del estudiante
+        window.toggleStudentCompletion = async function(missionId, studentId, points) {
+            try {
+                const missionRef = doc(db, 'missions', missionId);
+                const mission = currentMissions.find(m => m.id === missionId);
+                
+                let completed = mission.completed || [];
+                
+                if (completed.includes(studentId)) {
+                    // Remover de completados y quitar puntos
+                    completed = completed.filter(id => id !== studentId);
+                    await updateStudentPoints(studentId, -points);
+                } else {
+                    // Agregar a completados y dar puntos
+                    completed.push(studentId);
+                    await updateStudentPoints(studentId, points);
+                }
+
+                await updateDoc(missionRef, { completed });
+                
+                // Actualizar la misión en memoria
+                mission.completed = completed;
+
+            } catch (error) {
+                console.error('Error actualizando completado:', error);
+                alert('Error al actualizar el estado');
+            }
+        }
+
+        // Actualizar puntos del estudiante
+        async function updateStudentPoints(studentId, pointsToAdd) {
+            try {
+                const studentRef = doc(db, 'students', studentId);
+                const student = students.find(s => s.id === studentId);
+                const currentPoints = student.points || 0;
+                
+                await updateDoc(studentRef, {
+                    points: currentPoints + pointsToAdd
+                });
+
+                // Actualizar en memoria
+                student.points = currentPoints + pointsToAdd;
+            } catch (error) {
+                console.error('Error actualizando puntos:', error);
+            }
+        }
+
+        // Finalizar todas las misiones
+        document.getElementById('finish-missions-btn').addEventListener('click', async function() {
+            if (!confirm('¿Estás seguro de que quieres finalizar todas las misiones actuales? Esta acción eliminará las misiones pero mantendrá los puntos de los estudiantes.')) {
+                return;
+            }
+
+            try {
+                // Eliminar todas las misiones actuales
+                const deletePromises = currentMissions.map(mission => 
+                    deleteDoc(doc(db, 'missions', mission.id))
+                );
+                
+                await Promise.all(deletePromises);
+                
+                // Recargar misiones
+                await loadMissions();
+                
+                alert('¡Todas las misiones han sido finalizadas correctamente!');
+            } catch (error) {
+                console.error('Error finalizando misiones:', error);
+                alert('Error al finalizar las misiones');
+            }
+        });
+
+        // Inicializar la aplicación
+        async function init() {
+            await loadStudents();
+            await loadMissions();
+        }
+
+        init();
+    </script>
+</body>
+</html>
