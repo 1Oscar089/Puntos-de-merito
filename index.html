@@ -204,6 +204,7 @@
         .student-details p {
             color: #666;
             font-size: 0.9em;
+            line-height: 1.5;
         }
 
         .points-section {
@@ -360,7 +361,6 @@
             transform: scale(1.05);
         }
 
-        /* Formulario oculto por defecto */
         #studentFormContainer {
             display: none;
             margin-bottom: 30px;
@@ -451,10 +451,6 @@
                                 <option value="octavo">Octavo Grado</option>
                                 <option value="noveno">Noveno Grado</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="studentPassword">Contraseña (generada automáticamente):</label>
-                            <input type="text" id="studentPassword" class="form-control" readonly>
                         </div>
                         <button type="submit" class="btn">Guardar Estudiante</button>
                         <button type="button" id="cancelFormBtn" class="btn" style="background: #6c757d; margin-left: 10px;">Cancelar</button>
@@ -550,7 +546,7 @@
         async function generateUniquePassword() {
             const studentsRef = collection(db, 'students');
             const querySnapshot = await getDocs(studentsRef);
-            usedPasswords = new Set();
+            usedPasswords.clear();
             querySnapshot.forEach(doc => {
                 const password = doc.data().password;
                 if (password) usedPasswords.add(password);
@@ -579,13 +575,14 @@
                 // Generar contraseña única
                 const password = await generateUniquePassword();
 
-                // Guardar en Firebase
+                // Guardar en Firebase con puntos de mérito y puntos de juego
                 await addDoc(studentsRef, {
                     nie: nie,
                     name: name,
                     grade: grade,
                     password: password,
-                    points: 0,
+                    points: 0,           // puntos de mérito
+                    gamePoints: 0,       // puntos de juego (nuevo campo)
                     createdAt: new Date()
                 });
 
@@ -593,7 +590,6 @@
                 
                 // Limpiar formulario y ocultar
                 studentForm.reset();
-                document.getElementById('studentPassword').value = '';
                 studentFormContainer.style.display = 'none';
                 
                 // Recargar la lista del grado
@@ -635,6 +631,7 @@
                                     <h4>NIE: ${student.nie}</h4>
                                     <p><strong>Nombre:</strong> ${student.name}</p>
                                     <p><strong>Contraseña:</strong> ${student.password}</p>
+                                    <p><strong>Puntos de Juego:</strong> ${student.gamePoints || 0}</p>
                                 </div>
                                 <div class="points-section">
                                     <div class="points-display">
@@ -660,7 +657,7 @@
             }
         }
 
-        // Función para agregar puntos
+        // Función para agregar puntos de mérito
         window.addPoints = async function(studentId, button) {
             const pointsInput = button.previousElementSibling;
             const pointsToAdd = parseInt(pointsInput.value);
@@ -700,7 +697,7 @@
             }
         };
 
-        // Función para quitar puntos
+        // Función para quitar puntos de mérito
         window.removePoints = async function(studentId, button) {
             const pointsInput = button.parentElement.querySelector('.points-input');
             const pointsToRemove = parseInt(pointsInput.value);
@@ -744,9 +741,6 @@
         showFormBtn.addEventListener('click', async () => {
             studentFormContainer.style.display = 'block';
             showFormBtn.style.display = 'none';
-            // Generar contraseña al abrir el formulario
-            const password = await generateUniquePassword();
-            document.getElementById('studentPassword').value = password;
         });
 
         // Cancelar formulario
