@@ -636,6 +636,7 @@
             // Mostrar campo de contraseña si no está visible
             if (passwordField.style.display !== 'block') {
                 passwordField.style.display = 'block';
+                passwordInput.setAttribute('required', '');
                 showAlert('Por favor, ingresa tu contraseña para confirmar.', 'warning');
                 return;
             }
