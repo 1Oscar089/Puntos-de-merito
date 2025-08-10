@@ -385,6 +385,15 @@
 
             container.innerHTML = '';
 
+            // Botón para asignar todas las misiones
+            const assignAllBtn = document.createElement('button');
+            assignAllBtn.className = 'btn btn-assign';
+            assignAllBtn.style.marginBottom = '20px';
+            assignAllBtn.style.display = 'block';
+            assignAllBtn.innerHTML = `📝 Asignar Todas las Misiones (${newMissions.length})`;
+            assignAllBtn.onclick = assignAllMissions;
+            container.appendChild(assignAllBtn);
+
             newMissions.forEach(mission => {
                 const missionCard = createMissionCard(mission, false);
                 container.appendChild(missionCard);
@@ -415,7 +424,7 @@
                         ${mission.question ? `<p><strong>Pregunta:</strong> ${mission.question}</p>` : ''}
                         ${mission.options ? `<p><strong>Opciones:</strong> A) ${mission.options.a}, B) ${mission.options.b}, C) ${mission.options.c}, D) ${mission.options.d}</p>` : ''}
                     </div>
-                    ${isAssigned ? createStudentsGrid(mission) : `<button class="btn btn-assign" onclick="assignMission('${mission.docId}', ${mission.missionIndex})">📝 Asignar Misión</button>`}
+                    ${isAssigned ? createStudentsGrid(mission) : ''}
                 </div>
             `;
 
@@ -480,33 +489,61 @@
             content.classList.toggle('active');
         }
 
-        // Asignar misión
-        window.assignMission = async function(docId, missionIndex) {
-            try {
-                const docRef = doc(db, 'daily_missions', docId);
-                
-                // Obtener el documento actual para actualizar la misión específica
-                const docSnapshot = await docRef.get();
-                if (docSnapshot.exists()) {
-                    const docData = docSnapshot.data();
-                    const missions = docData.missions;
-                    
-                    // Actualizar la misión específica
-                    missions[missionIndex].assigned = true;
-                    missions[missionIndex].assignedAt = new Date().toISOString();
-                    
-                    // Actualizar en Firebase
-                    await updateDoc(docRef, {
-                        missions: missions
-                    });
+        // Asignar todas las misiones nuevas
+        window.assignAllMissions = async function() {
+            if (newMissions.length === 0) {
+                alert('No hay misiones nuevas para asignar');
+                return;
+            }
 
-                    // Recargar misiones
-                    await loadMissions();
-                    alert('¡Misión asignada correctamente!');
-                }
+            if (!confirm(`¿Estás seguro de que quieres asignar todas las ${newMissions.length} misiones nuevas?`)) {
+                return;
+            }
+
+            try {
+                // Agrupar misiones por documento
+                const docGroups = {};
+                newMissions.forEach(mission => {
+                    if (!docGroups[mission.docId]) {
+                        docGroups[mission.docId] = [];
+                    }
+                    docGroups[mission.docId].push(mission);
+                });
+
+                // Actualizar cada documento
+                const updatePromises = Object.keys(docGroups).map(async (docId) => {
+                    const docRef = doc(db, 'daily_missions', docId);
+                    const docSnapshot = await getDocs(collection(db, 'daily_missions'));
+                    
+                    // Buscar el documento específico
+                    const targetDoc = docSnapshot.docs.find(d => d.id === docId);
+                    if (targetDoc) {
+                        const docData = targetDoc.data();
+                        const missions = docData.missions;
+                        
+                        // Actualizar todas las misiones de este documento que están en newMissions
+                        docGroups[docId].forEach(newMission => {
+                            const missionInDoc = missions.find(m => m.id === newMission.id);
+                            if (missionInDoc) {
+                                missionInDoc.assigned = true;
+                                missionInDoc.assignedAt = new Date().toISOString();
+                            }
+                        });
+                        
+                        // Actualizar en Firebase
+                        await updateDoc(docRef, { missions: missions });
+                    }
+                });
+
+                await Promise.all(updatePromises);
+                
+                // Recargar misiones
+                await loadMissions();
+                alert(`¡${newMissions.length} misiones asignadas correctamente!`);
+                
             } catch (error) {
-                console.error('Error asignando misión:', error);
-                alert('Error al asignar la misión');
+                console.error('Error asignando misiones:', error);
+                alert('Error al asignar las misiones: ' + error.message);
             }
         }
 
@@ -516,9 +553,11 @@
                 const docRef = doc(db, 'daily_missions', docId);
                 
                 // Obtener el documento actual
-                const docSnapshot = await docRef.get();
-                if (docSnapshot.exists()) {
-                    const docData = docSnapshot.data();
+                const dailyMissionsSnapshot = await getDocs(collection(db, 'daily_missions'));
+                const targetDoc = dailyMissionsSnapshot.docs.find(d => d.id === docId);
+                
+                if (targetDoc) {
+                    const docData = targetDoc.data();
                     const missions = docData.missions;
                     const mission = missions[missionIndex];
                     
