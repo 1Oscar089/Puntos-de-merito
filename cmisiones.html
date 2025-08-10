@@ -1058,9 +1058,10 @@
                 const missionBatch = {
                     date: today.toISOString().split('T')[0], // YYYY-MM-DD format
                     createdAt: serverTimestamp(),
+                    publishedAt: serverTimestamp(),
                     missions: missions.map(mission => ({
                         ...mission,
-                        publishedAt: serverTimestamp()
+                        publishedAt: new Date().toISOString() // Use regular timestamp inside array
                     })),
                     totalMissions: missions.length,
                     status: 'active'
