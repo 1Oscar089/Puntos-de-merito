@@ -39,17 +39,6 @@
             position: relative;
         }
 
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-            opacity: 0.3;
-        }
-
         .header h1 {
             font-size: 2.2em;
             margin-bottom: 10px;
@@ -164,14 +153,8 @@
         }
 
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .alert-success {
@@ -399,6 +382,7 @@
                     </div>
                 </div>
 
+                <!-- 🔴 CAMBIO: quitado 'required' del input de contraseña -->
                 <div class="form-group password-field" id="passwordField">
                     <label class="form-label" for="password">
                         <span class="icon">🔒</span> Tu Contraseña
@@ -408,7 +392,7 @@
                         id="password" 
                         class="form-input" 
                         placeholder="Ingresa tu contraseña"
-                        required
+                        <!-- 🔻 'required' fue eliminado aquí -->
                     >
                     <div class="form-help">
                         <span>🔑</span> Necesaria para confirmar la transferencia
@@ -471,7 +455,7 @@
         const receiverNieInput = document.getElementById('receiverNie');
         const pointsAmountInput = document.getElementById('pointsAmount');
         const passwordField = document.getElementById('passwordField');
-        const passwordInput = document.getElementById('password');
+        const passwordInput = document.getElementById('password'); // 🔴 Referencia al input
         const submitBtn = document.getElementById('submitBtn');
         const submitText = document.getElementById('submitText');
         const loadingSpinner = document.getElementById('loadingSpinner');
@@ -633,10 +617,11 @@
                 return;
             }
 
-            // Mostrar campo de contraseña si no está visible
+            // 🔴 Mostrar campo de contraseña si está oculto
             if (passwordField.style.display !== 'block') {
                 passwordField.style.display = 'block';
-                passwordInput.setAttribute('required', '');
+                passwordInput.setAttribute('required', ''); // ✅ Añadir 'required' solo cuando se muestra
+                passwordInput.focus(); // 🔥 Enfocar automáticamente
                 showAlert('Por favor, ingresa tu contraseña para confirmar.', 'warning');
                 return;
             }
@@ -658,13 +643,13 @@
                 }
 
                 if (senderData.points < pointsAmount) {
-                    showAlert(`No tienes suficientes puntos. Tienes ${senderData.points}, pero intentas enviar ${pointsAmount}.`, 'error');
+                    showAlert(`No tienes suficientes puntos. Tienes ${senderData.points.toLocaleString()}, pero intentas enviar ${pointsAmount.toLocaleString()}.`, 'error');
                     return;
                 }
 
-                // Validar contraseña
+                // 🔴 Validar contraseña
                 if (password !== senderData.password) {
-                    showAlert('Contraseña incorrecta.', 'error');
+                    showAlert('❌ Contraseña incorrecta.', 'error');
                     setLoading(false);
                     return;
                 }
@@ -686,6 +671,7 @@
                 form.reset();
                 transferSummary.style.display = 'none';
                 passwordField.style.display = 'none';
+                // No es necesario quitar 'required' porque se vuelve a ocultar
 
             } catch (error) {
                 console.error('Error en la transferencia:', error);
@@ -704,11 +690,9 @@
                 .sort((a, b) => a.timestamp - b.timestamp); // Más antiguo primero
 
             if (messages.length >= 30) {
-                // Eliminar el más antiguo
-                await deleteDoc(doc(db, 'messages', messages[0].id));
+                await deleteDoc(doc(db, 'messages', messages[0].id)); // Eliminar más antiguo
             }
 
-            // Añadir nuevo mensaje
             await addDoc(messagesRef, {
                 nie: nie,
                 message: messageText,
