@@ -41,21 +41,42 @@
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        .student-selector {
+        .student-login {
             background: rgba(255, 255, 255, 0.2);
             border-radius: 10px;
-            padding: 15px;
+            padding: 20px;
             margin-top: 20px;
         }
 
-        .student-selector select {
-            width: 100%;
+        .login-fields {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .login-fields input {
+            flex: 1;
+            min-width: 150px;
             padding: 12px;
             border: none;
             border-radius: 8px;
             font-size: 16px;
-            background: white;
-            color: #333;
+        }
+
+        .login-btn {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: 2px solid white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: rgba(255,255,255,0.4);
         }
 
         .student-info {
@@ -89,7 +110,6 @@
             cursor: pointer;
             font-size: 24px;
             transition: all 0.3s ease;
-            position: relative;
         }
 
         .cart-icon:hover {
@@ -226,7 +246,12 @@
             flex: 1;
         }
 
-        .add-to-cart-btn:hover {
+        .add-to-cart-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .add-to-cart-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 15px rgba(79, 172, 254, 0.3);
         }
@@ -422,6 +447,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .login-fields {
+                flex-direction: column;
+            }
+
             .student-info {
                 flex-direction: column;
                 gap: 10px;
@@ -442,7 +471,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <button class="cart-icon" onclick="toggleCart()">
+            <button class="cart-icon" onclick="toggleCart()" disabled>
                 🛒
                 <span class="cart-count" id="cartCount">0</span>
             </button>
@@ -450,14 +479,12 @@
             <h1>🏪 Tienda Virtual</h1>
             <p>Canjea tus puntos por increíbles productos</p>
             
-            <div class="student-selector">
-                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
-                    <input type="text" id="nieInput" placeholder="Ingresa tu NIE" 
-                           style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
-                    <button onclick="loadStudentByNie()" 
-                            style="background: rgba(255,255,255,0.3); color: white; border: 2px solid white; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">
-                        Aceptar
-                    </button>
+            <div class="student-login">
+                <h3 style="color: white; margin-bottom: 15px;">🔐 Ingresa tus credenciales</h3>
+                <div class="login-fields">
+                    <input type="text" id="nieInput" placeholder="Ingresa tu NIE">
+                    <input type="password" id="passwordInput" placeholder="Ingresa tu contraseña">
+                    <button class="login-btn" onclick="authenticateStudent()">Aceptar</button>
                 </div>
                 
                 <div class="student-info" id="studentInfo" style="display: none;">
@@ -511,7 +538,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-        // Firebase configuration
+        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
             authDomain: "puntos-de-merito.firebaseapp.com",
@@ -522,7 +549,7 @@
             measurementId: "G-CZ340GE3T7"
         };
 
-        // Initialize Firebase
+        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -530,145 +557,66 @@
         let currentStudent = null;
         let cart = [];
         let products = [
-            {
-                id: 1,
-                name: "Ticket de limpieza",
-                description: "Puedes NO hacer la limpieza por un día",
-                price: 270,
-                icon: "🧹"
-            },
-            {
-                id: 2,
-                name: "Ticket para baño",
-                description: "Puedes usarlo para solicitar ir al baño",
-                price: 12,
-                icon: "🚽"
-            },
-            {
-                id: 3,
-                name: "Ticket para comprar agua",
-                description: "Puedes salir a comprar agua",
-                price: 80,
-                icon: "💧",
-            },
-            {
-                id: 4,
-                name: "Ticket para lunes civico",
-                description: "Usalo si no quieres participar en un lunes civico",
-                price: 350,
-                icon: "🏳",
-            },
-            {
-                id: 5,
-                name: "Ticket para Cancha",
-                description: "Usalo para ir a la cancha (puede tenerlo solo un estudiante)",
-                price: 2000,
-                icon: "✅",
-            },
-            {
-                id: 6,
-                name: "Ticket para tarea",
-                description: "Usalo para que se te revise a la misma base tu tarea tardia (aplica uno por dia)",
-                price: 120,
-                icon: "📖"
-            },
-            {
-                id: 7,
-                name: "Ticket de un punto para nota de tarea",
-                description: "Puedes solicitar el aumento un punto en una tarea",
-                price: 225,
-                icon: "+1 punto",
-            },
-            {
-                id: 8,
-                name: "Ticket de un punto para libreta",
-                description: "Puedes solicitar aumentar un punto en la nota de libreta",
-                price: 650,
-                icon: "+1 punto",
-            },
-            {
-                id: 9,
-                name: "Ticket para un punto para libro de ejercicio",
-                description: "Un punto para libro de ejercicio",
-                price: 615,
-                icon: "+1 punto",
-            },
-            {
-                id: 10,
-                name: "Ticket para un punto para examen de unidad",
-                description: "Un punto para cualquier examen que sea de unidad",
-                price: 400,
-                icon: "+1 punto",
-            },
-            {
-                id: 11,
-                name: "Ticket para un punto en examen trimestral",
-                description: "Un punto para cualquier examen trimestral",
-                price: 1000,
-                icon: "+1 punto",
-            },
-            {
-                id: 11,
-                name: "Ticket para no comer alimentos",
-                description: "Serás libre de no comer alimento por un dia",
-                price: 200,
-                icon: "🍳",
-            },
-            {
-                id: 12,
-                name: "Ticket para ver una pelicula",
-                description: "Se podra ver una pelicula en hora de clase (puede tenerlo solo un estudiante)",
-                price: 1250,
-                icon: "📽️",
-            }
-            
+            { id: 1, name: "Ticket de limpieza", description: "Puedes NO hacer la limpieza por un día", price: 270, icon: "🧹" },
+            { id: 2, name: "Ticket para baño", description: "Puedes usarlo para solicitar ir al baño", price: 12, icon: "🚽" },
+            { id: 3, name: "Ticket para comprar agua", description: "Puedes salir a comprar agua", price: 80, icon: "💧" },
+            { id: 4, name: "Ticket para lunes civico", description: "Usalo si no quieres participar en un lunes civico", price: 350, icon: "🏳" },
+            { id: 5, name: "Ticket para Cancha", description: "Usalo para ir a la cancha (puede tenerlo solo un estudiante)", price: 2000, icon: "✅" },
+            { id: 6, name: "Ticket para tarea", description: "Usalo para que se te revise a la misma base tu tarea tardia (aplica uno por dia)", price: 120, icon: "📖" },
+            { id: 7, name: "Ticket de un punto para nota de tarea", description: "Puedes solicitar el aumento un punto en una tarea", price: 225, icon: "+1 punto" },
+            { id: 8, name: "Ticket de un punto para libreta", description: "Puedes solicitar aumentar un punto en la nota de libreta", price: 650, icon: "+1 punto" },
+            { id: 9, name: "Ticket para un punto para libro de ejercicio", description: "Un punto para libro de ejercicio", price: 615, icon: "+1 punto" },
+            { id: 10, name: "Ticket para un punto para examen de unidad", description: "Un punto para cualquier examen que sea de unidad", price: 400, icon: "+1 punto" },
+            { id: 11, name: "Ticket para un punto en examen trimestral", description: "Un punto para cualquier examen trimestral", price: 1000, icon: "+1 punto" },
+            { id: 12, name: "Ticket para no comer alimentos", description: "Serás libre de no comer alimento por un dia", price: 200, icon: "🍳" },
+            { id: 13, name: "Ticket para ver una pelicula", description: "Se podra ver una pelicula en hora de clase (puede tenerlo solo un estudiante)", price: 1250, icon: "📽️" }
         ];
 
-        // Inicializar EmailJS
-        (function(){
-            emailjs.init("YOUR_EMAILJS_USER_ID"); // Reemplazar con tu User ID de EmailJS
-        })();
+        // Inicializar EmailJS (opcional - puedes activarlo después)
+        // emailjs.init("YOUR_USER_ID");
 
-        // Cargar estudiantes al inicio
-        window.addEventListener('load', async () => {
+        // Cargar productos al inicio
+        window.addEventListener('load', () => {
             renderProducts();
-            // Agregar evento Enter al input del NIE
-            const nieInput = document.getElementById('nieInput');
-            nieInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    loadStudentByNie();
-                }
+            // Evento Enter en los campos
+            document.getElementById('nieInput').addEventListener('keypress', e => {
+                if (e.key === 'Enter') authenticateStudent();
+            });
+            document.getElementById('passwordInput').addEventListener('keypress', e => {
+                if (e.key === 'Enter') authenticateStudent();
             });
         });
 
-        // Buscar estudiante por NIE
-        window.loadStudentByNie = async function() {
-            const nieInput = document.getElementById('nieInput');
-            const nieValue = nieInput.value.trim();
-            
-            if (!nieValue) {
-                showAlert('Por favor ingresa tu NIE', 'error');
+        // Autenticar estudiante
+        window.authenticateStudent = async function() {
+            const nie = document.getElementById('nieInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+
+            if (!nie || !password) {
+                showAlert('Por favor ingresa NIE y contraseña', 'error');
                 return;
             }
 
             try {
-                // Buscar estudiante por NIE en Firebase
                 const studentsRef = collection(db, 'students');
-                const q = query(studentsRef, where('nie', '==', nieValue));
+                const q = query(studentsRef, where('nie', '==', nie));
                 const querySnapshot = await getDocs(q);
-                
+
                 if (querySnapshot.empty) {
-                    showAlert('NIE no encontrado. Verifica que esté correctamente escrito.', 'error');
-                    document.getElementById('studentInfo').style.display = 'none';
-                    currentStudent = null;
-                    updateCartDisplay();
+                    showAlert('NIE no encontrado', 'error');
                     return;
                 }
 
-                // Obtener datos del estudiante
                 const studentDoc = querySnapshot.docs[0];
                 const studentData = studentDoc.data();
-                
+
+                // Verificar contraseña
+                if (studentData.password !== parseInt(password)) {
+                    showAlert('Contraseña incorrecta', 'error');
+                    return;
+                }
+
+                // Autenticación exitosa
                 currentStudent = {
                     id: studentDoc.id,
                     nie: studentData.nie,
@@ -676,20 +624,20 @@
                     points: studentData.points || 0
                 };
 
-                // Mostrar información del estudiante
+                // Mostrar info del estudiante
                 document.getElementById('studentName').textContent = currentStudent.name;
                 document.getElementById('studentNie').textContent = `NIE: ${currentStudent.nie}`;
                 document.getElementById('studentPoints').textContent = `${currentStudent.points} puntos`;
                 document.getElementById('studentInfo').style.display = 'flex';
-                
-                // Actualizar estado del carrito
-                updateCartDisplay();
-                
+
+                // Habilitar carrito
+                document.querySelector('.cart-icon').disabled = false;
+
                 showAlert(`¡Bienvenido/a ${currentStudent.name}!`, 'success');
-                
+
             } catch (error) {
-                console.error('Error loading student:', error);
-                showAlert('Error al buscar el estudiante. Inténtalo de nuevo.', 'error');
+                console.error('Error al autenticar:', error);
+                showAlert('Error en el sistema. Inténtalo más tarde.', 'error');
             }
         };
 
@@ -713,7 +661,7 @@
                                 <div class="quantity-display" id="qty-${product.id}">1</div>
                                 <button class="quantity-btn" onclick="changeQuantity(${product.id}, 1)">+</button>
                             </div>
-                            <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
+                            <button class="add-to-cart-btn" onclick="addToCart(${product.id})" ${!currentStudent ? 'disabled' : ''}>
                                 Agregar al carrito
                             </button>
                         </div>
@@ -723,44 +671,33 @@
             });
         }
 
-        // Cambiar cantidad de producto
+        // Cambiar cantidad
         window.changeQuantity = function(productId, change) {
             const qtyElement = document.getElementById(`qty-${productId}`);
             let currentQty = parseInt(qtyElement.textContent);
             let newQty = currentQty + change;
-            
-            const product = products.find(p => p.id === productId);
-            const maxQty = product.maxQuantity || 10;
-            
             if (newQty < 1) newQty = 1;
-            if (newQty > maxQty) newQty = maxQty;
-            
+            if (newQty > 10) newQty = 10; // Límite por producto
             qtyElement.textContent = newQty;
         };
 
         // Agregar al carrito
         window.addToCart = function(productId) {
             if (!currentStudent) {
-                showAlert('Por favor selecciona tu NIE primero', 'error');
+                showAlert('Debes iniciar sesión primero', 'error');
                 return;
             }
 
             const product = products.find(p => p.id === productId);
             const quantity = parseInt(document.getElementById(`qty-${productId}`).textContent);
-            
-            // Verificar si ya existe en el carrito
+
             const existingItem = cart.find(item => item.id === productId);
-            
             if (existingItem) {
-                const newQuantity = existingItem.quantity + quantity;
-                const maxAllowed = product.maxQuantity || 100;
-                
-                if (newQuantity > maxAllowed) {
-                    showAlert(`Solo puedes agregar máximo ${maxAllowed} unidades de ${product.name}`, 'error');
+                if (existingItem.quantity + quantity > 10) {
+                    showAlert(`Máximo 10 unidades de ${product.name}`, 'error');
                     return;
                 }
-                
-                existingItem.quantity = newQuantity;
+                existingItem.quantity += quantity;
             } else {
                 cart.push({
                     id: product.id,
@@ -773,8 +710,6 @@
 
             updateCartDisplay();
             showAlert(`${product.name} agregado al carrito`, 'success');
-            
-            // Reset quantity to 1
             document.getElementById(`qty-${productId}`).textContent = '1';
         };
 
@@ -782,27 +717,27 @@
         window.toggleCart = function() {
             const sidebar = document.getElementById('cartSidebar');
             const overlay = document.getElementById('overlay');
-            
+            if (!sidebar.classList.contains('open') && !currentStudent) {
+                showAlert('Debes iniciar sesión para ver el carrito', 'error');
+                return;
+            }
             sidebar.classList.toggle('open');
             overlay.classList.toggle('active');
         };
 
-        // Actualizar display del carrito
+        // Actualizar carrito
         function updateCartDisplay() {
             const cartCount = document.getElementById('cartCount');
             const cartContent = document.getElementById('cartContent');
             const cartTotal = document.getElementById('cartTotal');
             const purchaseBtn = document.getElementById('purchaseBtn');
-            
-            // Contar items
+
             const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
             cartCount.textContent = totalItems;
-            
-            // Calcular total
+
             const totalPoints = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             cartTotal.textContent = `${totalPoints} puntos`;
-            
-            // Renderizar items del carrito
+
             if (cart.length === 0) {
                 cartContent.innerHTML = `
                     <div class="empty-cart">
@@ -818,7 +753,7 @@
                         <div class="cart-item-icon">${item.icon}</div>
                         <div class="cart-item-info">
                             <h4>${item.name}</h4>
-                            <p>${item.price} puntos c/u × ${item.quantity}</p>
+                            <p>${item.price} × ${item.quantity}</p>
                         </div>
                         <div class="cart-item-actions">
                             <div class="quantity-controls">
@@ -830,152 +765,88 @@
                         </div>
                     </div>
                 `).join('');
-                
-                // Habilitar/deshabilitar botón de compra
-                if (currentStudent && totalPoints <= currentStudent.points) {
-                    purchaseBtn.disabled = false;
-                } else {
-                    purchaseBtn.disabled = true;
-                }
+
+                purchaseBtn.disabled = !currentStudent || totalPoints > currentStudent.points;
             }
         }
 
         // Actualizar cantidad en carrito
         window.updateCartQuantity = function(productId, change) {
-            const item = cart.find(item => item.id === productId);
-            const product = products.find(p => p.id === productId);
-            
-            if (item) {
-                const newQuantity = item.quantity + change;
-                const maxAllowed = product.maxQuantity || 100;
-                
-                if (newQuantity < 1) {
-                    removeFromCart(productId);
-                    return;
-                }
-                
-                if (newQuantity > maxAllowed) {
-                    showAlert(`Solo puedes tener máximo ${maxAllowed} unidades de ${product.name}`, 'error');
-                    return;
-                }
-                
-                item.quantity = newQuantity;
+            const item = cart.find(i => i.id === productId);
+            if (!item) return;
+            const newQty = item.quantity + change;
+            if (newQty < 1) removeFromCart(productId);
+            else if (newQty <= 10) {
+                item.quantity = newQty;
                 updateCartDisplay();
+            } else {
+                showAlert('Máximo 10 unidades', 'error');
             }
         };
 
         // Remover del carrito
         window.removeFromCart = function(productId) {
-            cart = cart.filter(item => item.id !== productId);
+            cart = cart.filter(i => i.id !== productId);
             updateCartDisplay();
         };
 
         // Procesar compra
         window.processPurchase = async function() {
-            if (!currentStudent) {
-                showAlert('Error: No hay estudiante seleccionado', 'error');
-                return;
-            }
+            if (!currentStudent) return;
 
-            if (cart.length === 0) {
-                showAlert('El carrito está vacío', 'error');
-                return;
-            }
-
-            const totalPoints = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
+            const totalPoints = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
             if (totalPoints > currentStudent.points) {
-                showAlert('No tienes suficientes puntos para esta compra', 'error');
+                showAlert('No tienes suficientes puntos', 'error');
                 return;
             }
 
             try {
-                // Actualizar puntos del estudiante
                 const newPoints = currentStudent.points - totalPoints;
                 const studentRef = doc(db, 'students', currentStudent.id);
-                
-                await updateDoc(studentRef, {
-                    points: newPoints,
-                    lastUpdated: new Date()
-                });
+                await updateDoc(studentRef, { points: newPoints });
 
-                // Crear registro de pedido
                 const order = {
                     studentName: currentStudent.name,
                     studentNie: currentStudent.nie,
-                    items: cart.map(item => ({
-                        name: item.name,
-                        quantity: item.quantity,
-                        unitPrice: item.price,
-                        totalPrice: item.price * item.quantity
+                    items: cart.map(i => ({
+                        name: i.name,
+                        quantity: i.quantity,
+                        unitPrice: i.price,
+                        totalPrice: i.price * i.quantity
                     })),
-                    totalPoints: totalPoints,
+                    totalPoints,
                     orderDate: new Date(),
                     status: 'pendiente'
                 };
 
                 await addDoc(collection(db, 'orders'), order);
 
-                // Enviar correo
-                await sendOrderEmail(order);
-
-                // Actualizar datos locales
                 currentStudent.points = newPoints;
                 document.getElementById('studentPoints').textContent = `${newPoints} puntos`;
 
-                // Limpiar carrito
                 cart = [];
                 updateCartDisplay();
                 toggleCart();
 
-                showAlert('¡Compra realizada exitosamente! Recibirás tu pedido pronto.', 'success');
-
+                showAlert('¡Compra realizada exitosamente!', 'success');
             } catch (error) {
-                console.error('Error processing purchase:', error);
-                showAlert('Error al procesar la compra. Inténtalo de nuevo.', 'error');
+                console.error('Error:', error);
+                showAlert('Error al procesar la compra', 'error');
             }
         };
 
-        // Enviar email
-        async function sendOrderEmail(order) {
-            try {
-                const itemsList = order.items.map(item => 
-                    `• ${item.name} - Cantidad: ${item.quantity} - Puntos: ${item.totalPrice}`
-                ).join('\n');
-
-                const templateParams = {
-                    to_email: 'compraestudiantes@gmail.com',
-                    student_name: order.studentName,
-                    student_nie: order.studentNie,
-                    order_items: itemsList,
-                    total_points: order.totalPoints,
-                    order_date: order.orderDate.toLocaleString('es-ES')
-                };
-
-                await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams);
-                console.log('Email enviado exitosamente');
-            } catch (error) {
-                console.error('Error enviando email:', error);
-                // No mostramos error al usuario para no interrumpir la compra exitosa
-            }
-        }
-
         // Mostrar alertas
         function showAlert(message, type) {
-            const alertsContainer = document.getElementById('alerts');
+            const alerts = document.getElementById('alerts');
             const alert = document.createElement('div');
             alert.className = `alert alert-${type}`;
             alert.textContent = message;
-            
-            alertsContainer.appendChild(alert);
-            
-            setTimeout(() => {
-                alert.remove();
-            }, 5000);
+            alerts.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
         }
     </script>
 
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- EmailJS SDK (opcional - descomenta si lo usas) -->
+    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script> -->
 </body>
 </html>
