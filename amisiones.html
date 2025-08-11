@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista del Docente - Gestión de Misiones</title>
+    <title>Asignar Misiones - Docente</title>
     <style>
         * {
             margin: 0;
@@ -19,16 +19,34 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-        h1 {
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
             text-align: center;
             color: white;
-            font-size: 2.5rem;
-            margin-bottom: 30px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
         }
 
         .section {
@@ -36,255 +54,221 @@
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
         }
 
         .section h2 {
             color: #333;
             margin-bottom: 20px;
-            font-size: 1.8rem;
-            border-bottom: 3px solid #667eea;
+            font-size: 1.8em;
+            border-bottom: 3px solid #4facfe;
             padding-bottom: 10px;
         }
 
-        .mission-card {
+        .mission-item {
             background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            overflow: hidden;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #11998e;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .mission-card:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
+        .mission-item:hover {
+            background: #e9ecef;
         }
 
         .mission-header {
-            background: #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .mission-name {
+            font-size: 1.2em;
+        }
+
+        .points-badge {
+            background: #11998e;
             color: white;
-            padding: 15px 20px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.3s ease;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
         }
 
-        .mission-header:hover {
-            background: #5a67d8;
-        }
-
-        .mission-header h3 {
-            font-size: 1.2rem;
-        }
-
-        .mission-points {
-            background: rgba(255,255,255,0.2);
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
-
-        .mission-content {
+        .mission-details {
             display: none;
-            padding: 20px;
-            background: white;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
         }
 
-        .mission-content.active {
-            display: block;
+        .student-list {
+            margin-top: 15px;
         }
 
-        .mission-info {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .students-grid {
-            display: grid;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .student-card {
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
+        .student-item {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            transition: background-color 0.3s ease;
-        }
-
-        .student-card:hover {
-            background: #eeeeee;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #e9ecef;
         }
 
         .student-info {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .student-name {
-            font-weight: bold;
+            font-size: 0.95em;
             color: #333;
-            font-size: 1.1rem;
         }
 
-        .student-response {
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 8px;
-            color: #666;
-            font-style: italic;
-            max-width: 300px;
-            word-wrap: break-word;
+        .response-field {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin: 5px 0;
+            font-size: 0.9em;
+            color: #555;
         }
 
-        .student-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .complete-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
         }
 
-        .checkbox-container input[type="checkbox"] {
-            transform: scale(1.5);
-            cursor: pointer;
-        }
-
-        .checkbox-container label {
-            font-weight: 500;
-            color: #4caf50;
-            cursor: pointer;
+        .complete-btn.disabled {
+            background: #6c757d;
+            cursor: not-allowed;
         }
 
         .btn {
-            padding: 12px 25px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
             border: none;
+            padding: 12px 25px;
             border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
             cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
         }
 
-        .btn-assign {
-            background: #4caf50;
-            color: white;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 15px;
             margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: 500;
         }
 
-        .btn-assign:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(76,175,80,0.4);
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
-        .btn-finish {
-            background: #f44336;
-            color: white;
-            display: block;
-            margin: 30px auto 0;
-            font-size: 1.1rem;
-            padding: 15px 40px;
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
-        .btn-finish:hover {
-            background: #d32f2f;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(244,67,54,0.4);
-        }
-
-        .loading {
+        .no-items {
             text-align: center;
-            padding: 40px;
             color: #666;
-            font-size: 1.2rem;
-        }
-
-        .no-missions {
-            text-align: center;
-            padding: 40px;
-            color: #666;
+            padding: 20px;
             font-style: italic;
-            font-size: 1.1rem;
         }
-
-        .mission-type {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-
-        .type-normal { background: #e8f5e8; color: #2e7d32; }
-        .type-question { background: #fff3e0; color: #f57c00; }
-        .type-multiple-choice { background: #f3e5f5; color: #7b1fa2; }
 
         @media (max-width: 768px) {
-            .student-card {
+            .content {
+                padding: 20px;
+            }
+
+            .mission-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .student-item {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 15px;
-            }
-
-            .student-actions {
-                justify-content: center;
-            }
-
-            h1 {
-                font-size: 2rem;
+                gap: 10px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎯 Gestión de Misiones</h1>
-
-        <!-- Misiones Actuales -->
-        <div class="section">
-            <h2>📋 Misiones Actuales</h2>
-            <div id="current-missions">
-                <div class="loading">Cargando misiones actuales...</div>
-            </div>
-            <button id="finish-missions-btn" class="btn btn-finish" style="display: none;">
-                🏁 Finalizar Todas las Misiones
-            </button>
+        <div class="header">
+            <h1>🎯 Asignar Misiones - Docente</h1>
+            <p>Supervisa y completa misiones con tus estudiantes</p>
         </div>
 
-        <!-- Misiones Nuevas -->
-        <div class="section">
-            <h2>🆕 Misiones Nuevas Sin Asignar</h2>
-            <div id="new-missions">
-                <div class="loading">Cargando misiones nuevas...</div>
+        <div class="content">
+            <!-- Sección 1: Misiones Asignadas -->
+            <div class="section" id="assignedSection" style="display: none;">
+                <h2>✅ Misiones Asignadas</h2>
+                <div id="assignedMissionsList">
+                    <!-- Aquí se mostrarán las misiones asignadas -->
+                </div>
+                <button id="endMissionsBtn" class="btn btn-danger">🗑️ Terminar Misiones</button>
             </div>
+
+            <!-- Sección 2: Misiones Nuevas -->
+            <div class="section" id="newSection">
+                <h2>🆕 Misiones Nuevas</h2>
+                <div id="newMissionsList">
+                    <!-- Aquí se mostrarán las misiones nuevas -->
+                </div>
+                <button id="assignBtn" class="btn">📤 Asignar Misiones</button>
+            </div>
+
+            <!-- Alertas -->
+            <div id="alerts"></div>
         </div>
     </div>
 
+    <!-- Firebase Scripts -->
     <script type="module">
-        // Firebase Configuration
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, query, where, arrayUnion } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
             authDomain: "puntos-de-merito.firebaseapp.com",
@@ -295,360 +279,281 @@
             measurementId: "G-CZ340GE3T7"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let students = [];
-        let allMissions = [];
-        let currentMissions = [];
+        // Elementos del DOM
+        const assignedSection = document.getElementById('assignedSection');
+        const assignedMissionsList = document.getElementById('assignedMissionsList');
+        const newSection = document.getElementById('newSection');
+        const newMissionsList = document.getElementById('newMissionsList');
+        const assignBtn = document.getElementById('assignBtn');
+        const endMissionsBtn = document.getElementById('endMissionsBtn');
+        const alerts = document.getElementById('alerts');
+
+        // Variables globales
+        let assignedMissions = [];
         let newMissions = [];
+        let students = [];
+        let studentResponses = {}; // { misiónID: { nie: respuesta } }
+
+        // Cargar datos al inicio
+        window.addEventListener('load', async () => {
+            try {
+                await loadStudents();
+                await loadMissions();
+                await loadResponses();
+
+                renderAssignedMissions();
+                renderNewMissions();
+
+                // Mostrar u ocultar secciones
+                if (assignedMissions.length > 0) {
+                    assignedSection.style.display = 'block';
+                    assignBtn.disabled = true;
+                } else {
+                    assignedSection.style.display = 'none';
+                    assignBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error al cargar:', error);
+                showAlert('Error al cargar los datos', 'error');
+            }
+        });
 
         // Cargar estudiantes
         async function loadStudents() {
-            try {
-                const studentsSnapshot = await getDocs(collection(db, 'students'));
-                students = studentsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                console.log('Estudiantes cargados:', students);
-            } catch (error) {
-                console.error('Error cargando estudiantes:', error);
-            }
+            const studentsRef = collection(db, 'students');
+            const querySnapshot = await getDocs(studentsRef);
+            students = [];
+            querySnapshot.forEach(doc => {
+                students.push({ id: doc.id, ...doc.data() });
+            });
         }
 
-        // Cargar misiones desde daily_missions
+        // Cargar misiones
         async function loadMissions() {
-            try {
-                const dailyMissionsSnapshot = await getDocs(collection(db, 'daily_missions'));
-                allMissions = [];
-                
-                dailyMissionsSnapshot.docs.forEach(doc => {
-                    const docData = doc.data();
-                    if (docData.missions && Array.isArray(docData.missions)) {
-                        docData.missions.forEach((mission, index) => {
-                            allMissions.push({
-                                ...mission,
-                                docId: doc.id, // ID del documento daily_missions
-                                missionIndex: index, // Índice de la misión en el array
-                                batchDate: docData.date
-                            });
-                        });
-                    }
-                });
-
-                // Separar misiones asignadas y no asignadas
-                currentMissions = allMissions.filter(mission => mission.assigned === true);
-                newMissions = allMissions.filter(mission => mission.assigned !== true);
-
-                console.log('Misiones cargadas:', allMissions);
-                console.log('Misiones actuales:', currentMissions);
-                console.log('Misiones nuevas:', newMissions);
-
-                renderCurrentMissions();
-                renderNewMissions();
-            } catch (error) {
-                console.error('Error cargando misiones:', error);
-                document.getElementById('current-missions').innerHTML = '<div class="no-missions">Error al cargar las misiones</div>';
-                document.getElementById('new-missions').innerHTML = '<div class="no-missions">Error al cargar las misiones</div>';
-            }
+            const missionsRef = collection(db, 'missions');
+            const querySnapshot = await getDocs(missionsRef);
+            newMissions = [];
+            querySnapshot.forEach(doc => {
+                newMissions.push({ id: doc.id, ...doc.data() });
+            });
         }
 
-        // Renderizar misiones actuales
-        function renderCurrentMissions() {
-            const container = document.getElementById('current-missions');
-            const finishBtn = document.getElementById('finish-missions-btn');
+        // Cargar respuestas de estudiantes (desde una colección 'mission_responses')
+        async function loadResponses() {
+            const responsesRef = collection(db, 'mission_responses');
+            const querySnapshot = await getDocs(responsesRef);
+            studentResponses = {};
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                if (!studentResponses[data.missionId]) {
+                    studentResponses[data.missionId] = {};
+                }
+                studentResponses[data.missionId][data.studentNie] = data.response;
+            });
+        }
 
-            if (currentMissions.length === 0) {
-                container.innerHTML = '<div class="no-missions">No hay misiones asignadas actualmente</div>';
-                finishBtn.style.display = 'none';
+        // Renderizar misiones asignadas
+        function renderAssignedMissions() {
+            assignedMissionsList.innerHTML = '';
+            if (assignedMissions.length === 0) {
+                assignedMissionsList.innerHTML = '<div class="no-items">No hay misiones asignadas</div>';
                 return;
             }
 
-            finishBtn.style.display = 'block';
+            assignedSection.style.display = 'block';
+
+            assignedMissions.forEach(mission => {
+                const missionEl = document.createElement('div');
+                missionEl.className = 'mission-item';
+                missionEl.innerHTML = `
+                    <div class="mission-header">
+                        <span class="mission-name">${mission.name}</span>
+                        <span class="points-badge">${mission.points} ${mission.isGamePoints ? 'juego' : 'mérito'}</span>
+                    </div>
+                    <div class="mission-details" id="details-${mission.id}">
+                        <p><strong>Descripción:</strong> ${mission.description}</p>
+                        <div class="student-list" id="students-${mission.id}"></div>
+                    </div>
+                `;
+                assignedMissionsList.appendChild(missionEl);
+
+                // Toggle detalles
+                missionEl.addEventListener('click', () => {
+                    const details = document.getElementById(`details-${mission.id}`);
+                    details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                    if (details.style.display === 'block') {
+                        renderStudentsForMission(mission);
+                    }
+                });
+            });
+        }
+
+        // Renderizar estudiantes para una misión
+        function renderStudentsForMission(mission) {
+            const container = document.getElementById(`students-${mission.id}`);
             container.innerHTML = '';
 
-            currentMissions.forEach(mission => {
-                const missionCard = createMissionCard(mission, true);
-                container.appendChild(missionCard);
+            students.forEach(student => {
+                const response = (studentResponses[mission.id] || {})[student.nie] || 'Sin responder';
+
+                const studentEl = document.createElement('div');
+                studentEl.className = 'student-item';
+
+                if (mission.type === 'mcq') {
+                    const correct = response === mission.correctIndex;
+                    studentEl.innerHTML = `
+                        <div class="student-info">
+                            ${student.name} (${student.nie}) - ${correct ? '✅ Correcta' : '❌ Incorrecta'}
+                        </div>
+                    `;
+                    if (correct && !student.completedMissions?.includes(mission.id)) {
+                        addPointsToStudent(student.id, mission);
+                    }
+                } else {
+                    studentEl.innerHTML = `
+                        <div>
+                            <div class="student-info">${student.name} (${student.nie})</div>
+                            ${['question', 'mcq'].includes(mission.type) ? `<div class="response-field">${response}</div>` : ''}
+                        </div>
+                        <button class="complete-btn" onclick="completeStudent('${mission.id}', '${student.id}', ${mission.points}, ${mission.isGamePoints})">
+                            Completar
+                        </button>
+                    `;
+                    if (student.completedMissions?.includes(mission.id)) {
+                        const btn = studentEl.querySelector('.complete-btn');
+                        btn.textContent = '✅ Completado';
+                        btn.classList.add('disabled');
+                        btn.disabled = true;
+                    }
+                }
+
+                container.appendChild(studentEl);
             });
+        }
+
+        // Completar misión para un estudiante (normal o pregunta)
+        window.completeStudent = async function(missionId, studentId, points, isGamePoints) {
+            try {
+                const studentRef = doc(db, 'students', studentId);
+                const studentDoc = await getDoc(studentRef);
+                const studentData = studentDoc.data();
+
+                // Actualizar puntos
+                const field = isGamePoints ? 'gamePoints' : 'points';
+                await updateDoc(studentRef, {
+                    [field]: (studentData[field] || 0) + points,
+                    completedMissions: [...(studentData.completedMissions || []), missionId]
+                });
+
+                // Actualizar botón
+                const btn = event.target;
+                btn.textContent = '✅ Completado';
+                btn.classList.add('disabled');
+                btn.disabled = true;
+
+                showAlert(`✅ Puntos otorgados a estudiante`, 'success');
+            } catch (error) {
+                console.error('Error completando misión:', error);
+                showAlert('❌ Error al completar', 'error');
+            }
+        };
+
+        // Sumar puntos automáticamente (opción múltiple correcta)
+        async function addPointsToStudent(studentId, mission) {
+            try {
+                const studentRef = doc(db, 'students', studentId);
+                const studentDoc = await getDoc(studentRef);
+                const studentData = studentDoc.data();
+
+                const field = mission.isGamePoints ? 'gamePoints' : 'points';
+                await updateDoc(studentRef, {
+                    [field]: (studentData[field] || 0) + mission.points,
+                    completedMissions: [...(studentData.completedMissions || []), mission.id]
+                });
+            } catch (error) {
+                console.error('Error otorgando puntos automáticos:', error);
+            }
         }
 
         // Renderizar misiones nuevas
         function renderNewMissions() {
-            const container = document.getElementById('new-missions');
-
+            newMissionsList.innerHTML = '';
             if (newMissions.length === 0) {
-                container.innerHTML = '<div class="no-missions">No hay misiones nuevas disponibles</div>';
+                newMissionsList.innerHTML = '<div class="no-items">No hay misiones nuevas</div>';
                 return;
             }
-
-            container.innerHTML = '';
-
-            // Botón para asignar todas las misiones
-            const assignAllBtn = document.createElement('button');
-            assignAllBtn.className = 'btn btn-assign';
-            assignAllBtn.style.marginBottom = '20px';
-            assignAllBtn.style.display = 'block';
-            assignAllBtn.innerHTML = `📝 Asignar Todas las Misiones (${newMissions.length})`;
-            assignAllBtn.onclick = assignAllMissions;
-            container.appendChild(assignAllBtn);
 
             newMissions.forEach(mission => {
-                const missionCard = createMissionCard(mission, false);
-                container.appendChild(missionCard);
-            });
-        }
-
-        // Crear tarjeta de misión
-        function createMissionCard(mission, isAssigned) {
-            const card = document.createElement('div');
-            card.className = 'mission-card';
-
-            const typeClass = mission.type === 'normal' ? 'type-normal' : 
-                             mission.type === 'question' ? 'type-question' : 'type-multiple-choice';
-            const typeText = mission.type === 'normal' ? 'Normal' : 
-                            mission.type === 'question' ? 'Pregunta' : 'Opción Múltiple';
-
-            card.innerHTML = `
-                <div class="mission-header" onclick="toggleMission('${mission.id}')">
-                    <div>
-                        <h3>${mission.name}</h3>
-                        <span class="mission-type ${typeClass}">${typeText}</span>
+                const missionEl = document.createElement('div');
+                missionEl.className = 'mission-item';
+                missionEl.innerHTML = `
+                    <div class="mission-header">
+                        <span class="mission-name">${mission.name}</span>
+                        <span class="points-badge">${mission.points} ${mission.isGamePoints ? 'juego' : 'mérito'}</span>
                     </div>
-                    <div class="mission-points">${mission.points} pts</div>
-                </div>
-                <div class="mission-content" id="content-${mission.id}">
-                    <div class="mission-info">
+                    <div class="mission-details" id="new-details-${mission.id}">
                         <p><strong>Descripción:</strong> ${mission.description}</p>
                         ${mission.question ? `<p><strong>Pregunta:</strong> ${mission.question}</p>` : ''}
-                        ${mission.options ? `<p><strong>Opciones:</strong> A) ${mission.options.a}, B) ${mission.options.b}, C) ${mission.options.c}, D) ${mission.options.d}</p>` : ''}
-                    </div>
-                    ${isAssigned ? createStudentsGrid(mission) : ''}
-                </div>
-            `;
-
-            return card;
-        }
-
-        // Crear grid de estudiantes
-        function createStudentsGrid(mission) {
-            let studentsHtml = '<div class="students-grid">';
-
-            students.forEach(student => {
-                const studentResponse = mission.responses && mission.responses[student.id] ? mission.responses[student.id] : null;
-                const isCompleted = mission.completed && mission.completed.includes(student.id);
-
-                studentsHtml += `
-                    <div class="student-card">
-                        <div class="student-info">
-                            <div class="student-name">👤 ${student.name}</div>
-                            ${createResponseField(mission, student.id, studentResponse)}
-                        </div>
-                        <div class="student-actions">
-                            <div class="checkbox-container">
-                                <input type="checkbox" 
-                                       id="check-${mission.id}-${student.id}" 
-                                       ${isCompleted ? 'checked' : ''}
-                                       onchange="toggleStudentCompletion('${mission.docId}', ${mission.missionIndex}, '${student.id}', ${mission.points})">
-                                <label for="check-${mission.id}-${student.id}">Completado</label>
-                            </div>
-                        </div>
                     </div>
                 `;
+                newMissionsList.appendChild(missionEl);
+
+                missionEl.addEventListener('click', () => {
+                    const details = document.getElementById(`new-details-${mission.id}`);
+                    details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                });
             });
-
-            studentsHtml += '</div>';
-            return studentsHtml;
         }
 
-        // Crear campo de respuesta según el tipo de misión
-        function createResponseField(mission, studentId, response) {
-            if (mission.type === 'normal') {
-                return '';
-            }
-
-            if (mission.type === 'question') {
-                return `<div class="student-response">
-                    ${response ? `Respuesta: "${response}"` : 'Sin respuesta aún'}
-                </div>`;
-            }
-
-            if (mission.type === 'multiple-choice') {
-                return `<div class="student-response">
-                    ${response ? `Opción seleccionada: ${response}` : 'Sin selección aún'}
-                </div>`;
-            }
-
-            return '';
-        }
-
-        // Toggle misión desplegable
-        window.toggleMission = function(missionId) {
-            const content = document.getElementById(`content-${missionId}`);
-            content.classList.toggle('active');
-        }
-
-        // Asignar todas las misiones nuevas
-        window.assignAllMissions = async function() {
-            if (newMissions.length === 0) {
-                alert('No hay misiones nuevas para asignar');
+        // Asignar misiones
+        assignBtn.addEventListener('click', async () => {
+            if (assignedMissions.length > 0) {
+                showAlert('Primero debes terminar las misiones asignadas', 'error');
                 return;
             }
 
-            if (!confirm(`¿Estás seguro de que quieres asignar todas las ${newMissions.length} misiones nuevas?`)) {
-                return;
-            }
+            assignedMissions = [...newMissions];
+            renderAssignedMissions();
+
+            assignBtn.disabled = true;
+            showAlert(`✅ ${newMissions.length} misiones asignadas`, 'success');
+        });
+
+        // Terminar misiones asignadas
+        endMissionsBtn.addEventListener('click', async () => {
+            if (!confirm('¿Estás seguro de terminar todas las misiones? Se eliminarán de Firebase.')) return;
 
             try {
-                // Agrupar misiones por documento
-                const docGroups = {};
-                newMissions.forEach(mission => {
-                    if (!docGroups[mission.docId]) {
-                        docGroups[mission.docId] = [];
-                    }
-                    docGroups[mission.docId].push(mission);
+                // Eliminar misiones asignadas de Firebase
+                const missionsRef = collection(db, 'missions');
+                const q = query(missionsRef);
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach(async (doc) => {
+                    await deleteDoc(doc.ref);
                 });
 
-                // Actualizar cada documento
-                const updatePromises = Object.keys(docGroups).map(async (docId) => {
-                    const docRef = doc(db, 'daily_missions', docId);
-                    const docSnapshot = await getDocs(collection(db, 'daily_missions'));
-                    
-                    // Buscar el documento específico
-                    const targetDoc = docSnapshot.docs.find(d => d.id === docId);
-                    if (targetDoc) {
-                        const docData = targetDoc.data();
-                        const missions = docData.missions;
-                        
-                        // Actualizar todas las misiones de este documento que están en newMissions
-                        docGroups[docId].forEach(newMission => {
-                            const missionInDoc = missions.find(m => m.id === newMission.id);
-                            if (missionInDoc) {
-                                missionInDoc.assigned = true;
-                                missionInDoc.assignedAt = new Date().toISOString();
-                            }
-                        });
-                        
-                        // Actualizar en Firebase
-                        await updateDoc(docRef, { missions: missions });
-                    }
-                });
-
-                await Promise.all(updatePromises);
-                
-                // Recargar misiones
-                await loadMissions();
-                alert(`¡${newMissions.length} misiones asignadas correctamente!`);
-                
+                assignedMissions = [];
+                newMissions = [];
+                assignedSection.style.display = 'none';
+                assignBtn.disabled = false;
+                showAlert('🗑️ Misiones terminadas y eliminadas', 'success');
             } catch (error) {
-                console.error('Error asignando misiones:', error);
-                alert('Error al asignar las misiones: ' + error.message);
-            }
-        }
-
-        // Toggle completado del estudiante
-        window.toggleStudentCompletion = async function(docId, missionIndex, studentId, points) {
-            try {
-                const docRef = doc(db, 'daily_missions', docId);
-                
-                // Obtener el documento actual
-                const dailyMissionsSnapshot = await getDocs(collection(db, 'daily_missions'));
-                const targetDoc = dailyMissionsSnapshot.docs.find(d => d.id === docId);
-                
-                if (targetDoc) {
-                    const docData = targetDoc.data();
-                    const missions = docData.missions;
-                    const mission = missions[missionIndex];
-                    
-                    let completed = mission.completed || [];
-                    
-                    if (completed.includes(studentId)) {
-                        // Remover de completados y quitar puntos
-                        completed = completed.filter(id => id !== studentId);
-                        await updateStudentPoints(studentId, -points);
-                    } else {
-                        // Agregar a completados y dar puntos
-                        completed.push(studentId);
-                        await updateStudentPoints(studentId, points);
-                    }
-
-                    // Actualizar la misión
-                    missions[missionIndex].completed = completed;
-                    
-                    // Guardar en Firebase
-                    await updateDoc(docRef, { missions: missions });
-                    
-                    // Actualizar en memoria
-                    const missionInMemory = currentMissions.find(m => m.docId === docId && m.missionIndex === missionIndex);
-                    if (missionInMemory) {
-                        missionInMemory.completed = completed;
-                    }
-                }
-            } catch (error) {
-                console.error('Error actualizando completado:', error);
-                alert('Error al actualizar el estado');
-            }
-        }
-
-        // Actualizar puntos del estudiante
-        async function updateStudentPoints(studentId, pointsToAdd) {
-            try {
-                const studentRef = doc(db, 'students', studentId);
-                const student = students.find(s => s.id === studentId);
-                const currentPoints = student.points || 0;
-                
-                await updateDoc(studentRef, {
-                    points: currentPoints + pointsToAdd
-                });
-
-                // Actualizar en memoria
-                student.points = currentPoints + pointsToAdd;
-            } catch (error) {
-                console.error('Error actualizando puntos:', error);
-            }
-        }
-
-        // Finalizar todas las misiones
-        document.getElementById('finish-missions-btn').addEventListener('click', async function() {
-            if (!confirm('¿Estás seguro de que quieres finalizar todas las misiones actuales? Esta acción eliminará las misiones pero mantendrá los puntos de los estudiantes.')) {
-                return;
-            }
-
-            try {
-                // Agrupar misiones por documento
-                const docGroups = {};
-                currentMissions.forEach(mission => {
-                    if (!docGroups[mission.docId]) {
-                        docGroups[mission.docId] = [];
-                    }
-                    docGroups[mission.docId].push(mission);
-                });
-
-                // Eliminar cada documento de daily_missions que tiene misiones asignadas
-                const deletePromises = Object.keys(docGroups).map(docId => 
-                    deleteDoc(doc(db, 'daily_missions', docId))
-                );
-                
-                await Promise.all(deletePromises);
-                
-                // Recargar misiones
-                await loadMissions();
-                
-                alert('¡Todas las misiones han sido finalizadas correctamente!');
-            } catch (error) {
-                console.error('Error finalizando misiones:', error);
-                alert('Error al finalizar las misiones');
+                console.error('Error terminando misiones:', error);
+                showAlert('❌ Error al terminar misiones', 'error');
             }
         });
 
-        // Inicializar la aplicación
-        async function init() {
-            await loadStudents();
-            await loadMissions();
+        // Mostrar alertas
+        function showAlert(message, type) {
+            alerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                alerts.innerHTML = '';
+            }, 5000);
         }
-
-        init();
     </script>
 </body>
 </html>
