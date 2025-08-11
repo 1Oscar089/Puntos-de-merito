@@ -174,11 +174,6 @@
             margin: 0 10px;
         }
 
-        .status-icon {
-            font-size: 1.2em;
-            margin: 0 8px;
-        }
-
         .btn {
             background: #1a73e8;
             color: white;
@@ -296,6 +291,9 @@
         let students = [];
         let studentResponses = {};
 
+        // Orden de grados
+        const gradeOrder = { 'Séptimo': 1, 'Octavo': 2, 'Noveno': 3 };
+
         // Cargar datos al inicio
         window.addEventListener('load', async () => {
             try {
@@ -329,6 +327,13 @@
             students = [];
             querySnapshot.forEach(doc => {
                 students.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Ordenar por grado: Séptimo → Octavo → Noveno
+            students.sort((a, b) => {
+                const orderA = gradeOrder[a.grade] || 99;
+                const orderB = gradeOrder[b.grade] || 99;
+                return orderA - orderB;
             });
         }
 
@@ -418,21 +423,34 @@
             container.innerHTML = '';
 
             // Agrupar estudiantes por grado
-            const studentsByGrade = {};
-            students.forEach(s => {
-                const grade = s.grado || 'Sin grado';
-                if (!studentsByGrade[grade]) studentsByGrade[grade] = [];
-                studentsByGrade[grade].push(s);
+            const studentsByGrade = { 'Séptimo': [], 'Octavo': [], 'Noveno': [] };
+            // Inicializar vacíos por si no hay estudiantes en algún grado
+            Object.keys(studentsByGrade).forEach(grade => {
+                studentsByGrade[grade] = [];
             });
 
-            Object.keys(studentsByGrade).sort().forEach(grade => {
+            students.forEach(s => {
+                const grade = s.grade || 'Sin grado';
+                if (studentsByGrade[grade] !== undefined) {
+                    studentsByGrade[grade].push(s);
+                } else {
+                    if (!studentsByGrade['Sin grado']) studentsByGrade['Sin grado'] = [];
+                    studentsByGrade['Sin grado'].push(s);
+                }
+            });
+
+            // Mostrar en orden: Séptimo → Octavo → Noveno
+            ['Séptimo', 'Octavo', 'Noveno'].forEach(grade => {
+                const gradeStudents = studentsByGrade[grade];
+                if (gradeStudents.length === 0) return;
+
                 const gradeGroup = document.createElement('div');
                 gradeGroup.className = 'student-group';
                 gradeGroup.innerHTML = `<div class="grade-title">${grade}</div>`;
                 const studentList = document.createElement('div');
                 studentList.className = 'student-list';
 
-                studentsByGrade[grade].forEach(student => {
+                gradeStudents.forEach(student => {
                     const responseObj = (studentResponses[mission.id] || {})[student.nie];
                     const hasResponded = !!responseObj;
                     const isCompleted = student.completedMissions?.includes(mission.id);
@@ -440,25 +458,49 @@
                     const row = document.createElement('div');
                     row.className = 'student-row';
 
-                    let responseText = 'Sin responder';
-                    if (mission.type === 'question' && hasResponded && responseObj.status !== 'timeout') {
-                        responseText = responseObj.response;
-                    } else if (mission.type === 'mcq' && hasResponded && responseObj.status !== 'timeout') {
+                    let responseContent = '';
+                    let actionButton = '';
+
+                    if (mission.type === 'normal') {
+                        // Solo botón, sin campo de respuesta
+                        actionButton = `<button class="btn" 
+                                    ${isCompleted ? 'disabled' : ''} 
+                                    onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
+                                        ${isCompleted ? '✅ Completado' : 'Completar'}
+                                    </button>`;
+                    } 
+                    else if (mission.type === 'question' && hasResponded && responseObj.status !== 'timeout') {
+                        responseContent = `<div class="student-response">${responseObj.response}</div>`;
+                        actionButton = `<button class="btn" 
+                                    ${isCompleted ? 'disabled' : ''} 
+                                    onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
+                                        ${isCompleted ? '✅ Completado' : 'Completar'}
+                                    </button>`;
+                    } 
+                    else if (mission.type === 'mcq' && hasResponded && responseObj.status !== 'timeout') {
                         const isCorrect = responseObj.response === mission.correctIndex;
-                        responseText = `${mission.options[responseObj.response] || 'Opción no válida'} 
-                                       <span class="status-icon">${isCorrect ? '✅' : '❌'}</span>`;
-                    } else if (hasResponded && responseObj.status === 'timeout') {
-                        responseText = '⏰ Sin respuesta (tiempo agotado)';
+                        const responseText = `${mission.options[responseObj.response] || 'Opción no válida'} 
+                                              <span class="status-icon">${isCorrect ? '✅' : '❌'}</span>`;
+                        responseContent = `<div class="student-response">${responseText}</div>`;
+                        // No se muestra botón en opción múltiple
+                        actionButton = ''; 
+                    } 
+                    else if (hasResponded && responseObj.status === 'timeout') {
+                        responseContent = `<div class="student-response">⏰ Sin respuesta (tiempo agotado)</div>`;
+                        actionButton = '';
+                    } 
+                    else {
+                        // No ha respondido aún
+                        responseContent = `<div class="student-response">Sin responder</div>`;
+                        actionButton = mission.type === 'question' 
+                            ? `<button class="btn" disabled>Sin respuesta</button>` 
+                            : '';
                     }
 
                     row.innerHTML = `
                         <div class="student-name">${student.name}</div>
-                        <div class="student-response">${responseText}</div>
-                        <button class="btn" 
-                                ${isCompleted ? 'disabled' : ''} 
-                                onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
-                            ${isCompleted ? '✅ Completado' : 'Completar'}
-                        </button>
+                        ${responseContent}
+                        ${actionButton}
                     `;
                     studentList.appendChild(row);
                 });
