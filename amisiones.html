@@ -360,7 +360,7 @@
             return missions;
         }
 
-        // Cargar misiones nuevas (de la colección 'missions')
+        // Cargar misiones nuevas
         async function loadNewMissions() {
             const missionsRef = collection(db, 'missions');
             const querySnapshot = await getDocs(missionsRef);
@@ -433,7 +433,7 @@
                             <div class="student-info">${student.name} (${student.nie})</div>
                             ${['question', 'mcq'].includes(mission.type) ? `<div class="response-field">${response}</div>` : ''}
                         </div>
-                        <button class="complete-btn" onclick="completeStudent('${mission.id}', '${student.id}', ${mission.points}, ${mission.isGamePoints})">
+                        <button class="complete-btn" onclick="completeStudent(this, '${mission.id}', '${student.id}', ${mission.points}, ${mission.isGamePoints})">
                             Completar
                         </button>
                     `;
@@ -450,7 +450,7 @@
         }
 
         // Completar misión para un estudiante
-        window.completeStudent = async function(missionId, studentId, points, isGamePoints) {
+        window.completeStudent = async function(btn, missionId, studentId, points, isGamePoints) {
             try {
                 const studentRef = doc(db, 'students', studentId);
                 const studentDoc = await getDoc(studentRef);
@@ -462,7 +462,6 @@
                     completedMissions: [...(studentData.completedMissions || []), missionId]
                 });
 
-                const btn = event.target;
                 btn.textContent = '✅ Completado';
                 btn.classList.add('disabled');
                 btn.disabled = true;
@@ -546,23 +545,41 @@
             }
         });
 
-        // Terminar misiones asignadas
+        // Terminar misiones asignadas (y borrar respuestas)
         endMissionsBtn.addEventListener('click', async () => {
-            if (!confirm('¿Estás seguro de terminar todas las misiones? Se eliminarán de Firebase.')) return;
+            if (!confirm('¿Estás seguro de terminar todas las misiones? Se eliminarán de Firebase, incluyendo todas las respuestas.')) return;
 
             try {
+                // 1. Obtener todas las misiones asignadas
                 const assignedRef = collection(db, 'assigned_missions');
                 const querySnapshot = await getDocs(assignedRef);
-                querySnapshot.forEach(async (doc) => {
-                    await deleteDoc(doc.ref);
-                });
 
+                // 2. Eliminar misiones asignadas
+                const deleteMissionsPromises = [];
+                const missionIds = [];
+                querySnapshot.forEach(doc => {
+                    deleteMissionsPromises.push(deleteDoc(doc.ref));
+                    missionIds.push(doc.id);
+                });
+                await Promise.all(deleteMissionsPromises);
+
+                // 3. Eliminar respuestas de esas misiones
+                const responsesRef = collection(db, 'mission_responses');
+                const responsesQuery = query(responsesRef, where('missionId', 'in', missionIds));
+                const responsesSnapshot = await getDocs(responsesQuery);
+                const deleteResponsesPromises = [];
+                responsesSnapshot.forEach(doc => {
+                    deleteResponsesPromises.push(deleteDoc(doc.ref));
+                });
+                await Promise.all(deleteResponsesPromises);
+
+                // 4. Actualizar interfaz
                 assignedMissions = [];
                 assignedSection.style.display = 'none';
                 newMissions = await loadNewMissions();
                 newSection.style.display = 'block';
                 assignBtn.disabled = false;
-                showAlert('🗑️ Misiones terminadas y eliminadas', 'success');
+                showAlert('🗑️ Misiones y respuestas eliminadas', 'success');
             } catch (error) {
                 console.error('Error terminando misiones:', error);
                 showAlert('❌ Error al terminar misiones', 'error');
