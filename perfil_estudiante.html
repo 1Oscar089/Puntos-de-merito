@@ -388,7 +388,7 @@
     <script type="module">
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where, getDoc, doc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -419,12 +419,15 @@
 
         let currentStudentNie = null;
 
-        // Función de inicio de sesión
+        // 🔴 Función de inicio de sesión (expuesta globalmente)
         async function login() {
-            const nie = document.getElementById('nie').value.trim().toUpperCase();
-            const passwordInput = document.getElementById('password').value.trim();
+            const nieInput = document.getElementById('nie');
+            const passwordInput = document.getElementById('password');
 
-            if (!nie || !passwordInput) {
+            const nie = nieInput.value.trim().toUpperCase();
+            const password = passwordInput.value.trim();
+
+            if (!nie || !password) {
                 showAlert('Por favor completa todos los campos', 'error');
                 return;
             }
@@ -442,35 +445,38 @@
                 const studentDoc = querySnapshot.docs[0];
                 const studentData = studentDoc.data();
 
-                // Convertir entrada y contraseña a número si es posible
-                const enteredPassword = parseInt(passwordInput);
-                const correctPassword = typeof studentData.password === 'string' 
-                    ? parseInt(studentData.password) 
-                    : studentData.password;
+                // 🔢 Comparar contraseñas como números (porque es numérica en Firebase)
+                const enteredPassword = parseInt(password);
+                const correctPassword = studentData.password; // ya es número
 
                 if (isNaN(enteredPassword) || enteredPassword !== correctPassword) {
-                    showAlert('Contraseña incorrecta', 'error');
+                    showAlert('❌ Contraseña incorrecta', 'error');
                     return;
                 }
 
-                // Mostrar perfil
+                // ✅ Login exitoso
                 currentStudentNie = nie;
                 studentNameEl.textContent = studentData.name;
                 studentNieEl.textContent = nie;
                 meritPointsEl.textContent = studentData.points || 0;
                 gamePointsEl.textContent = studentData.gamePoints || 0;
 
-                loginForm.style.display = 'none';
-                studentProfile.style.display = 'block';
-
                 // Cargar mensajes
                 await loadMessages(nie);
 
+                // Cambiar vistas
+                loginForm.style.display = 'none';
+                studentProfile.style.display = 'block';
+
             } catch (error) {
                 console.error('Error en login:', error);
-                showAlert('Error al iniciar sesión', 'error');
+                showAlert('Error al conectar con la base de datos', 'error');
             }
         }
+
+        // 🔴 Exponer funciones al objeto global (window) para que funcionen en onclick
+        window.login = login;
+        window.toggleMessages = toggleMessages;
 
         // Cargar mensajes del estudiante
         async function loadMessages(nie) {
