@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil del Estudiante</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        /* Formulario de login */
+        .login-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .alert {
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Perfil del estudiante (oculto al inicio) */
+        .student-profile {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .student-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .student-info h2 {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .student-info p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .points-display {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .game-points {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .mailbox {
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            padding: 10px;
+            border-radius: 50%;
+            background: #4facfe;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .mailbox:hover {
+            transform: scale(1.1);
+        }
+
+        /* Mensajes (oculto al inicio) */
+        .messages-container {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e9ecef;
+        }
+
+        .message-item {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4facfe;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .message-text {
+            color: #333;
+            font-size: 1em;
+        }
+
+        .message-date {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Secciones */
+        .sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .section-card.proximamente {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f8f9fa;
+            border-color: #dee2e6;
+        }
+
+        .section-card.proximamente .section-title {
+            color: #6c757d;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            .student-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .points-section {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Perfil del Estudiante</h1>
+            <p>Accede a tu cuenta para ver tu información</p>
+        </div>
+
+        <div class="content">
+            <!-- Formulario de login -->
+            <div class="login-form" id="loginForm">
+                <h2>🔐 Iniciar Sesión</h2>
+                <div class="form-group">
+                    <label class="form-label" for="nie">NIE:</label>
+                    <input type="text" id="nie" class="form-input" placeholder="Ingresa tu NIE" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Contraseña:</label>
+                    <input type="password" id="password" class="form-input" placeholder="Ingresa tu contraseña" required>
+                </div>
+                <button class="btn" onclick="login()">Aceptar</button>
+                <div id="loginAlerts"></div>
+            </div>
+
+            <!-- Perfil del estudiante -->
+            <div class="student-profile" id="studentProfile">
+                <div class="student-header">
+                    <div class="student-info">
+                        <h2 id="studentName">Juan Pérez</h2>
+                        <p><strong>NIE:</strong> <span id="studentNie"></span></p>
+                    </div>
+                    <div class="points-section">
+                        <div class="points-display">
+                            🔢 <span id="meritPoints">0</span> Puntos
+                        </div>
+                        <div class="game-points">
+                            🎮 <span id="gamePoints">0</span> Juego
+                        </div>
+                    </div>
+                    <div class="mailbox" onclick="toggleMessages()" title="Ver mensajes">
+                        📧
+                    </div>
+                </div>
+
+                <!-- Mensajes -->
+                <div class="messages-container" id="messagesContainer">
+                    <h4>📬 Tus mensajes</h4>
+                    <div id="messagesList"></div>
+                </div>
+
+                <!-- Secciones -->
+                <div class="sections">
+                    <div class="section-card" onclick="alert('Función en desarrollo')">
+                        <div class="section-icon">🛒</div>
+                        <div class="section-title">Tienda</div>
+                    </div>
+                    <div class="section-card" onclick="alert('Función en desarrollo')">
+                        <div class="section-icon">📦</div>
+                        <div class="section-title">Mis Productos</div>
+                    </div>
+                    <div class="section-card" onclick="alert('Función en desarrollo')">
+                        <div class="section-icon">💸</div>
+                        <div class="section-title">Transferencias</div>
+                    </div>
+                    <div class="section-card proximamente">
+                        <div class="section-icon">🎯</div>
+                        <div class="section-title">Próximamente</div>
+                    </div>
+                    <div class="section-card proximamente">
+                        <div class="section-icon">🏆</div>
+                        <div class="section-title">Próximamente</div>
+                    </div>
+                    <div class="section-card proximamente">
+                        <div class="section-icon">📅</div>
+                        <div class="section-title">Próximamente</div>
+                    </div>
+                    <div class="section-card proximamente">
+                        <div class="section-icon">📊</div>
+                        <div class="section-title">Próximamente</div>
+                    </div>
+                    <div class="section-card proximamente">
+                        <div class="section-icon">💡</div>
+                        <div class="section-title">Próximamente</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where, getDoc, doc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
+            authDomain: "puntos-de-merito.firebaseapp.com",
+            projectId: "puntos-de-merito",
+            storageBucket: "puntos-de-merito.firebasestorage.app",
+            messagingSenderId: "793336144671",
+            appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
+            measurementId: "G-CZ340GE3T7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Elementos del DOM
+        const loginForm = document.getElementById('loginForm');
+        const studentProfile = document.getElementById('studentProfile');
+        const loginAlerts = document.getElementById('loginAlerts');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messagesList = document.getElementById('messagesList');
+
+        const studentNameEl = document.getElementById('studentName');
+        const studentNieEl = document.getElementById('studentNie');
+        const meritPointsEl = document.getElementById('meritPoints');
+        const gamePointsEl = document.getElementById('gamePoints');
+
+        let currentStudentNie = null;
+
+        // Función de inicio de sesión
+        async function login() {
+            const nie = document.getElementById('nie').value.trim().toUpperCase();
+            const passwordInput = document.getElementById('password').value.trim();
+
+            if (!nie || !passwordInput) {
+                showAlert('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const studentsRef = collection(db, 'students');
+                const q = query(studentsRef, where('nie', '==', nie));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    showAlert('NIE no encontrado', 'error');
+                    return;
+                }
+
+                const studentDoc = querySnapshot.docs[0];
+                const studentData = studentDoc.data();
+
+                // Convertir entrada y contraseña a número si es posible
+                const enteredPassword = parseInt(passwordInput);
+                const correctPassword = typeof studentData.password === 'string' 
+                    ? parseInt(studentData.password) 
+                    : studentData.password;
+
+                if (isNaN(enteredPassword) || enteredPassword !== correctPassword) {
+                    showAlert('Contraseña incorrecta', 'error');
+                    return;
+                }
+
+                // Mostrar perfil
+                currentStudentNie = nie;
+                studentNameEl.textContent = studentData.name;
+                studentNieEl.textContent = nie;
+                meritPointsEl.textContent = studentData.points || 0;
+                gamePointsEl.textContent = studentData.gamePoints || 0;
+
+                loginForm.style.display = 'none';
+                studentProfile.style.display = 'block';
+
+                // Cargar mensajes
+                await loadMessages(nie);
+
+            } catch (error) {
+                console.error('Error en login:', error);
+                showAlert('Error al iniciar sesión', 'error');
+            }
+        }
+
+        // Cargar mensajes del estudiante
+        async function loadMessages(nie) {
+            try {
+                const messagesRef = collection(db, 'messages');
+                const q = query(messagesRef, where('nie', '==', nie));
+                const querySnapshot = await getDocs(q);
+
+                messagesList.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    messagesList.innerHTML = '<div class="message-item">No tienes mensajes.</div>';
+                    return;
+                }
+
+                const messages = querySnapshot.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        timestamp: doc.data().timestamp?.toDate()
+                    }))
+                    .sort((a, b) => b.timestamp - a.timestamp);
+
+                messages.forEach(msg => {
+                    const msgEl = document.createElement('div');
+                    msgEl.className = 'message-item';
+                    msgEl.innerHTML = `
+                        <div class="message-text">${msg.message}</div>
+                        <div class="message-date">${formatDate(msg.timestamp)}</div>
+                    `;
+                    messagesList.appendChild(msgEl);
+                });
+
+            } catch (error) {
+                console.error('Error cargando mensajes:', error);
+                messagesList.innerHTML = '<div class="message-item">Error al cargar mensajes.</div>';
+            }
+        }
+
+        // Mostrar/ocultar mensajes
+        function toggleMessages() {
+            const visible = messagesContainer.style.display === 'block';
+            messagesContainer.style.display = visible ? 'none' : 'block';
+        }
+
+        // Formatear fecha
+        function formatDate(date) {
+            return date.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Mostrar alertas
+        function showAlert(message, type) {
+            loginAlerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                loginAlerts.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
