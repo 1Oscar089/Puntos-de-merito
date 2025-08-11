@@ -267,7 +267,6 @@
     <script type="module">
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        // ✅ Corregido: agregado 'getDoc' (singular)
         import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Firebase configuration
@@ -421,6 +420,7 @@
                 const responseObj = (studentResponses[mission.id] || {})[student.nie];
                 const hasResponded = !!responseObj;
                 const isTimeout = responseObj?.status === 'timeout';
+                const completed = student.completedMissions?.includes(mission.id);
 
                 const studentEl = document.createElement('div');
                 studentEl.className = 'student-item';
@@ -457,31 +457,36 @@
                     responseContent = `<div class="response-field">Sin responder</div>`;
                 }
 
-                // Botón completar (solo si no completado y ya respondió)
-                const completed = student.completedMissions?.includes(mission.id);
-                const showCompleteBtn = hasResponded && !isTimeout && !completed;
+                // Botón o estado
+                let actionElement = '';
+                if (mission.type === 'mcq') {
+                    // No se muestra botón, es automático
+                    actionElement = `<div class="status status-correct">✅ Puntos ya otorgados</div>`;
+                } else if (mission.type === 'question') {
+                    if (completed) {
+                        actionElement = `<div class="status status-correct">✅ Ya completada</div>`;
+                    } else if (hasResponded && !isTimeout) {
+                        actionElement = `<button class="complete-btn" onclick="completeStudent(this, '${student.id}', ${JSON.stringify(mission)})">Marcar como completado</button>`;
+                    } else {
+                        actionElement = `<div class="status status-incorrect">Pendiente</div>`;
+                    }
+                }
 
                 studentEl.innerHTML = `
                     <div class="student-info">${student.name} (${student.nie})</div>
                     ${responseContent}
-                    <button class="complete-btn" ${showCompleteBtn ? '' : 'disabled'}>
-                        ${completed ? '✅ Completado' : (showCompleteBtn ? 'Marcar como completado' : 'Sin acción')}
-                    </button>
+                    ${actionElement}
                 `;
-
-                if (showCompleteBtn) {
-                    studentEl.querySelector('.complete-btn').onclick = () => completeStudent(student.id, mission);
-                }
 
                 container.appendChild(studentEl);
             });
         }
 
         // Completar misión para un estudiante
-        async function completeStudent(studentId, mission) {
+        window.completeStudent = async function(btn, studentId, mission) {
             try {
                 const studentRef = doc(db, 'students', studentId);
-                const studentDoc = await getDoc(studentRef); // ✅ Ahora funciona
+                const studentDoc = await getDoc(studentRef);
                 const studentData = studentDoc.data();
 
                 const field = mission.isGamePoints ? 'gamePoints' : 'points';
@@ -490,18 +495,18 @@
                     completedMissions: [...(studentData.completedMissions || []), mission.id]
                 });
 
-                // Actualizar interfaz
-                const btn = event.target;
-                btn.textContent = '✅ Completado';
-                btn.disabled = true;
-                btn.classList.add('disabled');
+                // Reemplazar botón por "Ya completada"
+                const container = btn.closest('.student-item');
+                container.innerHTML = container.querySelector('.student-info').outerHTML +
+                    container.querySelector('.response-field')?.parentElement.innerHTML +
+                    '<div class="status status-correct">✅ Ya completada</div>';
 
                 showAlert('✅ Puntos otorgados', 'success');
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error al completar:', error);
                 showAlert('❌ Error al completar', 'error');
             }
-        }
+        };
 
         // Renderizar misiones nuevas
         function renderNewMissions(missions) {
