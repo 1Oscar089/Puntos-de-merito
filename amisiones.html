@@ -114,31 +114,50 @@
 
         .student-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
             background: white;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             border: 1px solid #e9ecef;
         }
 
         .student-info {
             font-size: 0.95em;
             color: #333;
+            font-weight: 600;
         }
 
         .response-field {
             background: #f8f9fa;
-            padding: 8px 12px;
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: 6px;
-            margin: 5px 0;
+            font-size: 0.95em;
+            color: #333;
+        }
+
+        .status {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
             font-size: 0.9em;
-            color: #555;
+        }
+
+        .status-correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-incorrect {
+            background: #f8d7da;
+            color: #721c24;
         }
 
         .complete-btn {
+            align-self: flex-start;
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
             border: none;
@@ -211,24 +230,6 @@
             padding: 20px;
             font-style: italic;
         }
-
-        @media (max-width: 768px) {
-            .content {
-                padding: 20px;
-            }
-
-            .mission-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-            .student-item {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -266,7 +267,7 @@
     <script type="module">
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -296,15 +297,33 @@
         let assignedMissions = [];
         let newMissions = [];
         let students = [];
+        let studentResponses = {}; // { missionId: { nie: { response, status } } }
 
         // Cargar datos al inicio
         window.addEventListener('load', async () => {
             try {
                 await loadStudents();
-                await loadAssignedMissionsAndRender();
+                await loadResponses();
+
+                // Cargar misiones asignadas
+                const assigned = await loadAssignedMissions();
+                if (assigned.length > 0) {
+                    assignedMissions = assigned;
+                    renderAssignedMissions();
+                    assignBtn.disabled = true;
+                    assignedSection.style.display = 'block';
+                    newSection.style.display = 'none';
+                } else {
+                    const newMissionsData = await loadNewMissions();
+                    newMissions = newMissionsData;
+                    renderNewMissions(newMissionsData);
+                    assignedSection.style.display = 'none';
+                    newSection.style.display = 'block';
+                    assignBtn.disabled = false;
+                }
             } catch (error) {
                 console.error('Error al cargar:', error);
-                showAlert('Error al cargar los datos', 'error');
+                showAlert('❌ Error al cargar los datos', 'error');
             }
         });
 
@@ -318,37 +337,43 @@
             });
         }
 
-        // Cargar misiones asignadas y renderizar
-        async function loadAssignedMissionsAndRender() {
-            const assignedRef = collection(db, 'assigned_missions');
-            const querySnapshot = await getDocs(assignedRef);
-            assignedMissions = [];
-            querySnapshot.forEach(doc => {
-                assignedMissions.push({ id: doc.id, ...doc.data() });
-            });
+        // Cargar respuestas de los estudiantes
+        async function loadResponses() {
+            const responsesRef = collection(db, 'mission_responses');
+            const querySnapshot = await getDocs(responsesRef);
+            studentResponses = {};
 
-            if (assignedMissions.length > 0) {
-                renderAssignedMissions();
-                assignBtn.disabled = true;
-                assignedSection.style.display = 'block';
-                newSection.style.display = 'none';
-            } else {
-                await loadNewMissionsAndRender();
-            }
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                const { missionId, studentNie, response, status } = data;
+
+                if (!studentResponses[missionId]) {
+                    studentResponses[missionId] = {};
+                }
+                studentResponses[missionId][studentNie] = { response, status };
+            });
         }
 
-        // Cargar misiones nuevas
-        async function loadNewMissionsAndRender() {
+        // Cargar misiones asignadas
+        async function loadAssignedMissions() {
+            const assignedRef = collection(db, 'assigned_missions');
+            const querySnapshot = await getDocs(assignedRef);
+            const missions = [];
+            querySnapshot.forEach(doc => {
+                missions.push({ id: doc.id, ...doc.data() });
+            });
+            return missions;
+        }
+
+        // Cargar misiones nuevas (de 'missions')
+        async function loadNewMissions() {
             const missionsRef = collection(db, 'missions');
             const querySnapshot = await getDocs(missionsRef);
-            newMissions = [];
+            const missions = [];
             querySnapshot.forEach(doc => {
-                newMissions.push({ id: doc.id, ...doc.data() });
+                missions.push({ id: doc.id, ...doc.data() });
             });
-            renderNewMissions();
-            assignedSection.style.display = 'none';
-            newSection.style.display = 'block';
-            assignBtn.disabled = false;
+            return missions;
         }
 
         // Renderizar misiones asignadas
@@ -392,28 +417,59 @@
             container.innerHTML = '';
 
             students.forEach(student => {
-                const completed = student.completedMissions?.includes(mission.id);
-                const response = 'Sin responder'; // No cargamos respuestas aquí, pero puedes hacerlo si lo necesitas
+                const responseObj = (studentResponses[mission.id] || {})[student.nie];
+                const hasResponded = !!responseObj;
+                const isTimeout = responseObj?.status === 'timeout';
 
                 const studentEl = document.createElement('div');
                 studentEl.className = 'student-item';
 
-                if (mission.type === 'mcq') {
-                    studentEl.innerHTML = `
-                        <div class="student-info">${student.name} (${student.nie})</div>
-                    `;
-                } else {
-                    studentEl.innerHTML = `
-                        <div>
-                            <div class="student-info">${student.name} (${student.nie})</div>
+                // Pregunta (si aplica)
+                let responseContent = '';
+                if (mission.type === 'question' && hasResponded && !isTimeout) {
+                    responseContent = `
+                        <div class="response-field">
+                            <strong>Pregunta:</strong><br>${mission.question}
                         </div>
-                        <button class="complete-btn" ${completed ? 'disabled' : ''}>
-                            ${completed ? '✅ Completado' : 'Completar'}
-                        </button>
+                        <div class="response-field">
+                            <strong>Respuesta:</strong><br>${responseObj.response}
+                        </div>
                     `;
-                    if (!completed) {
-                        studentEl.querySelector('.complete-btn').onclick = () => completeStudent(student.id, mission);
-                    }
+                } else if (mission.type === 'mcq' && hasResponded && !isTimeout) {
+                    const isCorrect = responseObj.response === mission.correctIndex;
+                    const optionText = mission.options[responseObj.response] || 'Opción no válida';
+                    const statusIcon = isCorrect ? '✅' : '❌';
+                    const statusClass = isCorrect ? 'status-correct' : 'status-incorrect';
+
+                    responseContent = `
+                        <div class="response-field">
+                            <strong>Pregunta:</strong><br>${mission.question}
+                        </div>
+                        <div class="response-field">
+                            <strong>Seleccionó:</strong><br>${optionText}
+                        </div>
+                        <div class="status ${statusClass}">${statusIcon} ${isCorrect ? 'Correcta' : 'Incorrecta'}</div>
+                    `;
+                } else if (isTimeout) {
+                    responseContent = `<div class="status status-incorrect">⏰ Sin respuesta (tiempo agotado)</div>`;
+                } else {
+                    responseContent = `<div class="response-field">Sin responder</div>`;
+                }
+
+                // Botón completar (solo si no completado y ya respondió)
+                const completed = student.completedMissions?.includes(mission.id);
+                const showCompleteBtn = hasResponded && !isTimeout && !completed;
+
+                studentEl.innerHTML = `
+                    <div class="student-info">${student.name} (${student.nie})</div>
+                    ${responseContent}
+                    <button class="complete-btn" ${showCompleteBtn ? '' : 'disabled'}>
+                        ${completed ? '✅ Completado' : (showCompleteBtn ? 'Marcar como completado' : 'Sin acción')}
+                    </button>
+                `;
+
+                if (showCompleteBtn) {
+                    studentEl.querySelector('.complete-btn').onclick = () => completeStudent(student.id, mission);
                 }
 
                 container.appendChild(studentEl);
@@ -447,14 +503,14 @@
         }
 
         // Renderizar misiones nuevas
-        function renderNewMissions() {
+        function renderNewMissions(missions) {
             newMissionsList.innerHTML = '';
-            if (newMissions.length === 0) {
+            if (missions.length === 0) {
                 newMissionsList.innerHTML = '<div class="no-items">No hay misiones nuevas</div>';
                 return;
             }
 
-            newMissions.forEach(mission => {
+            missions.forEach(mission => {
                 const missionEl = document.createElement('div');
                 missionEl.className = 'mission-item';
                 missionEl.innerHTML = `
@@ -476,7 +532,7 @@
             });
         }
 
-        // Asignar misiones
+        // Asignar misiones: copiar a assigned_missions y borrar de missions
         assignBtn.addEventListener('click', async () => {
             if (assignedMissions.length > 0) {
                 showAlert('Primero termina las misiones asignadas', 'error');
@@ -484,90 +540,75 @@
             }
 
             try {
+                const newMissionsData = await loadNewMissions();
+                if (newMissionsData.length === 0) {
+                    showAlert('No hay misiones para asignar', 'error');
+                    return;
+                }
+
+                // 1. Copiar a assigned_missions
                 const assignedRef = collection(db, 'assigned_missions');
-                for (const mission of newMissions) {
+                for (const mission of newMissionsData) {
                     await addDoc(assignedRef, mission);
                 }
 
-                assignedMissions = [...newMissions];
+                // 2. Borrar de missions
+                const missionsRef = collection(db, 'missions');
+                const missionsSnapshot = await getDocs(missionsRef);
+                const deletePromises = [];
+                missionsSnapshot.forEach(doc => {
+                    deletePromises.push(deleteDoc(doc.ref));
+                });
+                await Promise.all(deletePromises);
+
+                // 3. Actualizar interfaz
+                assignedMissions = [...newMissionsData];
                 renderAssignedMissions();
 
                 newSection.style.display = 'none';
                 assignBtn.disabled = true;
-                showAlert('✅ Misiones asignadas', 'success');
+                showAlert('✅ Misiones asignadas y eliminadas de "missions"', 'success');
             } catch (error) {
-                console.error('Error:', error);
-                showAlert('❌ Error al asignar', 'error');
+                console.error('Error al asignar:', error);
+                showAlert('❌ Error al asignar misiones', 'error');
             }
         });
 
-        // Terminar misiones asignadas (y limpiar todo)
+        // Terminar misiones: borrar assigned_missions y mission_responses
         endMissionsBtn.addEventListener('click', async () => {
-            if (!confirm('¿Estás seguro? Se eliminarán las misiones asignadas, sus respuestas y el progreso de los estudiantes.')) return;
+            if (!confirm('¿Estás seguro? Se eliminarán las misiones asignadas y todas las respuestas.')) return;
 
             try {
-                // 1. Obtener misiones asignadas
+                // 1. Borrar assigned_missions
                 const assignedRef = collection(db, 'assigned_missions');
                 const assignedSnapshot = await getDocs(assignedRef);
-                const missionIds = assignedSnapshot.docs.map(doc => doc.id);
-
-                if (missionIds.length === 0) {
-                    showAlert('No hay misiones asignadas', 'error');
-                    return;
-                }
-
-                // 2. Eliminar de `assigned_missions`
                 const deleteAssignedPromises = [];
                 assignedSnapshot.forEach(doc => {
                     deleteAssignedPromises.push(deleteDoc(doc.ref));
                 });
                 await Promise.all(deleteAssignedPromises);
 
-                // 3. Eliminar de `missions` (las originales)
-                const missionsRef = collection(db, 'missions');
-                const missionsQuery = query(missionsRef, where('__name__', 'in', missionIds));
-                const missionsSnapshot = await getDocs(missionsQuery);
-                const deleteMissionsPromises = [];
-                missionsSnapshot.forEach(doc => {
-                    deleteMissionsPromises.push(deleteDoc(doc.ref));
-                });
-                await Promise.all(deleteMissionsPromises);
-
-                // 4. Eliminar respuestas de `mission_responses`
+                // 2. Borrar mission_responses
                 const responsesRef = collection(db, 'mission_responses');
-                const responsesQuery = query(responsesRef, where('missionId', 'in', missionIds));
-                const responsesSnapshot = await getDocs(responsesQuery);
+                const responsesSnapshot = await getDocs(responsesRef);
                 const deleteResponsesPromises = [];
                 responsesSnapshot.forEach(doc => {
                     deleteResponsesPromises.push(deleteDoc(doc.ref));
                 });
                 await Promise.all(deleteResponsesPromises);
 
-                // 5. Limpiar `completedMissions` de todos los estudiantes
-                const studentsRef = collection(db, 'students');
-                const studentsSnapshot = await getDocs(studentsRef);
-                const updateStudentsPromises = [];
-                studentsSnapshot.forEach(studentDoc => {
-                    const data = studentDoc.data();
-                    if (data.completedMissions && data.completedMissions.some(id => missionIds.includes(id))) {
-                        const filtered = data.completedMissions.filter(id => !missionIds.includes(id));
-                        updateStudentsPromises.push(
-                            updateDoc(doc(db, 'students', studentDoc.id), {
-                                completedMissions: filtered
-                            })
-                        );
-                    }
-                });
-                await Promise.all(updateStudentsPromises);
-
-                // 6. Actualizar interfaz
+                // 3. Actualizar interfaz
                 assignedMissions = [];
                 assignedSection.style.display = 'none';
-                await loadNewMissionsAndRender();
-                showAlert('✅ Misiones eliminadas y progreso reiniciado', 'success');
+                const newMissionsData = await loadNewMissions();
+                newMissions = newMissionsData;
+                renderNewMissions(newMissionsData);
+                assignBtn.disabled = false;
+                newSection.style.display = 'block';
+                showAlert('✅ Misiones y respuestas eliminadas', 'success');
             } catch (error) {
-                console.error('Error al terminar misiones:', error);
-                showAlert('❌ Error al limpiar datos', 'error');
+                console.error('Error al terminar:', error);
+                showAlert('❌ Error al limpiar', 'error');
             }
         });
 
