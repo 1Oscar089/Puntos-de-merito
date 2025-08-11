@@ -316,71 +316,39 @@
         // Cargar datos iniciales
         async function loadData() {
             try {
-                // En un caso real, cargarías desde Firebase
-                // Por ahora uso datos de ejemplo
-                
-                // Simular misiones asignadas
-                assignedMissions = [
-                    {
-                        id: "1",
-                        name: "Limpieza del Aula",
-                        description: "Mantener el aula limpia durante toda la semana",
-                        points: 50,
-                        type: "normal",
-                        pointType: "normal"
-                    },
-                    {
-                        id: "2",
-                        name: "Pregunta de Historia",
-                        description: "Responder correctamente la pregunta sobre la independencia",
-                        points: 30,
-                        type: "question",
-                        pointType: "game",
-                        question: "¿En qué año se independizó El Salvador?"
-                    },
-                    {
-                        id: "3",
-                        name: "Quiz de Matemáticas",
-                        description: "Resolver el problema de álgebra",
-                        points: 40,
-                        type: "multiple_choice",
-                        pointType: "normal",
-                        question: "¿Cuál es el resultado de 2x + 5 = 15?",
-                        options: ["x = 5", "x = 7", "x = 10", "x = 15"],
-                        correctAnswer: 0
-                    }
-                ];
+                // Cargar misiones asignadas desde Firebase
+                const assignedMissionsSnapshot = await getDocs(collection(db, 'assigned_missions'));
+                assignedMissions = [];
+                assignedMissionsSnapshot.forEach((doc) => {
+                    assignedMissions.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
 
-                // Simular respuestas de estudiantes
-                missionResponses = [
-                    { missionId: "2", student: "Ana García", grade: "7mo", response: "1821" },
-                    { missionId: "2", student: "Carlos López", grade: "7mo", response: "1822" },
-                    { missionId: "3", student: "Sofia Hernández", grade: "8vo", response: 0 },
-                    { missionId: "3", student: "Diego Pérez", grade: "8vo", response: 1 }
-                ];
+                // Cargar misiones nuevas desde Firebase
+                const newMissionsSnapshot = await getDocs(collection(db, 'missions'));
+                newMissions = [];
+                newMissionsSnapshot.forEach((doc) => {
+                    newMissions.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
 
-                // Simular misiones nuevas
-                newMissions = [
-                    {
-                        id: "4",
-                        name: "Ayuda a Compañeros",
-                        description: "Ayudar a 3 compañeros con sus tareas",
-                        points: 25,
-                        type: "normal",
-                        pointType: "normal"
-                    },
-                    {
-                        id: "5",
-                        name: "Pregunta de Ciencias",
-                        description: "Responder sobre el sistema solar",
-                        points: 35,
-                        type: "question",
-                        pointType: "game",
-                        question: "¿Cuál es el planeta más grande del sistema solar?"
-                    }
-                ];
+                // Cargar respuestas de misiones desde Firebase
+                const responsesSnapshot = await getDocs(collection(db, 'mission_responses'));
+                missionResponses = [];
+                responsesSnapshot.forEach((doc) => {
+                    missionResponses.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
 
+                // Por ahora usar estudiantes de ejemplo, pero se puede cargar de Firebase también
                 students = sampleStudents;
+
                 renderAssignedMissions();
                 renderNewMissions();
             } catch (error) {
@@ -568,10 +536,29 @@
 
         function markAsComplete(missionId, student, points, pointType) {
             const pointsText = pointType === 'game' ? `${points} puntos de juego` : `${points} puntos`;
-            alert(`✅ ¡Completado!\n\nEstudiante: ${student}\nPuntos otorgados: ${pointsText}`);
             
-            // Aquí implementarías la lógica para sumar puntos al estudiante en Firebase
-            console.log(`Sumando ${points} ${pointType} puntos a ${student}`);
+            if (confirm(`✅ ¿Confirmas completar la misión?\n\nEstudiante: ${student}\nPuntos a otorgar: ${pointsText}`)) {
+                // Aquí implementarías la lógica para sumar puntos al estudiante en Firebase
+                // Por ejemplo, actualizando una colección 'students' o 'student_points'
+                
+                try {
+                    // Ejemplo de cómo podrías guardar los puntos:
+                    // await addDoc(collection(db, 'student_points'), {
+                    //     student: student,
+                    //     points: points,
+                    //     pointType: pointType,
+                    //     missionId: missionId,
+                    //     completedAt: new Date(),
+                    //     completedBy: 'teacher' // o el usuario actual
+                    // });
+                    
+                    alert(`✅ ¡Completado!\n\nEstudiante: ${student}\nPuntos otorgados: ${pointsText}`);
+                    console.log(`Sumando ${points} ${pointType} puntos a ${student} por misión ${missionId}`);
+                } catch (error) {
+                    console.error("Error marking as complete:", error);
+                    alert('❌ Error al completar la misión');
+                }
+            }
         }
 
         function attachEventListeners(isAssigned) {
@@ -582,7 +569,24 @@
         document.getElementById('finish-missions').addEventListener('click', async () => {
             if (confirm('⚠️ ¿Estás seguro de que quieres terminar todas las misiones?\n\nEsto eliminará todas las misiones asignadas y respuestas.')) {
                 try {
-                    // Aquí implementarías la eliminación en Firebase
+                    // Eliminar todos los documentos de assigned_missions
+                    const assignedMissionsSnapshot = await getDocs(collection(db, 'assigned_missions'));
+                    const deleteAssignedPromises = [];
+                    assignedMissionsSnapshot.forEach((docSnapshot) => {
+                        deleteAssignedPromises.push(deleteDoc(doc(db, 'assigned_missions', docSnapshot.id)));
+                    });
+
+                    // Eliminar todos los documentos de mission_responses
+                    const responsesSnapshot = await getDocs(collection(db, 'mission_responses'));
+                    const deleteResponsesPromises = [];
+                    responsesSnapshot.forEach((docSnapshot) => {
+                        deleteResponsesPromises.push(deleteDoc(doc(db, 'mission_responses', docSnapshot.id)));
+                    });
+
+                    // Esperar a que se eliminen todos los documentos
+                    await Promise.all([...deleteAssignedPromises, ...deleteResponsesPromises]);
+
+                    // Actualizar arrays locales
                     assignedMissions = [];
                     missionResponses = [];
                     renderAssignedMissions();
@@ -602,11 +606,26 @@
 
             if (confirm(`📤 ¿Deseas asignar ${newMissions.length} misiones nuevas?`)) {
                 try {
-                    // Aquí implementarías la transferencia en Firebase
-                    assignedMissions = [...assignedMissions, ...newMissions];
-                    newMissions = [];
-                    renderAssignedMissions();
-                    renderNewMissions();
+                    // Transferir misiones de 'missions' a 'assigned_missions'
+                    const addPromises = [];
+                    const deletePromises = [];
+
+                    for (const mission of newMissions) {
+                        // Crear copia de la misión sin el ID (Firebase generará uno nuevo)
+                        const { id, ...missionData } = mission;
+                        
+                        // Agregar a assigned_missions
+                        addPromises.push(addDoc(collection(db, 'assigned_missions'), missionData));
+                        
+                        // Eliminar de missions
+                        deletePromises.push(deleteDoc(doc(db, 'missions', id)));
+                    }
+
+                    // Ejecutar todas las operaciones
+                    await Promise.all([...addPromises, ...deletePromises]);
+
+                    // Recargar datos
+                    await loadData();
                     alert('✅ ¡Misiones asignadas correctamente!');
                 } catch (error) {
                     console.error("Error assigning missions:", error);
