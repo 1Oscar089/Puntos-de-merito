@@ -502,56 +502,61 @@
                             <p><strong>${mission.question}</strong></p>
                             <textarea class="response-field" id="response-${mission.id}" placeholder="Escribe tu respuesta..." ${response ? 'disabled' : ''}>${response ? response.response : ''}</textarea>
                             <button class="submit-btn" id="submit-${mission.id}" ${response ? 'disabled' : ''}>Aceptar</button>
-                            <div id="timer-${mission.id}" class="timer"></div>
+                            <div class="timer" id="timer-${mission.id}"></div>
                         ` : ''}
                         ${mission.type === 'mcq' ? `
                             <p><strong>${mission.question}</strong></p>
                             <div class="options-container" id="options-${mission.id}"></div>
-                            <div id="timer-${mission.id}" class="timer"></div>
+                            <div class="timer" id="timer-${mission.id}"></div>
                         ` : ''}
                         ${response ? `<p><strong>Estado:</strong> ✅ Respondido</p>` : ''}
                     </div>
                 `;
                 missionsList.appendChild(missionEl);
 
+                // Agregar opciones para MCQ
                 if (mission.type === 'mcq' && !response) {
                     const optionsContainer = missionEl.querySelector(`#options-${mission.id}`);
                     mission.options.forEach((opt, i) => {
                         const btn = document.createElement('button');
                         btn.className = 'option-btn';
                         btn.textContent = opt;
-                        btn.onclick = () => selectOption(mission.id, i, mission.correctIndex, mission.points, mission.isGamePoints);
+                        btn.onclick = () => selectOption(mission.id, i, mission.correctIndex, mission.points, mission.isGamePoints, missionEl);
                         optionsContainer.appendChild(btn);
                     });
                 }
 
                 // Solo desplegar si no ha respondido
                 if (!response) {
-                    missionEl.querySelector('.mission-header').onclick = () => {
+                    const header = missionEl.querySelector('.mission-header');
+                    header.onclick = () => {
                         const details = missionEl.querySelector(`#details-${mission.id}`);
                         details.style.display = 'block';
-                        startTimer(mission);
-                        missionEl.querySelector('.mission-header').onclick = null;
+                        startTimer(mission, missionEl);
+                        header.onclick = null; // Evitar múltiples aperturas
                     };
                 }
             });
         }
 
-        // Iniciar temporizador de misión
-        function startTimer(mission) {
-            const timerEl = document.getElementById(`timer-${mission.id}`);
-            let time = mission.type === 'question' ? 40 : 30;
+        // Iniciar temporizador
+        function startTimer(mission, missionEl) {
+            const timerEl = missionEl.querySelector(`#timer-${mission.id}`);
+            if (!timerEl) return; // Protección contra null
 
+            let time = mission.type === 'question' ? 40 : 30;
             timerEl.textContent = `⏰ Tiempo restante: ${time} segundos`;
 
             const interval = setInterval(() => {
                 time--;
-                timerEl.textContent = `⏰ Tiempo restante: ${time} segundos`;
+                if (timerEl) {
+                    timerEl.textContent = `⏰ Tiempo restante: ${time} segundos`;
+                }
 
                 if (time <= 0) {
                     clearInterval(interval);
-                    disableMissionResponse(mission);
-                    timerEl.textContent = '⏰ Tiempo agotado';
+                    disableMissionResponse(mission, missionEl);
+                    if (timerEl) timerEl.textContent = '⏰ Tiempo agotado';
                     saveResponse(mission.id, null, 'timeout');
                 }
             }, 1000);
@@ -560,9 +565,9 @@
         }
 
         // Desactivar respuesta
-        function disableMissionResponse(mission) {
-            const submitBtn = document.getElementById(`submit-${mission.id}`);
-            const options = document.querySelectorAll(`#options-${mission.id} .option-btn`);
+        function disableMissionResponse(mission, missionEl) {
+            const submitBtn = missionEl.querySelector(`#submit-${mission.id}`);
+            const options = missionEl.querySelectorAll(`#options-${mission.id} .option-btn`);
 
             if (submitBtn) submitBtn.disabled = true;
             options.forEach(btn => {
@@ -581,23 +586,25 @@
                 return;
             }
 
-            clearInterval(timers[missionId]);
-            disableMissionResponse({ id: missionId });
-            await saveResponse(missionId, response, 'respondido');
-            document.getElementById(`timer-${missionId}`).textContent = '✅ Enviado';
+            const missionEl = responseInput.closest('.mission-item');
+            const timerEl = missionEl ? missionEl.querySelector(`#timer-${missionId}`) : null;
 
-            // Actualizar interfaz
+            clearInterval(timers[missionId]);
+            disableMissionResponse({ id: missionId }, missionEl);
+
+            if (timerEl) timerEl.textContent = '✅ Enviado';
             responseInput.disabled = true;
             document.getElementById(`submit-${missionId}`).disabled = true;
-            document.getElementById(`submit-${missionId}`).classList.add('disabled');
+
+            await saveResponse(missionId, response, 'respondido');
         };
 
         // Seleccionar opción múltiple
-        window.selectOption = async function(missionId, optionIndex, correctIndex, points, isGamePoints) {
+        window.selectOption = async function(missionId, optionIndex, correctIndex, points, isGamePoints, missionEl) {
             clearInterval(timers[missionId]);
-            disableMissionResponse({ id: missionId });
+            disableMissionResponse({ id: missionId }, missionEl);
 
-            const options = document.querySelectorAll(`#options-${missionId} .option-btn`);
+            const options = missionEl.querySelectorAll(`#options-${missionId} .option-btn`);
             options.forEach((btn, i) => {
                 btn.disabled = true;
                 if (i === optionIndex) {
@@ -611,7 +618,8 @@
                 await addPointsToStudent(currentStudent.id, points, isGamePoints);
             }
 
-            document.getElementById(`timer-${missionId}`).textContent = '✅ Enviado';
+            const timerEl = missionEl.querySelector(`#timer-${missionId}`);
+            if (timerEl) timerEl.textContent = '✅ Enviado';
         };
 
         // Guardar respuesta en Firebase
@@ -643,13 +651,13 @@
             meritPointsEl.textContent = (studentData[field] || 0) + points;
         }
 
-        // Temporizador de nuevas misiones (cada día a las 8 PM)
+        // Temporizador de nuevas misiones
         function startMissionsCountdown() {
             function getNextResetTime() {
                 const now = new Date();
                 const reset = new Date(now);
-                reset.setHours(20, 0, 0, 0); // 8:00 PM
-                if (now.getHours() >= 20) {
+                reset.setHours(20, 0, 0, 0);
+                if (now >= reset) {
                     reset.setDate(reset.getDate() + 1);
                 }
                 return reset;
@@ -667,7 +675,7 @@
                 missionsTimer.textContent = `⏰ Nuevas misiones en: ${hours}h ${minutes}m ${seconds}s`;
 
                 if (diff <= 0) {
-                    location.reload(); // Recargar cuando cambie el día
+                    location.reload();
                 }
             }
 
