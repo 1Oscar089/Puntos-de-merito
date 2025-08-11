@@ -27,12 +27,6 @@
             overscroll-behavior: none;
         }
 
-        /* Prevenir zoom en celular */
-        input, textarea {
-            -webkit-user-select: text;
-            user-select: text;
-        }
-
         .container {
             max-width: 800px;
             width: 100%;
@@ -48,9 +42,6 @@
             padding: 30px;
             text-align: center;
             color: white;
-            position: relative;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
         .header h1 {
@@ -185,20 +176,15 @@
             padding: 15px;
             margin-bottom: 15px;
             border-left: 4px solid #11998e;
-            cursor: pointer;
             transition: all 0.3s ease;
-            opacity: 1;
-        }
-
-        .mission-item.disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
         }
 
         .mission-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
+            padding: 5px 0;
         }
 
         .mission-name {
@@ -216,17 +202,11 @@
             font-weight: bold;
         }
 
-        .timer {
-            font-size: 0.9em;
-            color: #dc3545;
-            font-weight: 600;
-            margin-top: 5px;
-        }
-
         .mission-details {
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #dee2e6;
+            display: none;
         }
 
         .mission-desc {
@@ -242,6 +222,7 @@
             border-radius: 8px;
             font-size: 16px;
             margin-bottom: 15px;
+            resize: vertical;
         }
 
         .options-container {
@@ -296,6 +277,13 @@
             cursor: not-allowed;
         }
 
+        .timer {
+            font-size: 0.9em;
+            color: #dc3545;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
         .no-missions {
             text-align: center;
             color: #666;
@@ -303,7 +291,6 @@
             font-style: italic;
         }
 
-        /* Prevenir capturas (estilo adicional) */
         ::selection {
             background: transparent;
         }
@@ -355,7 +342,7 @@
     <script type="module">
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where, addDoc, getDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -386,33 +373,12 @@
         let studentResponses = {};
         let timers = {};
 
-        // Prevenir capturas (en algunos navegadores)
+        // Prevenir acciones no deseadas
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('selectstart', e => e.preventDefault());
         document.addEventListener('copy', e => e.preventDefault());
         document.addEventListener('cut', e => e.preventDefault());
         document.addEventListener('paste', e => e.preventDefault());
-
-        // En móviles, intentar bloquear gestos
-        document.addEventListener('touchstart', function(e) {
-            if (e.touches.length > 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        document.addEventListener('gesturestart', e => e.preventDefault());
-        document.addEventListener('gesturechange', e => e.preventDefault());
-        document.addEventListener('gestureend', e => e.preventDefault());
-
-        // Intentar bloquear capturas (Chrome/Edge)
-        if (navigator.clipboard && navigator.clipboard.write) {
-            navigator.clipboard.write = new Proxy(navigator.clipboard.write, {
-                apply: function(target, thisArg, args) {
-                    console.warn('Intento de copiar bloqueado');
-                    return Promise.reject(new Error('Blocked'));
-                }
-            });
-        }
 
         // Función de login
         async function login() {
@@ -497,55 +463,55 @@
             }
 
             assignedMissions.forEach(mission => {
-                const response = studentResponses[mission.id];
+                const hasResponded = studentResponses[mission.id];
 
                 const missionEl = document.createElement('div');
-                missionEl.className = 'mission-item' + (response ? ' disabled' : '');
+                missionEl.className = 'mission-item';
                 missionEl.innerHTML = `
                     <div class="mission-header">
                         <span class="mission-name">${mission.name}</span>
                         <span class="points-badge">${mission.points} puntos</span>
                     </div>
-                    <div class="mission-details" id="details-${mission.id}">
+                    <div class="mission-details" id="details-${mission.id}" style="display: none;">
                         <p class="mission-desc">${mission.description}</p>
-                        ${!response && mission.type === 'question' ? renderQuestionForm(mission) : ''}
-                        ${!response && mission.type === 'mcq' ? renderMCQForm(mission) : ''}
-                        ${response ? '<p><strong>Estado:</strong> <span style="color:#28a745">✅ Respondido</span></p>' : ''}
-                        <div id="timer-${mission.id}" class="timer" style="display: ${response ? 'none' : 'block'};"></div>
+                        ${mission.type === 'question' ? `
+                            <p><strong>${mission.question}</strong></p>
+                            <textarea class="response-field" id="response-${mission.id}" placeholder="Escribe tu respuesta..."></textarea>
+                            <button class="submit-btn" id="submit-${mission.id}" onclick="submitResponse('${mission.id}')">Aceptar</button>
+                            <div id="timer-${mission.id}" class="timer"></div>
+                        ` : ''}
+                        ${mission.type === 'mcq' ? `
+                            <p><strong>${mission.question}</strong></p>
+                            <div class="options-container" id="options-${mission.id}"></div>
+                            <div id="timer-${mission.id}" class="timer"></div>
+                        ` : ''}
+                        ${hasResponded ? `<p><strong>Estado:</strong> ✅ Respondido</p>` : ''}
                     </div>
                 `;
                 missionsList.appendChild(missionEl);
 
-                if (!response) {
-                    missionEl.addEventListener('click', () => openMissionOnce(mission, missionEl));
+                if (mission.type === 'mcq' && !hasResponded) {
+                    const optionsContainer = missionEl.querySelector(`#options-${mission.id}`);
+                    mission.options.forEach((opt, i) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'option-btn';
+                        btn.textContent = opt;
+                        btn.onclick = () => selectOption(mission.id, i, mission.correctIndex, mission.points, mission.isGamePoints);
+                        optionsContainer.appendChild(btn);
+                    });
+                }
+
+                // Solo desplegar si no ha respondido
+                if (!hasResponded) {
+                    missionEl.querySelector('.mission-header').onclick = () => {
+                        const details = missionEl.querySelector(`#details-${mission.id}`);
+                        details.style.display = 'block';
+                        startTimer(mission);
+                        // Desactivar más clics
+                        missionEl.querySelector('.mission-header').onclick = null;
+                    };
                 }
             });
-        }
-
-        // Abrir misión solo una vez
-        function openMissionOnce(mission, element) {
-            element.removeEventListener('click', arguments.callee);
-            element.classList.add('disabled');
-            startTimer(mission);
-        }
-
-        // Renderizar formulario de pregunta
-        function renderQuestionForm(mission) {
-            return `
-                <textarea class="response-field" id="response-${mission.id}" placeholder="Escribe tu respuesta..."></textarea>
-                <button class="submit-btn" id="submit-${mission.id}">Aceptar</button>
-            `;
-        }
-
-        // Renderizar opción múltiple
-        function renderMCQForm(mission) {
-            const optionsHTML = mission.options.map((opt, i) => `
-                <button class="option-btn" onclick="selectOption('${mission.id}', ${i})">${opt}</button>
-            `).join('');
-            return `
-                <p><strong>${mission.question}</strong></p>
-                <div class="options-container">${optionsHTML}</div>
-            `;
         }
 
         // Iniciar temporizador
@@ -563,7 +529,7 @@
                     clearInterval(interval);
                     disableMissionResponse(mission);
                     timerEl.textContent = '⏰ Tiempo agotado';
-                    saveResponse(mission.id, null, 'timeout'); // Guardar timeout
+                    saveResponse(mission.id, null, 'timeout');
                 }
             }, 1000);
 
@@ -573,7 +539,7 @@
         // Desactivar respuesta
         function disableMissionResponse(mission) {
             const submitBtn = document.getElementById(`submit-${mission.id}`);
-            const options = document.querySelectorAll(`#details-${mission.id} .option-btn`);
+            const options = document.querySelectorAll(`#options-${mission.id} .option-btn`);
 
             if (submitBtn) submitBtn.disabled = true;
             options.forEach(btn => {
@@ -592,22 +558,33 @@
                 return;
             }
 
-            try {
-                clearInterval(timers[missionId]);
-                disableMissionResponse({ id: missionId });
-                await saveResponse(missionId, response, 'respondido');
-                document.getElementById(`timer-${missionId}`).textContent = '✅ Enviado';
-            } catch (error) {
-                console.error('Error guardando respuesta:', error);
-                alert('Error al enviar');
-            }
+            clearInterval(timers[missionId]);
+            disableMissionResponse({ id: missionId });
+            await saveResponse(missionId, response, 'respondido');
+            document.getElementById(`timer-${missionId}`).textContent = '✅ Enviado';
         };
 
         // Seleccionar opción múltiple
-        window.selectOption = async function(missionId, optionIndex) {
+        window.selectOption = async function(missionId, optionIndex, correctIndex, points, isGamePoints) {
             clearInterval(timers[missionId]);
             disableMissionResponse({ id: missionId });
+
+            const options = document.querySelectorAll(`#options-${missionId} .option-btn`);
+            options.forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === optionIndex) {
+                    btn.classList.add(optionIndex === correctIndex ? 'selected' : 'disabled');
+                }
+            });
+
+            // Guardar respuesta
             await saveResponse(missionId, optionIndex, 'respondido');
+
+            // Si es correcta, sumar puntos
+            if (optionIndex === correctIndex) {
+                await addPointsToStudent(currentStudent.id, points, isGamePoints);
+            }
+
             document.getElementById(`timer-${missionId}`).textContent = '✅ Enviado';
         };
 
@@ -624,9 +601,21 @@
             });
 
             studentResponses[missionId] = { response, status };
-            if (status === 'timeout') {
-                alert('⏰ Tiempo agotado. No se puede responder.');
-            }
+        }
+
+        // Sumar puntos al estudiante
+        async function addPointsToStudent(studentId, points, isGamePoints) {
+            const studentRef = doc(db, 'students', studentId);
+            const studentDoc = await getDoc(studentRef);
+            const studentData = studentDoc.data();
+
+            const field = isGamePoints ? 'gamePoints' : 'points';
+            await updateDoc(studentRef, {
+                [field]: (studentData[field] || 0) + points
+            });
+
+            // Actualizar interfaz
+            meritPointsEl.textContent = (studentData[field] || 0) + points;
         }
 
         // Mostrar alertas
