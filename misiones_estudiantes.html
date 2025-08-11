@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Misiones - Estudiante</title>
+    <meta name="robots" content="noindex, nofollow">
     <style>
         * {
             margin: 0;
@@ -19,6 +20,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            overscroll-behavior: none;
+        }
+
+        /* Prevenir zoom en celular */
+        input, textarea {
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         .container {
@@ -36,6 +48,9 @@
             padding: 30px;
             text-align: center;
             color: white;
+            position: relative;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .header h1 {
@@ -135,7 +150,7 @@
             border: 1px solid #f5c6cb;
         }
 
-        /* Panel de misiones (oculto al inicio) */
+        /* Panel de misiones */
         .missions-panel {
             display: none;
         }
@@ -172,10 +187,12 @@
             border-left: 4px solid #11998e;
             cursor: pointer;
             transition: all 0.3s ease;
+            opacity: 1;
         }
 
-        .mission-item:hover {
-            background: #e9ecef;
+        .mission-item.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .mission-header {
@@ -207,7 +224,6 @@
         }
 
         .mission-details {
-            display: none;
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #dee2e6;
@@ -286,6 +302,11 @@
             padding: 40px;
             font-style: italic;
         }
+
+        /* Prevenir capturas (estilo adicional) */
+        ::selection {
+            background: transparent;
+        }
     </style>
 </head>
 <body>
@@ -334,7 +355,7 @@
     <script type="module">
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where, addDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where, addDoc, getDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -365,13 +386,38 @@
         let studentResponses = {};
         let timers = {};
 
+        // Prevenir capturas (en algunos navegadores)
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('selectstart', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('cut', e => e.preventDefault());
+        document.addEventListener('paste', e => e.preventDefault());
+
+        // En móviles, intentar bloquear gestos
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+        document.addEventListener('gestureend', e => e.preventDefault());
+
+        // Intentar bloquear capturas (Chrome/Edge)
+        if (navigator.clipboard && navigator.clipboard.write) {
+            navigator.clipboard.write = new Proxy(navigator.clipboard.write, {
+                apply: function(target, thisArg, args) {
+                    console.warn('Intento de copiar bloqueado');
+                    return Promise.reject(new Error('Blocked'));
+                }
+            });
+        }
+
         // Función de login
         async function login() {
-            const nieInput = document.getElementById('nie');
-            const passwordInput = document.getElementById('password');
-
-            const nie = nieInput.value.trim().toUpperCase();
-            const password = passwordInput.value.trim();
+            const nie = document.getElementById('nie').value.trim().toUpperCase();
+            const password = document.getElementById('password').value.trim();
 
             if (!nie || !password) {
                 showAlert('Completa todos los campos', 'error');
@@ -390,7 +436,6 @@
 
                 const studentDoc = querySnapshot.docs[0];
                 const studentData = studentDoc.data();
-
                 const enteredPassword = parseInt(password);
                 const correctPassword = studentData.password;
 
@@ -437,7 +482,7 @@
                 const data = doc.data();
                 studentResponses[data.missionId] = {
                     response: data.response,
-                    timestamp: data.timestamp?.toDate()
+                    status: data.status || 'respondido'
                 };
             });
         }
@@ -452,10 +497,10 @@
             }
 
             assignedMissions.forEach(mission => {
-                const hasResponded = studentResponses[mission.id];
+                const response = studentResponses[mission.id];
 
                 const missionEl = document.createElement('div');
-                missionEl.className = 'mission-item';
+                missionEl.className = 'mission-item' + (response ? ' disabled' : '');
                 missionEl.innerHTML = `
                     <div class="mission-header">
                         <span class="mission-name">${mission.name}</span>
@@ -463,42 +508,40 @@
                     </div>
                     <div class="mission-details" id="details-${mission.id}">
                         <p class="mission-desc">${mission.description}</p>
-                        ${mission.type === 'question' ? renderQuestionForm(mission, hasResponded) : ''}
-                        ${mission.type === 'mcq' ? renderMCQForm(mission, hasResponded) : ''}
-                        <div id="timer-${mission.id}" class="timer" style="display: none;"></div>
+                        ${!response && mission.type === 'question' ? renderQuestionForm(mission) : ''}
+                        ${!response && mission.type === 'mcq' ? renderMCQForm(mission) : ''}
+                        ${response ? '<p><strong>Estado:</strong> <span style="color:#28a745">✅ Respondido</span></p>' : ''}
+                        <div id="timer-${mission.id}" class="timer" style="display: ${response ? 'none' : 'block'};"></div>
                     </div>
                 `;
                 missionsList.appendChild(missionEl);
 
-                // Toggle detalles
-                missionEl.addEventListener('click', () => {
-                    const details = document.getElementById(`details-${mission.id}`);
-                    const isVisible = details.style.display === 'block';
-                    details.style.display = isVisible ? 'none' : 'block';
-
-                    if (!isVisible && !hasResponded && ['question', 'mcq'].includes(mission.type)) {
-                        startTimer(mission);
-                    }
-                });
+                if (!response) {
+                    missionEl.addEventListener('click', () => openMissionOnce(mission, missionEl));
+                }
             });
         }
 
+        // Abrir misión solo una vez
+        function openMissionOnce(mission, element) {
+            element.removeEventListener('click', arguments.callee);
+            element.classList.add('disabled');
+            startTimer(mission);
+        }
+
         // Renderizar formulario de pregunta
-        function renderQuestionForm(mission, hasResponded) {
+        function renderQuestionForm(mission) {
             return `
-                <textarea class="response-field" id="response-${mission.id}" placeholder="Escribe tu respuesta..." ${hasResponded ? 'disabled' : ''}>${hasResponded ? mission.question : ''}</textarea>
-                <button class="submit-btn" id="submit-${mission.id}" ${hasResponded ? 'disabled' : ''}>Aceptar</button>
+                <textarea class="response-field" id="response-${mission.id}" placeholder="Escribe tu respuesta..."></textarea>
+                <button class="submit-btn" id="submit-${mission.id}">Aceptar</button>
             `;
         }
 
         // Renderizar opción múltiple
-        function renderMCQForm(mission, hasResponded) {
+        function renderMCQForm(mission) {
             const optionsHTML = mission.options.map((opt, i) => `
-                <button class="option-btn" id="option-${mission.id}-${i}" ${hasResponded ? 'disabled' : ''}>
-                    ${opt}
-                </button>
+                <button class="option-btn" onclick="selectOption('${mission.id}', ${i})">${opt}</button>
             `).join('');
-
             return `
                 <p><strong>${mission.question}</strong></p>
                 <div class="options-container">${optionsHTML}</div>
@@ -510,17 +553,17 @@
             const timerEl = document.getElementById(`timer-${mission.id}`);
             let time = mission.type === 'question' ? 40 : 30;
 
-            timerEl.style.display = 'block';
-            timerEl.textContent = `Tiempo restante: ${time} segundos`;
+            timerEl.textContent = `⏰ Tiempo restante: ${time} segundos`;
 
             const interval = setInterval(() => {
                 time--;
-                timerEl.textContent = `Tiempo restante: ${time} segundos`;
+                timerEl.textContent = `⏰ Tiempo restante: ${time} segundos`;
 
                 if (time <= 0) {
                     clearInterval(interval);
                     disableMissionResponse(mission);
                     timerEl.textContent = '⏰ Tiempo agotado';
+                    saveResponse(mission.id, null, 'timeout'); // Guardar timeout
                 }
             }, 1000);
 
@@ -550,10 +593,10 @@
             }
 
             try {
-                await saveResponse(missionId, response);
-                responseInput.disabled = true;
-                document.getElementById(`submit-${missionId}`).disabled = true;
                 clearInterval(timers[missionId]);
+                disableMissionResponse({ id: missionId });
+                await saveResponse(missionId, response, 'respondido');
+                document.getElementById(`timer-${missionId}`).textContent = '✅ Enviado';
             } catch (error) {
                 console.error('Error guardando respuesta:', error);
                 alert('Error al enviar');
@@ -562,38 +605,28 @@
 
         // Seleccionar opción múltiple
         window.selectOption = async function(missionId, optionIndex) {
-            const optionBtns = document.querySelectorAll(`#option-${missionId}-\\`);
-            optionBtns.forEach(btn => {
-                btn.disabled = true;
-                btn.classList.remove('selected');
-                btn.classList.add('disabled');
-            });
-
-            const selectedBtn = document.getElementById(`option-${missionId}-${optionIndex}`);
-            selectedBtn.classList.add('selected');
-
             clearInterval(timers[missionId]);
-
-            try {
-                await saveResponse(missionId, optionIndex);
-            } catch (error) {
-                console.error('Error guardando opción:', error);
-            }
+            disableMissionResponse({ id: missionId });
+            await saveResponse(missionId, optionIndex, 'respondido');
+            document.getElementById(`timer-${missionId}`).textContent = '✅ Enviado';
         };
 
         // Guardar respuesta en Firebase
-        async function saveResponse(missionId, response) {
+        async function saveResponse(missionId, response, status) {
             const responsesRef = collection(db, 'mission_responses');
             await addDoc(responsesRef, {
                 missionId,
                 studentNie: currentStudent.nie,
                 studentName: currentStudent.name,
                 response,
+                status,
                 timestamp: new Date()
             });
 
-            studentResponses[missionId] = { response, timestamp: new Date() };
-            alert('✅ Respuesta enviada');
+            studentResponses[missionId] = { response, status };
+            if (status === 'timeout') {
+                alert('⏰ Tiempo agotado. No se puede responder.');
+            }
         }
 
         // Mostrar alertas
@@ -606,6 +639,8 @@
 
         // Exponer funciones globales
         window.login = login;
+        window.submitResponse = submitResponse;
+        window.selectOption = selectOption;
     </script>
 </body>
 </html>
