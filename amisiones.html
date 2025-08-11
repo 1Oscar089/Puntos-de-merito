@@ -296,24 +296,27 @@
         let assignedMissions = [];
         let newMissions = [];
         let students = [];
-        let studentResponses = {}; // { misiónID: { nie: respuesta } }
+        let studentResponses = {};
 
         // Cargar datos al inicio
         window.addEventListener('load', async () => {
             try {
                 await loadStudents();
-                await loadMissions();
                 await loadResponses();
 
-                renderAssignedMissions();
-                renderNewMissions();
-
-                // Mostrar u ocultar secciones
-                if (assignedMissions.length > 0) {
-                    assignedSection.style.display = 'block';
+                // Primero verificar si hay misiones asignadas
+                const assigned = await loadAssignedMissions();
+                if (assigned.length > 0) {
+                    assignedMissions = assigned;
+                    renderAssignedMissions();
                     assignBtn.disabled = true;
+                    assignedSection.style.display = 'block';
+                    newSection.style.display = 'none';
                 } else {
+                    newMissions = await loadNewMissions();
+                    renderNewMissions();
                     assignedSection.style.display = 'none';
+                    newSection.style.display = 'block';
                     assignBtn.disabled = false;
                 }
             } catch (error) {
@@ -332,17 +335,7 @@
             });
         }
 
-        // Cargar misiones
-        async function loadMissions() {
-            const missionsRef = collection(db, 'missions');
-            const querySnapshot = await getDocs(missionsRef);
-            newMissions = [];
-            querySnapshot.forEach(doc => {
-                newMissions.push({ id: doc.id, ...doc.data() });
-            });
-        }
-
-        // Cargar respuestas de estudiantes (desde una colección 'mission_responses')
+        // Cargar respuestas
         async function loadResponses() {
             const responsesRef = collection(db, 'mission_responses');
             const querySnapshot = await getDocs(responsesRef);
@@ -354,6 +347,28 @@
                 }
                 studentResponses[data.missionId][data.studentNie] = data.response;
             });
+        }
+
+        // Cargar misiones asignadas
+        async function loadAssignedMissions() {
+            const assignedRef = collection(db, 'assigned_missions');
+            const querySnapshot = await getDocs(assignedRef);
+            const missions = [];
+            querySnapshot.forEach(doc => {
+                missions.push({ id: doc.id, ...doc.data() });
+            });
+            return missions;
+        }
+
+        // Cargar misiones nuevas (de la colección 'missions')
+        async function loadNewMissions() {
+            const missionsRef = collection(db, 'missions');
+            const querySnapshot = await getDocs(missionsRef);
+            const missions = [];
+            querySnapshot.forEach(doc => {
+                missions.push({ id: doc.id, ...doc.data() });
+            });
+            return missions;
         }
 
         // Renderizar misiones asignadas
@@ -381,7 +396,6 @@
                 `;
                 assignedMissionsList.appendChild(missionEl);
 
-                // Toggle detalles
                 missionEl.addEventListener('click', () => {
                     const details = document.getElementById(`details-${mission.id}`);
                     details.style.display = details.style.display === 'block' ? 'none' : 'block';
@@ -435,21 +449,19 @@
             });
         }
 
-        // Completar misión para un estudiante (normal o pregunta)
+        // Completar misión para un estudiante
         window.completeStudent = async function(missionId, studentId, points, isGamePoints) {
             try {
                 const studentRef = doc(db, 'students', studentId);
                 const studentDoc = await getDoc(studentRef);
                 const studentData = studentDoc.data();
 
-                // Actualizar puntos
                 const field = isGamePoints ? 'gamePoints' : 'points';
                 await updateDoc(studentRef, {
                     [field]: (studentData[field] || 0) + points,
                     completedMissions: [...(studentData.completedMissions || []), missionId]
                 });
 
-                // Actualizar botón
                 const btn = event.target;
                 btn.textContent = '✅ Completado';
                 btn.classList.add('disabled');
@@ -462,7 +474,7 @@
             }
         };
 
-        // Sumar puntos automáticamente (opción múltiple correcta)
+        // Otorgar puntos automáticamente (opción múltiple)
         async function addPointsToStudent(studentId, mission) {
             try {
                 const studentRef = doc(db, 'students', studentId);
@@ -516,11 +528,22 @@
                 return;
             }
 
-            assignedMissions = [...newMissions];
-            renderAssignedMissions();
+            try {
+                const assignedRef = collection(db, 'assigned_missions');
+                for (const mission of newMissions) {
+                    await addDoc(assignedRef, mission);
+                }
 
-            assignBtn.disabled = true;
-            showAlert(`✅ ${newMissions.length} misiones asignadas`, 'success');
+                assignedMissions = [...newMissions];
+                renderAssignedMissions();
+
+                newSection.style.display = 'none';
+                assignBtn.disabled = true;
+                showAlert('✅ Misiones asignadas correctamente', 'success');
+            } catch (error) {
+                console.error('Error asignando misiones:', error);
+                showAlert('❌ Error al asignar misiones', 'error');
+            }
         });
 
         // Terminar misiones asignadas
@@ -528,17 +551,16 @@
             if (!confirm('¿Estás seguro de terminar todas las misiones? Se eliminarán de Firebase.')) return;
 
             try {
-                // Eliminar misiones asignadas de Firebase
-                const missionsRef = collection(db, 'missions');
-                const q = query(missionsRef);
-                const querySnapshot = await getDocs(q);
+                const assignedRef = collection(db, 'assigned_missions');
+                const querySnapshot = await getDocs(assignedRef);
                 querySnapshot.forEach(async (doc) => {
                     await deleteDoc(doc.ref);
                 });
 
                 assignedMissions = [];
-                newMissions = [];
                 assignedSection.style.display = 'none';
+                newMissions = await loadNewMissions();
+                newSection.style.display = 'block';
                 assignBtn.disabled = false;
                 showAlert('🗑️ Misiones terminadas y eliminadas', 'success');
             } catch (error) {
