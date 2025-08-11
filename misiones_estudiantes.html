@@ -171,7 +171,6 @@
             padding: 15px;
             margin-bottom: 15px;
             border-left: 4px solid #11998e;
-            cursor: pointer;
             transition: all 0.3s ease;
         }
 
@@ -188,36 +187,22 @@
             color: #333;
         }
 
-        .points-badge {
-            background: #11998e;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: bold;
-        }
-
-        .points-type {
-            background: #6c757d;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            margin-top: 5px;
+        .points-info {
+            font-size: 0.95em;
+            color: #28a745;
+            font-weight: 600;
         }
 
         .mission-desc {
             color: #666;
             margin: 10px 0;
             line-height: 1.5;
-            display: none;
         }
 
         .mission-details {
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #dee2e6;
-            display: none;
         }
 
         .question-text {
@@ -377,7 +362,7 @@
         let currentStudent = null;
         let assignedMissions = [];
         let studentResponses = {};
-        let timers = {};
+        let timers = {}; // Cada misión tendrá su propio temporizador
 
         // Función de login
         async function login() {
@@ -468,112 +453,134 @@
                 missionEl.innerHTML = `
                     <div class="mission-header">
                         <span class="mission-name">${mission.name}</span>
-                        <span class="points-badge">${mission.points} puntos</span>
+                        <span class="points-info">${mission.points} ${mission.isGamePoints ? 'puntos de juego' : 'puntos'}</span>
                     </div>
-                    <p class="points-type">${mission.isGamePoints ? '🎮 Puntos de Juego' : '🏆 Puntos de Mérito'}</p>
                     <p class="mission-desc">${mission.description}</p>
-                    <div class="mission-details" style="display: none;"></div>
+                    <div class="mission-details" style="${hasResponded ? 'display: block;' : 'display: none;'}">
+                        ${hasResponded 
+                            ? '<p><strong>Estado:</strong> ✅ Respondido</p>' 
+                            : renderMissionContent(mission)}
+                    </div>
                 `;
                 missionsList.appendChild(missionEl);
 
-                const details = missionEl.querySelector('.mission-details');
-
-                // Solo desplegar si no ha respondido
+                // Si ya respondió, no hacer clic
                 if (!hasResponded) {
                     missionEl.addEventListener('click', function openOnce() {
                         missionEl.removeEventListener('click', openOnce);
+                        const details = missionEl.querySelector('.mission-details');
                         details.style.display = 'block';
+                        details.innerHTML = renderMissionContent(mission);
 
                         if (mission.type === 'question') {
-                            details.innerHTML = `
-                                <p class="question-text">${mission.question}</p>
-                                <textarea class="response-field" placeholder="Escribe tu respuesta..."></textarea>
-                                <button class="submit-btn">Enviar</button>
-                                <div class="timer">⏳ Tiempo restante: 120 segundos</div>
-                            `;
-                            const textarea = details.querySelector('textarea');
-                            const submitBtn = details.querySelector('.submit-btn');
-                            const timerEl = details.querySelector('.timer');
-
-                            startTimer(mission.id, 120, () => {
-                                textarea.disabled = true;
-                                submitBtn.disabled = true;
-                                submitBtn.classList.add('disabled');
-                                timerEl.textContent = '⏰ Tiempo agotado';
-                                saveResponse(mission.id, null, 'timeout');
-                            });
-
-                            submitBtn.onclick = () => {
-                                const response = textarea.value.trim();
-                                if (!response) {
-                                    alert('Escribe una respuesta');
-                                    return;
-                                }
-                                clearInterval(timers[mission.id]);
-                                textarea.disabled = true;
-                                submitBtn.disabled = true;
-                                submitBtn.classList.add('disabled');
-                                timerEl.textContent = '✅ Enviado';
-                                saveResponse(mission.id, response, 'respondido');
-                            };
-                        }
-
-                        if (mission.type === 'mcq') {
-                            details.innerHTML = `
-                                <p class="question-text">${mission.question}</p>
-                                <div class="options-container"></div>
-                                <div class="timer">⏳ Tiempo restante: 45 segundos</div>
-                            `;
-                            const optionsContainer = details.querySelector('.options-container');
-                            const timerEl = details.querySelector('.timer');
-
-                            mission.options.forEach((opt, i) => {
-                                const btn = document.createElement('button');
-                                btn.className = 'option-btn';
-                                btn.textContent = opt;
-                                btn.onclick = () => {
-                                    clearInterval(timers[mission.id]);
-                                    Array.from(optionsContainer.children).forEach(b => {
-                                        b.disabled = true;
-                                        b.classList.add('disabled');
-                                    });
-                                    timerEl.textContent = '✅ Enviado';
-                                    saveResponse(mission.id, i, 'respondido');
-                                    if (i === mission.correctIndex) {
-                                        addPointsToStudent(currentStudent.id, mission.points, mission.isGamePoints);
-                                    }
-                                };
-                                optionsContainer.appendChild(btn);
-                            });
-
-                            startTimer(mission.id, 45, () => {
-                                Array.from(optionsContainer.children).forEach(b => {
-                                    b.disabled = true;
-                                    b.classList.add('disabled');
-                                });
-                                timerEl.textContent = '⏰ Tiempo agotado';
-                                saveResponse(mission.id, null, 'timeout');
-                            });
+                            setupQuestionMission(mission, details);
+                        } else if (mission.type === 'mcq') {
+                            setupMCQMission(mission, details);
                         }
                     });
-                } else {
-                    details.style.display = 'block';
-                    details.innerHTML = `<p><strong>Estado:</strong> ✅ Respondido</p>`;
                 }
             });
         }
 
-        // Iniciar temporizador
-        function startTimer(missionId, seconds, onEnd) {
-            let time = seconds;
-            const timerEl = document.querySelector(`#missionsList .mission-item .timer`);
-            if (!timerEl) return;
+        // Renderizar contenido de la misión
+        function renderMissionContent(mission) {
+            if (mission.type === 'normal') {
+                return `<p><em>Esta es una misión informativa.</em></p>`;
+            }
+            return `<div class="dynamic-content"></div>`;
+        }
 
+        // Configurar misión de pregunta
+        function setupQuestionMission(mission, container) {
+            const content = container.querySelector('.dynamic-content');
+            content.innerHTML = `
+                <p class="question-text">${mission.question}</p>
+                <textarea class="response-field" placeholder="Escribe tu respuesta..."></textarea>
+                <button class="submit-btn">Enviar</button>
+                <div class="timer">⏳ Tiempo restante: 120 segundos</div>
+            `;
+
+            const textarea = content.querySelector('.response-field');
+            const submitBtn = content.querySelector('.submit-btn');
+            const timerEl = content.querySelector('.timer');
+
+            startTimer(mission.id, 120, timerEl, () => {
+                textarea.disabled = true;
+                submitBtn.disabled = true;
+                submitBtn.classList.add('disabled');
+                timerEl.textContent = '⏰ Tiempo agotado';
+                saveResponse(mission.id, null, 'timeout');
+                container.innerHTML = '<p><strong>Estado:</strong> ⏰ Tiempo agotado</p>';
+            });
+
+            submitBtn.onclick = () => {
+                const response = textarea.value.trim();
+                if (!response) {
+                    alert('Escribe una respuesta');
+                    return;
+                }
+                clearInterval(timers[mission.id]);
+                textarea.disabled = true;
+                submitBtn.disabled = true;
+                submitBtn.classList.add('disabled');
+                timerEl.textContent = '✅ Enviado';
+                saveResponse(mission.id, response, 'respondido');
+                container.innerHTML = '<p><strong>Estado:</strong> ✅ Respondido</p>';
+            };
+        }
+
+        // Configurar opción múltiple
+        function setupMCQMission(mission, container) {
+            const content = container.querySelector('.dynamic-content');
+            content.innerHTML = `
+                <p class="question-text">${mission.question}</p>
+                <div class="options-container"></div>
+                <div class="timer">⏳ Tiempo restante: 45 segundos</div>
+            `;
+
+            const optionsContainer = content.querySelector('.options-container');
+            const timerEl = content.querySelector('.timer');
+
+            mission.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt;
+                btn.onclick = () => {
+                    clearInterval(timers[mission.id]);
+                    Array.from(optionsContainer.children).forEach(b => {
+                        b.disabled = true;
+                        b.classList.add('disabled');
+                    });
+                    timerEl.textContent = '✅ Enviado';
+                    saveResponse(mission.id, i, 'respondido');
+                    if (i === mission.correctIndex) {
+                        addPointsToStudent(currentStudent.id, mission.points, mission.isGamePoints);
+                    }
+                    container.innerHTML = '<p><strong>Estado:</strong> ✅ Respondido</p>';
+                };
+                optionsContainer.appendChild(btn);
+            });
+
+            startTimer(mission.id, 45, timerEl, () => {
+                Array.from(optionsContainer.children).forEach(b => {
+                    b.disabled = true;
+                    b.classList.add('disabled');
+                });
+                timerEl.textContent = '⏰ Tiempo agotado';
+                saveResponse(mission.id, null, 'timeout');
+                container.innerHTML = '<p><strong>Estado:</strong> ⏰ Tiempo agotado</p>';
+            });
+        }
+
+        // Iniciar temporizador independiente por misión
+        function startTimer(missionId, seconds, timerEl, onEnd) {
+            let time = seconds;
             const interval = setInterval(() => {
                 time--;
                 timerEl.textContent = `⏳ Tiempo restante: ${time} segundos`;
                 if (time <= 0) {
                     clearInterval(interval);
+                    delete timers[missionId];
                     onEnd();
                 }
             }, 1000);
