@@ -225,6 +225,12 @@
             resize: vertical;
         }
 
+        .response-field:disabled {
+            background-color: #f8f9fa;
+            color: #666;
+            cursor: not-allowed;
+        }
+
         .options-container {
             display: flex;
             flex-direction: column;
@@ -284,6 +290,17 @@
             margin-top: 10px;
         }
 
+        .missions-timer {
+            background: #343a40;
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
         .no-missions {
             text-align: center;
             color: #666;
@@ -330,6 +347,11 @@
                     </div>
                 </div>
 
+                <!-- Temporizador de nuevas misiones -->
+                <div class="missions-timer" id="missionsTimer">
+                    ⏰ Cargando...
+                </div>
+
                 <h3>📋 Tus Misiones</h3>
                 <div id="missionsList">
                     <!-- Aquí se mostrarán las misiones -->
@@ -366,6 +388,7 @@
         const missionsList = document.getElementById('missionsList');
         const studentNameEl = document.getElementById('studentName');
         const meritPointsEl = document.getElementById('meritPoints');
+        const missionsTimer = document.getElementById('missionsTimer');
 
         // Variables globales
         let currentStudent = null;
@@ -421,6 +444,7 @@
                 missionsPanel.style.display = 'block';
 
                 renderMissions();
+                startMissionsCountdown();
 
             } catch (error) {
                 console.error('Error en login:', error);
@@ -463,7 +487,7 @@
             }
 
             assignedMissions.forEach(mission => {
-                const hasResponded = studentResponses[mission.id];
+                const response = studentResponses[mission.id];
 
                 const missionEl = document.createElement('div');
                 missionEl.className = 'mission-item';
@@ -476,8 +500,8 @@
                         <p class="mission-desc">${mission.description}</p>
                         ${mission.type === 'question' ? `
                             <p><strong>${mission.question}</strong></p>
-                            <textarea class="response-field" id="response-${mission.id}" placeholder="Escribe tu respuesta..."></textarea>
-                            <button class="submit-btn" id="submit-${mission.id}" onclick="submitResponse('${mission.id}')">Aceptar</button>
+                            <textarea class="response-field" id="response-${mission.id}" placeholder="Escribe tu respuesta..." ${response ? 'disabled' : ''}>${response ? response.response : ''}</textarea>
+                            <button class="submit-btn" id="submit-${mission.id}" ${response ? 'disabled' : ''}>Aceptar</button>
                             <div id="timer-${mission.id}" class="timer"></div>
                         ` : ''}
                         ${mission.type === 'mcq' ? `
@@ -485,12 +509,12 @@
                             <div class="options-container" id="options-${mission.id}"></div>
                             <div id="timer-${mission.id}" class="timer"></div>
                         ` : ''}
-                        ${hasResponded ? `<p><strong>Estado:</strong> ✅ Respondido</p>` : ''}
+                        ${response ? `<p><strong>Estado:</strong> ✅ Respondido</p>` : ''}
                     </div>
                 `;
                 missionsList.appendChild(missionEl);
 
-                if (mission.type === 'mcq' && !hasResponded) {
+                if (mission.type === 'mcq' && !response) {
                     const optionsContainer = missionEl.querySelector(`#options-${mission.id}`);
                     mission.options.forEach((opt, i) => {
                         const btn = document.createElement('button');
@@ -502,19 +526,18 @@
                 }
 
                 // Solo desplegar si no ha respondido
-                if (!hasResponded) {
+                if (!response) {
                     missionEl.querySelector('.mission-header').onclick = () => {
                         const details = missionEl.querySelector(`#details-${mission.id}`);
                         details.style.display = 'block';
                         startTimer(mission);
-                        // Desactivar más clics
                         missionEl.querySelector('.mission-header').onclick = null;
                     };
                 }
             });
         }
 
-        // Iniciar temporizador
+        // Iniciar temporizador de misión
         function startTimer(mission) {
             const timerEl = document.getElementById(`timer-${mission.id}`);
             let time = mission.type === 'question' ? 40 : 30;
@@ -562,6 +585,11 @@
             disableMissionResponse({ id: missionId });
             await saveResponse(missionId, response, 'respondido');
             document.getElementById(`timer-${missionId}`).textContent = '✅ Enviado';
+
+            // Actualizar interfaz
+            responseInput.disabled = true;
+            document.getElementById(`submit-${missionId}`).disabled = true;
+            document.getElementById(`submit-${missionId}`).classList.add('disabled');
         };
 
         // Seleccionar opción múltiple
@@ -577,10 +605,8 @@
                 }
             });
 
-            // Guardar respuesta
             await saveResponse(missionId, optionIndex, 'respondido');
 
-            // Si es correcta, sumar puntos
             if (optionIndex === correctIndex) {
                 await addPointsToStudent(currentStudent.id, points, isGamePoints);
             }
@@ -614,8 +640,39 @@
                 [field]: (studentData[field] || 0) + points
             });
 
-            // Actualizar interfaz
             meritPointsEl.textContent = (studentData[field] || 0) + points;
+        }
+
+        // Temporizador de nuevas misiones (cada día a las 8 PM)
+        function startMissionsCountdown() {
+            function getNextResetTime() {
+                const now = new Date();
+                const reset = new Date(now);
+                reset.setHours(20, 0, 0, 0); // 8:00 PM
+                if (now.getHours() >= 20) {
+                    reset.setDate(reset.getDate() + 1);
+                }
+                return reset;
+            }
+
+            function updateTimer() {
+                const resetTime = getNextResetTime();
+                const now = new Date();
+                const diff = resetTime - now;
+
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                missionsTimer.textContent = `⏰ Nuevas misiones en: ${hours}h ${minutes}m ${seconds}s`;
+
+                if (diff <= 0) {
+                    location.reload(); // Recargar cuando cambie el día
+                }
+            }
+
+            updateTimer();
+            setInterval(updateTimer, 1000);
         }
 
         // Mostrar alertas
