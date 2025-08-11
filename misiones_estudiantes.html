@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misiones - Estudiante</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        /* Formulario de login */
+        .login-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Panel de misiones (oculto al inicio) */
+        .missions-panel {
+            display: none;
+        }
+
+        .student-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .student-info h2 {
+            color: #333;
+            font-size: 1.8em;
+        }
+
+        .points-display {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        /* Misiones */
+        .mission-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #11998e;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mission-item:hover {
+            background: #e9ecef;
+        }
+
+        .mission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mission-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .points-badge {
+            background: #11998e;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .timer {
+            font-size: 0.9em;
+            color: #dc3545;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .mission-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .mission-desc {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .response-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .option-btn {
+            padding: 12px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .option-btn:hover {
+            background: #f0f0f0;
+            border-color: #4facfe;
+        }
+
+        .option-btn.selected {
+            background: #4facfe;
+            color: white;
+            border-color: #4facfe;
+        }
+
+        .option-btn.disabled {
+            background: #e9ecef;
+            color: #666;
+            cursor: not-allowed;
+            border-color: #dee2e6;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .submit-btn.disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .no-missions {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Misiones - Estudiante</h1>
+            <p>Completa misiones para ganar puntos</p>
+        </div>
+
+        <div class="content">
+            <!-- Formulario de login -->
+            <div class="login-form" id="loginForm">
+                <h2>🔐 Iniciar Sesión</h2>
+                <div class="form-group">
+                    <label class="form-label" for="nie">NIE:</label>
+                    <input type="text" id="nie" class="form-input" placeholder="Ingresa tu NIE" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Contraseña:</label>
+                    <input type="password" id="password" class="form-input" placeholder="Ingresa tu contraseña" required>
+                </div>
+                <button class="btn" onclick="login()">Aceptar</button>
+                <div id="loginAlerts"></div>
+            </div>
+
+            <!-- Panel de misiones -->
+            <div class="missions-panel" id="missionsPanel">
+                <div class="student-header">
+                    <div class="student-info">
+                        <h2 id="studentName">Bienvenido</h2>
+                    </div>
+                    <div class="points-display">
+                        🔢 <span id="meritPoints">0</span> Puntos
+                    </div>
+                </div>
+
+                <h3>📋 Tus Misiones</h3>
+                <div id="missionsList">
+                    <!-- Aquí se mostrarán las misiones -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where, addDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
+            authDomain: "puntos-de-merito.firebaseapp.com",
+            projectId: "puntos-de-merito",
+            storageBucket: "puntos-de-merito.firebasestorage.app",
+            messagingSenderId: "793336144671",
+            appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
+            measurementId: "G-CZ340GE3T7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Elementos del DOM
+        const loginForm = document.getElementById('loginForm');
+        const missionsPanel = document.getElementById('missionsPanel');
+        const loginAlerts = document.getElementById('loginAlerts');
+        const missionsList = document.getElementById('missionsList');
+        const studentNameEl = document.getElementById('studentName');
+        const meritPointsEl = document.getElementById('meritPoints');
+
+        // Variables globales
+        let currentStudent = null;
+        let assignedMissions = [];
+        let studentResponses = {};
+        let timers = {};
+
+        // Función de login
+        async function login() {
+            const nieInput = document.getElementById('nie');
+            const passwordInput = document.getElementById('password');
+
+            const nie = nieInput.value.trim().toUpperCase();
+            const password = passwordInput.value.trim();
+
+            if (!nie || !password) {
+                showAlert('Completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const studentsRef = collection(db, 'students');
+                const q = query(studentsRef, where('nie', '==', nie));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    showAlert('NIE no encontrado', 'error');
+                    return;
+                }
+
+                const studentDoc = querySnapshot.docs[0];
+                const studentData = studentDoc.data();
+
+                const enteredPassword = parseInt(password);
+                const correctPassword = studentData.password;
+
+                if (isNaN(enteredPassword) || enteredPassword !== correctPassword) {
+                    showAlert('❌ Contraseña incorrecta', 'error');
+                    return;
+                }
+
+                currentStudent = { id: studentDoc.id, nie, ...studentData };
+                studentNameEl.textContent = studentData.name;
+                meritPointsEl.textContent = studentData.points || 0;
+
+                await loadAssignedMissions();
+                await loadStudentResponses();
+
+                loginForm.style.display = 'none';
+                missionsPanel.style.display = 'block';
+
+                renderMissions();
+
+            } catch (error) {
+                console.error('Error en login:', error);
+                showAlert('Error al conectar con la base de datos', 'error');
+            }
+        }
+
+        // Cargar misiones asignadas
+        async function loadAssignedMissions() {
+            const assignedRef = collection(db, 'assigned_missions');
+            const querySnapshot = await getDocs(assignedRef);
+            assignedMissions = [];
+            querySnapshot.forEach(doc => {
+                assignedMissions.push({ id: doc.id, ...doc.data() });
+            });
+        }
+
+        // Cargar respuestas del estudiante
+        async function loadStudentResponses() {
+            const responsesRef = collection(db, 'mission_responses');
+            const q = query(responsesRef, where('studentNie', '==', currentStudent.nie));
+            const querySnapshot = await getDocs(q);
+            studentResponses = {};
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                studentResponses[data.missionId] = {
+                    response: data.response,
+                    timestamp: data.timestamp?.toDate()
+                };
+            });
+        }
+
+        // Renderizar misiones
+        function renderMissions() {
+            missionsList.innerHTML = '';
+
+            if (assignedMissions.length === 0) {
+                missionsList.innerHTML = '<div class="no-missions">No tienes misiones asignadas</div>';
+                return;
+            }
+
+            assignedMissions.forEach(mission => {
+                const hasResponded = studentResponses[mission.id];
+
+                const missionEl = document.createElement('div');
+                missionEl.className = 'mission-item';
+                missionEl.innerHTML = `
+                    <div class="mission-header">
+                        <span class="mission-name">${mission.name}</span>
+                        <span class="points-badge">${mission.points} puntos</span>
+                    </div>
+                    <div class="mission-details" id="details-${mission.id}">
+                        <p class="mission-desc">${mission.description}</p>
+                        ${mission.type === 'question' ? renderQuestionForm(mission, hasResponded) : ''}
+                        ${mission.type === 'mcq' ? renderMCQForm(mission, hasResponded) : ''}
+                        <div id="timer-${mission.id}" class="timer" style="display: none;"></div>
+                    </div>
+                `;
+                missionsList.appendChild(missionEl);
+
+                // Toggle detalles
+                missionEl.addEventListener('click', () => {
+                    const details = document.getElementById(`details-${mission.id}`);
+                    const isVisible = details.style.display === 'block';
+                    details.style.display = isVisible ? 'none' : 'block';
+
+                    if (!isVisible && !hasResponded && ['question', 'mcq'].includes(mission.type)) {
+                        startTimer(mission);
+                    }
+                });
+            });
+        }
+
+        // Renderizar formulario de pregunta
+        function renderQuestionForm(mission, hasResponded) {
+            return `
+                <textarea class="response-field" id="response-${mission.id}" placeholder="Escribe tu respuesta..." ${hasResponded ? 'disabled' : ''}>${hasResponded ? mission.question : ''}</textarea>
+                <button class="submit-btn" id="submit-${mission.id}" ${hasResponded ? 'disabled' : ''}>Aceptar</button>
+            `;
+        }
+
+        // Renderizar opción múltiple
+        function renderMCQForm(mission, hasResponded) {
+            const optionsHTML = mission.options.map((opt, i) => `
+                <button class="option-btn" id="option-${mission.id}-${i}" ${hasResponded ? 'disabled' : ''}>
+                    ${opt}
+                </button>
+            `).join('');
+
+            return `
+                <p><strong>${mission.question}</strong></p>
+                <div class="options-container">${optionsHTML}</div>
+            `;
+        }
+
+        // Iniciar temporizador
+        function startTimer(mission) {
+            const timerEl = document.getElementById(`timer-${mission.id}`);
+            let time = mission.type === 'question' ? 40 : 30;
+
+            timerEl.style.display = 'block';
+            timerEl.textContent = `Tiempo restante: ${time} segundos`;
+
+            const interval = setInterval(() => {
+                time--;
+                timerEl.textContent = `Tiempo restante: ${time} segundos`;
+
+                if (time <= 0) {
+                    clearInterval(interval);
+                    disableMissionResponse(mission);
+                    timerEl.textContent = '⏰ Tiempo agotado';
+                }
+            }, 1000);
+
+            timers[mission.id] = interval;
+        }
+
+        // Desactivar respuesta
+        function disableMissionResponse(mission) {
+            const submitBtn = document.getElementById(`submit-${mission.id}`);
+            const options = document.querySelectorAll(`#details-${mission.id} .option-btn`);
+
+            if (submitBtn) submitBtn.disabled = true;
+            options.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('disabled');
+            });
+        }
+
+        // Enviar respuesta de pregunta
+        window.submitResponse = async function(missionId) {
+            const responseInput = document.getElementById(`response-${missionId}`);
+            const response = responseInput.value.trim();
+
+            if (!response) {
+                alert('Escribe una respuesta');
+                return;
+            }
+
+            try {
+                await saveResponse(missionId, response);
+                responseInput.disabled = true;
+                document.getElementById(`submit-${missionId}`).disabled = true;
+                clearInterval(timers[missionId]);
+            } catch (error) {
+                console.error('Error guardando respuesta:', error);
+                alert('Error al enviar');
+            }
+        };
+
+        // Seleccionar opción múltiple
+        window.selectOption = async function(missionId, optionIndex) {
+            const optionBtns = document.querySelectorAll(`#option-${missionId}-\\`);
+            optionBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('selected');
+                btn.classList.add('disabled');
+            });
+
+            const selectedBtn = document.getElementById(`option-${missionId}-${optionIndex}`);
+            selectedBtn.classList.add('selected');
+
+            clearInterval(timers[missionId]);
+
+            try {
+                await saveResponse(missionId, optionIndex);
+            } catch (error) {
+                console.error('Error guardando opción:', error);
+            }
+        };
+
+        // Guardar respuesta en Firebase
+        async function saveResponse(missionId, response) {
+            const responsesRef = collection(db, 'mission_responses');
+            await addDoc(responsesRef, {
+                missionId,
+                studentNie: currentStudent.nie,
+                studentName: currentStudent.name,
+                response,
+                timestamp: new Date()
+            });
+
+            studentResponses[missionId] = { response, timestamp: new Date() };
+            alert('✅ Respuesta enviada');
+        }
+
+        // Mostrar alertas
+        function showAlert(message, type) {
+            loginAlerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                loginAlerts.innerHTML = '';
+            }, 5000);
+        }
+
+        // Exponer funciones globales
+        window.login = login;
+    </script>
+</body>
+</html>
