@@ -510,7 +510,13 @@
                 if (response) {
                     html += `
                         <div class="student-response">
-                            <span class="response-text">💬 "${response.response}"</span>
+                            <span class="response-text">💬 Respuesta: "${response.response}"</span>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="student-response">
+                            <span class="response-text" style="color: #aaa;">💬 Sin respuesta aún</span>
                         </div>
                     `;
                 }
@@ -523,10 +529,16 @@
                     const selectedOption = mission.options[response.response];
                     html += `
                         <div class="student-response">
-                            <span class="response-text">💬 "${selectedOption}"</span>
+                            <span class="response-text">💬 Eligió: "${selectedOption}"</span>
                             <span class="correct-indicator ${isCorrect ? 'correct' : 'incorrect'}">
                                 ${isCorrect ? '✅' : '❌'}
                             </span>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="student-response">
+                            <span class="response-text" style="color: #aaa;">💬 Sin respuesta aún</span>
                         </div>
                     `;
                 }
@@ -641,15 +653,21 @@
                         deletePromises.push(deleteDoc(doc(db, 'missions', id)));
                     }
 
-                    // Ejecutar todas las operaciones
-                    await Promise.all([...addPromises, ...deletePromises]);
+                    // Ejecutar primero las adiciones
+                    await Promise.all(addPromises);
+                    console.log('✅ Misiones agregadas a assigned_missions');
+                    
+                    // Luego las eliminaciones
+                    await Promise.all(deletePromises);
+                    console.log('✅ Misiones eliminadas de missions');
 
                     // Recargar datos
                     await loadData();
-                    alert('✅ ¡Misiones asignadas correctamente!');
+                    alert('✅ ¡Misiones asignadas correctamente!\n\n' + 
+                          `Se transfirieron ${newMissions.length} misiones de "missions" a "assigned_missions"`);
                 } catch (error) {
                     console.error("Error assigning missions:", error);
-                    alert('❌ Error al asignar las misiones');
+                    alert('❌ Error al asignar las misiones: ' + error.message);
                 }
             }
         });
