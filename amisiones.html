@@ -504,13 +504,17 @@
             `;
 
             if (mission.type === 'question') {
+                // Buscar respuesta en mission_responses de Firebase
                 const response = missionResponses.find(r => 
-                    r.missionId === mission.id && r.student === student
+                    (r.missionId === mission.id || r.mission_id === mission.id) && 
+                    (r.student === student || r.studentName === student || r.student_name === student)
                 );
+                
                 if (response) {
+                    const responseText = response.response || response.answer || response.text || 'Respuesta no disponible';
                     html += `
                         <div class="student-response">
-                            <span class="response-text">💬 Respuesta: "${response.response}"</span>
+                            <span class="response-text">💬 Respuesta: "${responseText}"</span>
                         </div>
                     `;
                 } else {
@@ -521,12 +525,16 @@
                     `;
                 }
             } else if (mission.type === 'multiple_choice') {
+                // Buscar respuesta en mission_responses de Firebase
                 const response = missionResponses.find(r => 
-                    r.missionId === mission.id && r.student === student
+                    (r.missionId === mission.id || r.mission_id === mission.id) && 
+                    (r.student === student || r.studentName === student || r.student_name === student)
                 );
+                
                 if (response) {
-                    const isCorrect = response.response === mission.correctAnswer;
-                    const selectedOption = mission.options[response.response];
+                    const selectedIndex = response.response || response.answer || response.selectedOption || 0;
+                    const isCorrect = selectedIndex === mission.correctAnswer;
+                    const selectedOption = mission.options[selectedIndex] || 'Opción no válida';
                     html += `
                         <div class="student-response">
                             <span class="response-text">💬 Eligió: "${selectedOption}"</span>
