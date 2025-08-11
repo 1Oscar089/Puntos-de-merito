@@ -20,11 +20,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            overscroll-behavior: none;
         }
 
         .container {
@@ -176,6 +171,7 @@
             padding: 15px;
             margin-bottom: 15px;
             border-left: 4px solid #11998e;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
 
@@ -183,7 +179,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            cursor: pointer;
             padding: 5px 0;
         }
 
@@ -202,6 +197,22 @@
             font-weight: bold;
         }
 
+        .points-type {
+            background: #6c757d;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .mission-desc {
+            color: #666;
+            margin: 10px 0;
+            line-height: 1.5;
+            display: none;
+        }
+
         .mission-details {
             margin-top: 15px;
             padding-top: 15px;
@@ -209,10 +220,10 @@
             display: none;
         }
 
-        .mission-desc {
-            color: #666;
-            margin-bottom: 15px;
-            line-height: 1.5;
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
         }
 
         .response-field {
@@ -228,7 +239,6 @@
         .response-field:disabled {
             background-color: #f8f9fa;
             color: #666;
-            cursor: not-allowed;
         }
 
         .options-container {
@@ -251,12 +261,6 @@
 
         .option-btn:hover {
             background: #f0f0f0;
-            border-color: #4facfe;
-        }
-
-        .option-btn.selected {
-            background: #4facfe;
-            color: white;
             border-color: #4facfe;
         }
 
@@ -290,26 +294,11 @@
             margin-top: 10px;
         }
 
-        .missions-timer {
-            background: #343a40;
-            color: white;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: 600;
-            margin-bottom: 20px;
-            font-size: 1.1em;
-        }
-
         .no-missions {
             text-align: center;
             color: #666;
             padding: 40px;
             font-style: italic;
-        }
-
-        ::selection {
-            background: transparent;
         }
     </style>
 </head>
@@ -345,11 +334,6 @@
                     <div class="points-display">
                         🔢 <span id="meritPoints">0</span> Puntos
                     </div>
-                </div>
-
-                <!-- Temporizador de nuevas misiones -->
-                <div class="missions-timer" id="missionsTimer">
-                    ⏰ Cargando...
                 </div>
 
                 <h3>📋 Tus Misiones</h3>
@@ -388,20 +372,12 @@
         const missionsList = document.getElementById('missionsList');
         const studentNameEl = document.getElementById('studentName');
         const meritPointsEl = document.getElementById('meritPoints');
-        const missionsTimer = document.getElementById('missionsTimer');
 
         // Variables globales
         let currentStudent = null;
         let assignedMissions = [];
         let studentResponses = {};
         let timers = {};
-
-        // Prevenir acciones no deseadas
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('selectstart', e => e.preventDefault());
-        document.addEventListener('copy', e => e.preventDefault());
-        document.addEventListener('cut', e => e.preventDefault());
-        document.addEventListener('paste', e => e.preventDefault());
 
         // Función de login
         async function login() {
@@ -442,9 +418,7 @@
 
                 loginForm.style.display = 'none';
                 missionsPanel.style.display = 'block';
-
                 renderMissions();
-                startMissionsCountdown();
 
             } catch (error) {
                 console.error('Error en login:', error);
@@ -472,7 +446,7 @@
                 const data = doc.data();
                 studentResponses[data.missionId] = {
                     response: data.response,
-                    status: data.status || 'respondido'
+                    status: data.status
                 };
             });
         }
@@ -487,7 +461,7 @@
             }
 
             assignedMissions.forEach(mission => {
-                const response = studentResponses[mission.id];
+                const hasResponded = studentResponses[mission.id];
 
                 const missionEl = document.createElement('div');
                 missionEl.className = 'mission-item';
@@ -496,131 +470,116 @@
                         <span class="mission-name">${mission.name}</span>
                         <span class="points-badge">${mission.points} puntos</span>
                     </div>
-                    <div class="mission-details" id="details-${mission.id}" style="display: none;">
-                        <p class="mission-desc">${mission.description}</p>
-                        ${mission.type === 'question' ? `
-                            <p><strong>${mission.question}</strong></p>
-                            <textarea class="response-field" id="response-${mission.id}" placeholder="Escribe tu respuesta..." ${response ? 'disabled' : ''}>${response ? response.response : ''}</textarea>
-                            <button class="submit-btn" id="submit-${mission.id}" ${response ? 'disabled' : ''}>Aceptar</button>
-                            <div class="timer" id="timer-${mission.id}"></div>
-                        ` : ''}
-                        ${mission.type === 'mcq' ? `
-                            <p><strong>${mission.question}</strong></p>
-                            <div class="options-container" id="options-${mission.id}"></div>
-                            <div class="timer" id="timer-${mission.id}"></div>
-                        ` : ''}
-                        ${response ? `<p><strong>Estado:</strong> ✅ Respondido</p>` : ''}
-                    </div>
+                    <p class="points-type">${mission.isGamePoints ? '🎮 Puntos de Juego' : '🏆 Puntos de Mérito'}</p>
+                    <p class="mission-desc">${mission.description}</p>
+                    <div class="mission-details" style="display: none;"></div>
                 `;
                 missionsList.appendChild(missionEl);
 
-                // Agregar opciones para MCQ
-                if (mission.type === 'mcq' && !response) {
-                    const optionsContainer = missionEl.querySelector(`#options-${mission.id}`);
-                    mission.options.forEach((opt, i) => {
-                        const btn = document.createElement('button');
-                        btn.className = 'option-btn';
-                        btn.textContent = opt;
-                        btn.onclick = () => selectOption(mission.id, i, mission.correctIndex, mission.points, mission.isGamePoints, missionEl);
-                        optionsContainer.appendChild(btn);
-                    });
-                }
+                const details = missionEl.querySelector('.mission-details');
 
                 // Solo desplegar si no ha respondido
-                if (!response) {
-                    const header = missionEl.querySelector('.mission-header');
-                    header.onclick = () => {
-                        const details = missionEl.querySelector(`#details-${mission.id}`);
+                if (!hasResponded) {
+                    missionEl.addEventListener('click', function openOnce() {
+                        missionEl.removeEventListener('click', openOnce);
                         details.style.display = 'block';
-                        startTimer(mission, missionEl);
-                        header.onclick = null; // Evitar múltiples aperturas
-                    };
+
+                        if (mission.type === 'question') {
+                            details.innerHTML = `
+                                <p class="question-text">${mission.question}</p>
+                                <textarea class="response-field" placeholder="Escribe tu respuesta..."></textarea>
+                                <button class="submit-btn">Enviar</button>
+                                <div class="timer">⏳ Tiempo restante: 120 segundos</div>
+                            `;
+                            const textarea = details.querySelector('textarea');
+                            const submitBtn = details.querySelector('.submit-btn');
+                            const timerEl = details.querySelector('.timer');
+
+                            startTimer(mission.id, 120, () => {
+                                textarea.disabled = true;
+                                submitBtn.disabled = true;
+                                submitBtn.classList.add('disabled');
+                                timerEl.textContent = '⏰ Tiempo agotado';
+                                saveResponse(mission.id, null, 'timeout');
+                            });
+
+                            submitBtn.onclick = () => {
+                                const response = textarea.value.trim();
+                                if (!response) {
+                                    alert('Escribe una respuesta');
+                                    return;
+                                }
+                                clearInterval(timers[mission.id]);
+                                textarea.disabled = true;
+                                submitBtn.disabled = true;
+                                submitBtn.classList.add('disabled');
+                                timerEl.textContent = '✅ Enviado';
+                                saveResponse(mission.id, response, 'respondido');
+                            };
+                        }
+
+                        if (mission.type === 'mcq') {
+                            details.innerHTML = `
+                                <p class="question-text">${mission.question}</p>
+                                <div class="options-container"></div>
+                                <div class="timer">⏳ Tiempo restante: 45 segundos</div>
+                            `;
+                            const optionsContainer = details.querySelector('.options-container');
+                            const timerEl = details.querySelector('.timer');
+
+                            mission.options.forEach((opt, i) => {
+                                const btn = document.createElement('button');
+                                btn.className = 'option-btn';
+                                btn.textContent = opt;
+                                btn.onclick = () => {
+                                    clearInterval(timers[mission.id]);
+                                    Array.from(optionsContainer.children).forEach(b => {
+                                        b.disabled = true;
+                                        b.classList.add('disabled');
+                                    });
+                                    timerEl.textContent = '✅ Enviado';
+                                    saveResponse(mission.id, i, 'respondido');
+                                    if (i === mission.correctIndex) {
+                                        addPointsToStudent(currentStudent.id, mission.points, mission.isGamePoints);
+                                    }
+                                };
+                                optionsContainer.appendChild(btn);
+                            });
+
+                            startTimer(mission.id, 45, () => {
+                                Array.from(optionsContainer.children).forEach(b => {
+                                    b.disabled = true;
+                                    b.classList.add('disabled');
+                                });
+                                timerEl.textContent = '⏰ Tiempo agotado';
+                                saveResponse(mission.id, null, 'timeout');
+                            });
+                        }
+                    });
+                } else {
+                    details.style.display = 'block';
+                    details.innerHTML = `<p><strong>Estado:</strong> ✅ Respondido</p>`;
                 }
             });
         }
 
         // Iniciar temporizador
-        function startTimer(mission, missionEl) {
-            const timerEl = missionEl.querySelector(`#timer-${mission.id}`);
-            if (!timerEl) return; // Protección contra null
-
-            let time = mission.type === 'question' ? 40 : 30;
-            timerEl.textContent = `⏰ Tiempo restante: ${time} segundos`;
+        function startTimer(missionId, seconds, onEnd) {
+            let time = seconds;
+            const timerEl = document.querySelector(`#missionsList .mission-item .timer`);
+            if (!timerEl) return;
 
             const interval = setInterval(() => {
                 time--;
-                if (timerEl) {
-                    timerEl.textContent = `⏰ Tiempo restante: ${time} segundos`;
-                }
-
+                timerEl.textContent = `⏳ Tiempo restante: ${time} segundos`;
                 if (time <= 0) {
                     clearInterval(interval);
-                    disableMissionResponse(mission, missionEl);
-                    if (timerEl) timerEl.textContent = '⏰ Tiempo agotado';
-                    saveResponse(mission.id, null, 'timeout');
+                    onEnd();
                 }
             }, 1000);
 
-            timers[mission.id] = interval;
+            timers[missionId] = interval;
         }
-
-        // Desactivar respuesta
-        function disableMissionResponse(mission, missionEl) {
-            const submitBtn = missionEl.querySelector(`#submit-${mission.id}`);
-            const options = missionEl.querySelectorAll(`#options-${mission.id} .option-btn`);
-
-            if (submitBtn) submitBtn.disabled = true;
-            options.forEach(btn => {
-                btn.disabled = true;
-                btn.classList.add('disabled');
-            });
-        }
-
-        // Enviar respuesta de pregunta
-        window.submitResponse = async function(missionId) {
-            const responseInput = document.getElementById(`response-${missionId}`);
-            const response = responseInput.value.trim();
-
-            if (!response) {
-                alert('Escribe una respuesta');
-                return;
-            }
-
-            const missionEl = responseInput.closest('.mission-item');
-            const timerEl = missionEl ? missionEl.querySelector(`#timer-${missionId}`) : null;
-
-            clearInterval(timers[missionId]);
-            disableMissionResponse({ id: missionId }, missionEl);
-
-            if (timerEl) timerEl.textContent = '✅ Enviado';
-            responseInput.disabled = true;
-            document.getElementById(`submit-${missionId}`).disabled = true;
-
-            await saveResponse(missionId, response, 'respondido');
-        };
-
-        // Seleccionar opción múltiple
-        window.selectOption = async function(missionId, optionIndex, correctIndex, points, isGamePoints, missionEl) {
-            clearInterval(timers[missionId]);
-            disableMissionResponse({ id: missionId }, missionEl);
-
-            const options = missionEl.querySelectorAll(`#options-${missionId} .option-btn`);
-            options.forEach((btn, i) => {
-                btn.disabled = true;
-                if (i === optionIndex) {
-                    btn.classList.add(optionIndex === correctIndex ? 'selected' : 'disabled');
-                }
-            });
-
-            await saveResponse(missionId, optionIndex, 'respondido');
-
-            if (optionIndex === correctIndex) {
-                await addPointsToStudent(currentStudent.id, points, isGamePoints);
-            }
-
-            const timerEl = missionEl.querySelector(`#timer-${missionId}`);
-            if (timerEl) timerEl.textContent = '✅ Enviado';
-        };
 
         // Guardar respuesta en Firebase
         async function saveResponse(missionId, response, status) {
@@ -651,38 +610,6 @@
             meritPointsEl.textContent = (studentData[field] || 0) + points;
         }
 
-        // Temporizador de nuevas misiones
-        function startMissionsCountdown() {
-            function getNextResetTime() {
-                const now = new Date();
-                const reset = new Date(now);
-                reset.setHours(20, 0, 0, 0);
-                if (now >= reset) {
-                    reset.setDate(reset.getDate() + 1);
-                }
-                return reset;
-            }
-
-            function updateTimer() {
-                const resetTime = getNextResetTime();
-                const now = new Date();
-                const diff = resetTime - now;
-
-                const hours = Math.floor(diff / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                missionsTimer.textContent = `⏰ Nuevas misiones en: ${hours}h ${minutes}m ${seconds}s`;
-
-                if (diff <= 0) {
-                    location.reload();
-                }
-            }
-
-            updateTimer();
-            setInterval(updateTimer, 1000);
-        }
-
         // Mostrar alertas
         function showAlert(message, type) {
             loginAlerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
@@ -693,8 +620,6 @@
 
         // Exponer funciones globales
         window.login = login;
-        window.submitResponse = submitResponse;
-        window.selectOption = selectOption;
     </script>
 </body>
 </html>
