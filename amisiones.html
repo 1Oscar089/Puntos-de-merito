@@ -346,8 +346,28 @@
                     });
                 });
 
-                // Por ahora usar estudiantes de ejemplo, pero se puede cargar de Firebase también
-                students = sampleStudents;
+                // Cargar estudiantes desde Firebase
+                const studentsSnapshot = await getDocs(collection(db, 'students'));
+                students = {};
+                studentsSnapshot.forEach((doc) => {
+                    const studentData = doc.data();
+                    const grade = studentData.grade || studentData.grado; // Flexible para diferentes nombres de campo
+                    const name = studentData.name || studentData.nombre || studentData.fullName;
+                    
+                    if (!students[grade]) {
+                        students[grade] = [];
+                    }
+                    students[grade].push(name);
+                });
+
+                // Si no hay estudiantes en Firebase, usar datos de ejemplo
+                if (Object.keys(students).length === 0) {
+                    students = {
+                        "7mo": ["Ana García", "Carlos López", "María Rodríguez", "José Martínez"],
+                        "8vo": ["Sofia Hernández", "Diego Pérez", "Lucia González", "Miguel Torres"],
+                        "9no": ["Isabel Vargas", "Roberto Silva", "Carmen Flores", "Fernando Castro"]
+                    };
+                }
 
                 renderAssignedMissions();
                 renderNewMissions();
