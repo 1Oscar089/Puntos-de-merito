@@ -326,7 +326,10 @@
             const querySnapshot = await getDocs(studentsRef);
             students = [];
             querySnapshot.forEach(doc => {
-                students.push({ id: doc.id, ...doc.data() });
+                const data = doc.data();
+                // Aseguramos que el campo 'grade' exista
+                const grade = data.grade || 'Sin grado';
+                students.push({ id: doc.id, ...data, grade });
             });
 
             // Ordenar por grado: Séptimo → Octavo → Noveno
@@ -422,25 +425,22 @@
             const container = document.getElementById(`details-${mission.id}`);
             container.innerHTML = '';
 
-            // Agrupar estudiantes por grado
+            // Asegurar todos los grados en orden
+            const grades = ['Séptimo', 'Octavo', 'Noveno'];
             const studentsByGrade = { 'Séptimo': [], 'Octavo': [], 'Noveno': [] };
-            // Inicializar vacíos por si no hay estudiantes en algún grado
-            Object.keys(studentsByGrade).forEach(grade => {
-                studentsByGrade[grade] = [];
-            });
 
+            // Agrupar estudiantes
             students.forEach(s => {
                 const grade = s.grade || 'Sin grado';
-                if (studentsByGrade[grade] !== undefined) {
+                if (grades.includes(grade)) {
                     studentsByGrade[grade].push(s);
                 } else {
-                    if (!studentsByGrade['Sin grado']) studentsByGrade['Sin grado'] = [];
-                    studentsByGrade['Sin grado'].push(s);
+                    studentsByGrade['Noveno'].push(s); // Por defecto
                 }
             });
 
-            // Mostrar en orden: Séptimo → Octavo → Noveno
-            ['Séptimo', 'Octavo', 'Noveno'].forEach(grade => {
+            // Renderizar cada grado
+            grades.forEach(grade => {
                 const gradeStudents = studentsByGrade[grade];
                 if (gradeStudents.length === 0) return;
 
@@ -462,39 +462,38 @@
                     let actionButton = '';
 
                     if (mission.type === 'normal') {
-                        // Solo botón, sin campo de respuesta
                         actionButton = `<button class="btn" 
                                     ${isCompleted ? 'disabled' : ''} 
                                     onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
                                         ${isCompleted ? '✅ Completado' : 'Completar'}
                                     </button>`;
                     } 
-                    else if (mission.type === 'question' && hasResponded && responseObj.status !== 'timeout') {
-                        responseContent = `<div class="student-response">${responseObj.response}</div>`;
-                        actionButton = `<button class="btn" 
-                                    ${isCompleted ? 'disabled' : ''} 
-                                    onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
-                                        ${isCompleted ? '✅ Completado' : 'Completar'}
-                                    </button>`;
+                    else if (mission.type === 'question') {
+                        if (hasResponded && responseObj.status !== 'timeout') {
+                            responseContent = `<div class="student-response">${responseObj.response}</div>`;
+                            actionButton = `<button class="btn" 
+                                        ${isCompleted ? 'disabled' : ''} 
+                                        onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
+                                            ${isCompleted ? '✅ Completado' : 'Completar'}
+                                        </button>`;
+                        } else if (hasResponded && responseObj.status === 'timeout') {
+                            responseContent = `<div class="student-response">⏰ Sin respuesta</div>`;
+                        } else {
+                            responseContent = `<div class="student-response">Sin responder</div>`;
+                        }
                     } 
-                    else if (mission.type === 'mcq' && hasResponded && responseObj.status !== 'timeout') {
-                        const isCorrect = responseObj.response === mission.correctIndex;
-                        const responseText = `${mission.options[responseObj.response] || 'Opción no válida'} 
-                                              <span class="status-icon">${isCorrect ? '✅' : '❌'}</span>`;
-                        responseContent = `<div class="student-response">${responseText}</div>`;
-                        // No se muestra botón en opción múltiple
-                        actionButton = ''; 
-                    } 
-                    else if (hasResponded && responseObj.status === 'timeout') {
-                        responseContent = `<div class="student-response">⏰ Sin respuesta (tiempo agotado)</div>`;
-                        actionButton = '';
-                    } 
-                    else {
-                        // No ha respondido aún
-                        responseContent = `<div class="student-response">Sin responder</div>`;
-                        actionButton = mission.type === 'question' 
-                            ? `<button class="btn" disabled>Sin respuesta</button>` 
-                            : '';
+                    else if (mission.type === 'mcq') {
+                        if (hasResponded && responseObj.status !== 'timeout') {
+                            const isCorrect = responseObj.response === mission.correctIndex;
+                            const responseText = `${mission.options[responseObj.response] || 'Opción no válida'} 
+                                                  <span class="status-icon">${isCorrect ? '✅' : '❌'}</span>`;
+                            responseContent = `<div class="student-response">${responseText}</div>`;
+                            // No se muestra botón en opción múltiple
+                        } else if (hasResponded && responseObj.status === 'timeout') {
+                            responseContent = `<div class="student-response">⏰ Sin respuesta</div>`;
+                        } else {
+                            responseContent = `<div class="student-response">Sin responder</div>`;
+                        }
                     }
 
                     row.innerHTML = `
@@ -508,6 +507,11 @@
                 gradeGroup.appendChild(studentList);
                 container.appendChild(gradeGroup);
             });
+
+            // Si no se agregó ningún grupo
+            if (container.children.length === 0) {
+                container.innerHTML = '<div class="no-items">No hay estudiantes</div>';
+            }
         }
 
         // Marcar como correcta y sumar puntos
@@ -567,7 +571,7 @@
             });
         }
 
-        // Asignar misiones: copiar a assigned_missions y borrar de missions
+        // Asignar misiones
         assignBtn.addEventListener('click', async () => {
             if (assignedMissions.length > 0) {
                 showAlert('Primero termina las misiones asignadas', 'error');
@@ -581,22 +585,17 @@
                     return;
                 }
 
-                // 1. Copiar a assigned_missions
                 const assignedRef = collection(db, 'assigned_missions');
                 for (const mission of newMissionsData) {
                     await addDoc(assignedRef, mission);
                 }
 
-                // 2. Borrar de missions
                 const missionsRef = collection(db, 'missions');
                 const missionsSnapshot = await getDocs(missionsRef);
                 const deletePromises = [];
-                missionsSnapshot.forEach(doc => {
-                    deletePromises.push(deleteDoc(doc.ref));
-                });
+                missionsSnapshot.forEach(doc => deletePromises.push(deleteDoc(doc.ref)));
                 await Promise.all(deletePromises);
 
-                // 3. Actualizar interfaz
                 assignedMissions = [...newMissionsData];
                 renderAssignedMissions();
 
@@ -609,30 +608,23 @@
             }
         });
 
-        // Terminar misiones: borrar assigned_missions y mission_responses
+        // Terminar misiones
         endMissionsBtn.addEventListener('click', async () => {
             if (!confirm('¿Estás seguro? Se eliminarán todas las misiones asignadas y todas las respuestas.')) return;
 
             try {
-                // 1. Borrar assigned_missions
                 const assignedRef = collection(db, 'assigned_missions');
                 const assignedSnapshot = await getDocs(assignedRef);
                 const deleteAssignedPromises = [];
-                assignedSnapshot.forEach(doc => {
-                    deleteAssignedPromises.push(deleteDoc(doc.ref));
-                });
+                assignedSnapshot.forEach(doc => deleteAssignedPromises.push(deleteDoc(doc.ref)));
                 await Promise.all(deleteAssignedPromises);
 
-                // 2. Borrar mission_responses
                 const responsesRef = collection(db, 'mission_responses');
                 const responsesSnapshot = await getDocs(responsesRef);
                 const deleteResponsesPromises = [];
-                responsesSnapshot.forEach(doc => {
-                    deleteResponsesPromises.push(deleteDoc(doc.ref));
-                });
+                responsesSnapshot.forEach(doc => deleteResponsesPromises.push(deleteDoc(doc.ref)));
                 await Promise.all(deleteResponsesPromises);
 
-                // 3. Actualizar interfaz
                 assignedMissions = [];
                 assignedSection.style.display = 'none';
                 const newMissionsData = await loadNewMissions();
