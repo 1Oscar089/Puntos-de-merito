@@ -20,56 +20,42 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* CONTENEDOR FLEXIBLE */
         .container {
-            max-width: 1400px;
+            max-width: 100%;
             margin: 0 auto;
             background: rgba(255, 255, 255, 0.98);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Header */
+        /* HEADER */
         .header {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            padding: 25px;
+            padding: 20px;
             text-align: center;
             color: white;
             position: relative;
         }
 
-        .header h1 {
-            font-size: 2.2em;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
         .cart-icon {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 24px;
+            font-size: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10;
-        }
-
-        .cart-icon:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
         }
 
         .cart-count {
@@ -88,49 +74,61 @@
             font-weight: bold;
         }
 
-        /* Login */
+        .header h1 {
+            font-size: clamp(1.8em, 4vw, 2.2em);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: clamp(1em, 3.5vw, 1.1em);
+            opacity: 0.9;
+        }
+
+        /* LOGIN */
         .student-login {
             background: rgba(255, 255, 255, 0.25);
-            border-radius: 14px;
-            padding: 25px;
-            margin: 20px 20px 15px;
-            backdrop-filter: blur(6px);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px;
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .login-fields {
             display: flex;
-            gap: 12px;
-            margin-bottom: 18px;
-            align-items: center;
+            gap: 10px;
             flex-wrap: wrap;
             justify-content: center;
+            align-items: center;
             position: relative;
         }
 
         .login-fields input {
-            flex: 1;
-            min-width: 180px;
-            padding: 16px;
+            flex: 1 1 150px;
+            min-width: 140px;
+            padding: 15px;
             border: none;
             border-radius: 10px;
-            font-size: 17px;
+            font-size: 16px;
             text-align: center;
-            font-family: inherit;
         }
 
         .toggle-password {
             position: absolute;
-            right: 12px;
+            right: 8px;
             top: 50%;
             transform: translateY(-50%);
             background: rgba(255, 255, 255, 0.3);
             border: none;
             color: white;
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -140,100 +138,99 @@
             background: rgba(255, 255, 255, 0.3);
             color: white;
             border: 2px solid white;
-            padding: 14px 24px;
+            padding: 14px;
             border-radius: 10px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 17px;
-            transition: all 0.3s ease;
-        }
-
-        .login-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
+            font-size: 16px;
         }
 
         .student-info {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            margin-top: 15px;
+            gap: 10px;
             background: rgba(255, 255, 255, 0.15);
-            padding: 16px;
-            border-radius: 12px;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1em;
         }
 
         .student-info h3 {
             color: white;
-            font-size: 1.3em;
+            font-size: 1.2em;
             margin: 0;
             font-weight: 600;
         }
 
         .student-info p {
             color: rgba(255, 255, 255, 0.9);
-            margin: 4px 0 0;
-            font-size: 1em;
+            margin: 0;
+            font-size: 0.95em;
         }
 
         .points-display {
             background: #28a745;
             color: white;
-            padding: 12px 22px;
-            border-radius: 26px;
+            padding: 10px 18px;
+            border-radius: 24px;
             font-weight: 600;
-            font-size: 1.25em;
+            font-size: 1.15em;
         }
 
-        /* Contenido */
+        /* CONTENIDO PRINCIPAL */
         .content {
-            padding: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
+        /* GRID FLEXIBLE DE PRODUCTOS */
         .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            justify-content: center;
+            margin-bottom: 20px;
         }
 
         .product-card {
             background: white;
-            border-radius: 16px;
-            padding: 22px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
             border: 1px solid #eee;
-            transition: all 0.3s ease;
-        }
-
-        .product-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            flex: 1 1 260px;
+            min-width: 260px;
+            max-width: 320px;
         }
 
         .product-image {
             width: 100%;
-            height: 180px;
+            height: 160px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4em;
+            font-size: 3.5em;
             color: white;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .product-info h3 {
             color: #333;
             margin-bottom: 10px;
-            font-size: 1.3em;
+            font-size: 1.2em;
             font-weight: 600;
             text-align: center;
         }
 
         .product-info p {
             color: #666;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
             line-height: 1.5;
             font-size: 0.95em;
             text-align: center;
@@ -244,37 +241,36 @@
             text-align: center;
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             color: white;
-            padding: 10px 18px;
-            border-radius: 24px;
+            padding: 10px 16px;
+            border-radius: 20px;
             font-weight: 600;
-            font-size: 1.2em;
-            margin: 0 auto 16px;
-            max-width: 200px;
+            font-size: 1.15em;
+            margin: 0 auto 14px;
+            max-width: 180px;
         }
 
         .product-actions {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
         }
 
         .quantity-controls {
             display: flex;
             align-items: center;
-            gap: 12px;
-            justify-content: center;
+            gap: 10px;
         }
 
         .quantity-btn {
             background: #6c757d;
             color: white;
             border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -282,13 +278,12 @@
 
         .quantity-display {
             background: #f8f9fa;
-            padding: 12px 16px;
-            border-radius: 10px;
-            min-width: 60px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            min-width: 50px;
             text-align: center;
             font-weight: 600;
-            font-size: 1.2em;
-            color: #333;
+            font-size: 1.1em;
         }
 
         .add-to-cart-btn {
@@ -296,50 +291,45 @@
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             border: none;
-            padding: 16px;
-            border-radius: 10px;
+            padding: 14px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 17px;
-            transition: all 0.3s ease;
+            font-size: 16px;
         }
 
-        .add-to-cart-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(79, 172, 254, 0.3);
-        }
-
-        /* Carrito */
+        /* CARRITO LATERAL RESPONSIVO */
         .cart-sidebar {
             position: fixed;
             top: 0;
-            right: -100%;
+            left: 0;
             width: 100%;
-            max-width: 420px;
-            height: 100vh;
+            max-width: 400px;
+            height: 100%;
             background: white;
             box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
-            transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: translateX(100%);
+            transition: transform 0.4s ease;
             z-index: 1000;
             display: flex;
             flex-direction: column;
         }
 
         .cart-sidebar.open {
-            right: 0;
+            transform: translateX(0);
         }
 
         .cart-header {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
-            padding: 20px;
+            padding: 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .cart-header h2 {
-            font-size: 1.4em;
+            font-size: 1.3em;
             font-weight: 600;
         }
 
@@ -347,10 +337,10 @@
             background: none;
             border: none;
             color: white;
-            font-size: 28px;
+            font-size: 24px;
             cursor: pointer;
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -366,80 +356,79 @@
         .cart-item {
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 16px;
+            gap: 14px;
+            padding: 14px;
             background: white;
-            border-radius: 12px;
+            border-radius: 10px;
             margin-bottom: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .cart-item-icon {
-            width: 56px;
-            height: 56px;
+            width: 50px;
+            height: 50px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.6em;
+            font-size: 1.4em;
         }
 
         .cart-item-info h4 {
             color: #333;
             margin-bottom: 4px;
-            font-size: 1.1em;
+            font-size: 1.05em;
             font-weight: 600;
         }
 
         .cart-item-info p {
             color: #666;
-            font-size: 0.95em;
+            font-size: 0.9em;
         }
 
         .cart-item-actions {
             margin-left: auto;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .quantity-controls {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .quantity-btn {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             font-size: 16px;
         }
 
         .quantity-display {
-            min-width: 48px;
-            padding: 8px;
-            font-size: 1em;
+            min-width: 44px;
+            padding: 6px 8px;
+            font-size: 0.95em;
         }
 
         .remove-item {
             background: #dc3545;
             color: white;
             border: none;
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .cart-footer {
-            padding: 20px;
+            padding: 18px;
             border-top: 2px solid #eee;
             background: #f8f9fa;
         }
@@ -448,8 +437,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            font-size: 1.25em;
+            margin-bottom: 14px;
+            font-size: 1.15em;
             font-weight: 600;
             color: #333;
         }
@@ -459,17 +448,11 @@
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
             border: none;
-            padding: 18px;
-            border-radius: 10px;
+            padding: 16px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 1.15em;
-            transition: all 0.3s ease;
-        }
-
-        .purchase-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(40, 167, 69, 0.3);
+            font-size: 1.05em;
         }
 
         .purchase-btn:disabled {
@@ -478,7 +461,7 @@
             opacity: 0.8;
         }
 
-        /* Overlay */
+        /* OVERLAY */
         .overlay {
             position: fixed;
             top: 0;
@@ -494,11 +477,11 @@
             display: block;
         }
 
-        /* Alertas */
+        /* ALERTAS */
         .alert {
-            padding: 16px;
+            padding: 14px;
             margin: 15px 0;
-            border-radius: 10px;
+            border-radius: 8px;
             font-weight: 500;
             font-size: 1em;
             text-align: center;
@@ -518,19 +501,19 @@
 
         .empty-cart {
             text-align: center;
-            padding: 60px 20px;
+            padding: 50px 15px;
             color: #666;
         }
 
         .empty-cart-icon {
-            font-size: 3.5em;
-            margin-bottom: 16px;
+            font-size: 3em;
+            margin-bottom: 12px;
             opacity: 0.5;
         }
 
-        /* Scroll */
+        /* SCROLL */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         ::-webkit-scrollbar-track {
@@ -542,156 +525,6 @@
             background: #ccc;
             border-radius: 10px;
         }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #aaa;
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 768px) {
-            .container {
-                border-radius: 16px;
-                margin: 10px;
-                padding: 0;
-            }
-
-            .header {
-                padding: 20px 15px;
-            }
-
-            .header h1 {
-                font-size: 1.8em;
-            }
-
-            .cart-icon {
-                top: 15px;
-                right: 15px;
-                width: 48px;
-                height: 48px;
-                font-size: 22px;
-            }
-
-            .student-login {
-                padding: 20px 15px;
-            }
-
-            .login-fields {
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .toggle-password {
-                right: 10px;
-                width: 40px;
-                height: 40px;
-            }
-
-            .login-fields input {
-                font-size: 16px;
-            }
-
-            .login-btn {
-                font-size: 16px;
-                padding: 12px;
-            }
-
-            .student-info {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-                padding: 14px;
-            }
-
-            .content {
-                padding: 15px;
-            }
-
-            .products-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .product-card {
-                padding: 20px;
-            }
-
-            .product-image {
-                height: 160px;
-                font-size: 3.5em;
-            }
-
-            .product-info h3 {
-                font-size: 1.2em;
-            }
-
-            .product-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .add-to-cart-btn {
-                min-width: auto;
-            }
-
-            .cart-sidebar {
-                max-width: 100%;
-            }
-
-            .close-cart {
-                font-size: 24px;
-                width: 40px;
-                height: 40px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 8px;
-            }
-
-            .header {
-                padding: 18px 12px;
-            }
-
-            .header h1 {
-                font-size: 1.6em;
-            }
-
-            .login-fields input {
-                padding: 14px;
-                font-size: 16px;
-            }
-
-            .toggle-password {
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
-            }
-
-            .product-info h3 {
-                font-size: 1.15em;
-            }
-
-            .product-info p {
-                font-size: 0.9em;
-            }
-
-            .product-price {
-                font-size: 1.1em;
-                padding: 9px 16px;
-            }
-
-            .quantity-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
-            }
-
-            .quantity-display {
-                min-width: 50px;
-                padding: 10px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -701,9 +534,8 @@
                 🛒
                 <span class="cart-count" id="cartCount">0</span>
             </button>
-            
             <h1>🏪 Tienda Virtual</h1>
-            <p>Canjea tus puntos por increíbles productos</p>
+            <p>Canjea tus puntos por productos</p>
             
             <div class="student-login">
                 <div class="login-fields" style="position: relative;">
@@ -736,15 +568,13 @@
             <h2>🛒 Mi Carrito</h2>
             <button class="close-cart" onclick="toggleCart()">✕</button>
         </div>
-        
         <div class="cart-content" id="cartContent">
             <div class="empty-cart">
                 <div class="empty-cart-icon">🛒</div>
-                <h3>Tu carrito está vacío</h3>
-                <p>Agrega productos para comenzar</p>
+                <h3>Vacío</h3>
+                <p>Agrega productos</p>
             </div>
         </div>
-        
         <div class="cart-footer">
             <div class="cart-total">
                 <span>Total:</span>
@@ -779,19 +609,19 @@
         let passwordVisible = false;
 
         let products = [
-            { id: 1, name: "Ticket de limpieza", description: "Puedes NO hacer la limpieza por un día", price: 270, icon: "🧹" },
-            { id: 2, name: "Ticket para baño", description: "Puedes usarlo para solicitar ir al baño", price: 10, icon: "🚽" },
-            { id: 3, name: "Ticket para comprar agua", description: "Puedes salir a comprar agua", price: 80, icon: "💧" },
-            { id: 4, name: "Ticket para lunes cívico", description: "Usalo si no quieres participar en un lunes cívico", price: 350, icon: "🏳" },
-            { id: 5, name: "Ticket para Cancha", description: "Usalo para ir a la cancha (puede tenerlo solo un estudiante)", price: 1840, icon: "✅" },
-            { id: 6, name: "Ticket para tarea", description: "Usalo para que se te revise a la misma base tu tarea tardia (aplica uno por dia)", price: 120, icon: "📖" },
-            { id: 7, name: "Punto en tarea", description: "Aumentar un punto en una tarea", price: 225, icon: "+1" },
-            { id: 8, name: "Punto en libreta", description: "Aumentar un punto en la nota de libreta", price: 650, icon: "+1" },
-            { id: 9, name: "Punto en libro", description: "Un punto en libro de ejercicios", price: 615, icon: "+1" },
-            { id: 10, name: "Punto en examen unidad", description: "Un punto en examen de unidad", price: 400, icon: "+1" },
-            { id: 11, name: "Punto en examen trimestral", description: "Un punto en examen trimestral", price: 1000, icon: "+1" },
-            { id: 12, name: "Ticket para no comer", description: "No comer alimento por un día", price: 200, icon: "🍳" },
-            { id: 13, name: "Ticket para película", description: "Ver película en clase (único)", price: 1250, icon: "📽️" }
+            { id: 1, name: "Ticket de limpieza", description: "No hagas limpieza por un día", price: 270, icon: "🧹" },
+            { id: 2, name: "Ticket para baño", description: "Solicita ir al baño", price: 10, icon: "🚽" },
+            { id: 3, name: "Ticket para agua", description: "Salir a comprar agua", price: 80, icon: "💧" },
+            { id: 4, name: "Lunes cívico", description: "No participar", price: 350, icon: "🏳" },
+            { id: 5, name: "Cancha", description: "Ir a la cancha (único)", price: 1840, icon: "✅" },
+            { id: 6, name: "Tarea", description: "Revisada a la base", price: 120, icon: "📖" },
+            { id: 7, name: "Punto en tarea", description: "Aumentar un punto", price: 225, icon: "+1" },
+            { id: 8, name: "Punto en libreta", description: "Aumentar un punto", price: 650, icon: "+1" },
+            { id: 9, name: "Punto en libro", description: "En libro de ejercicios", price: 615, icon: "+1" },
+            { id: 10, name: "Punto en examen", description: "En examen de unidad", price: 400, icon: "+1" },
+            { id: 11, name: "Punto trimestral", description: "En examen trimestral", price: 1000, icon: "+1" },
+            { id: 12, name: "No comer", description: "No comer alimento", price: 200, icon: "🍳" },
+            { id: 13, name: "Película", description: "Ver en clase (único)", price: 1250, icon: "📽️" }
         ];
 
         window.addEventListener('load', () => {
@@ -972,7 +802,7 @@
         window.processPurchase = async () => {
             if (!currentStudent) return;
             const total = cart.reduce((a, b) => a + b.price * b.quantity, 0);
-            if (total > currentStudent.points) return showAlert('Sin puntos suficientes', 'error');
+            if (total > currentStudent.points) return showAlert('Sin puntos', 'error');
 
             try {
                 const newPoints = currentStudent.points - total;
@@ -990,9 +820,9 @@
                 cart = [];
                 updateCartDisplay();
                 toggleCart();
-                showAlert('🎉 ¡Compra realizada con éxito!', 'success');
+                showAlert('🎉 ¡Compra exitosa!', 'success');
             } catch (e) {
-                showAlert('Error al procesar compra', 'error');
+                showAlert('Error al comprar', 'error');
             }
         };
 
