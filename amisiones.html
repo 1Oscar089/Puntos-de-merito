@@ -519,6 +519,10 @@
 
         // Marcar como correcta
         window.markAsCorrect = async function(btn, studentId, missionId, points, isGamePoints) {
+            // ✅ Deshabilitar inmediatamente para evitar doble clic
+            btn.disabled = true;
+            btn.textContent = '⏳ Guardando...';
+
             try {
                 const studentRef = doc(db, 'students', studentId);
                 const studentDoc = await getDoc(studentRef);
@@ -530,13 +534,17 @@
                     completedMissions: [...(studentData.completedMissions || []), missionId]
                 });
 
-                // ✅ Deshabilitar y cambiar texto del botón
+                // ✅ Cambio visual instantáneo
                 btn.textContent = '✅ Completado';
-                btn.disabled = true;
+                btn.style.backgroundColor = '#ccc';
+                btn.style.color = '#666';
+                btn.style.cursor = 'not-allowed';
 
                 showAlert('✅ Puntos otorgados', 'success');
             } catch (error) {
                 console.error('Error al otorgar puntos:', error);
+                btn.disabled = false;
+                btn.textContent = 'Completar';
                 showAlert('❌ Error al completar', 'error');
             }
         };
