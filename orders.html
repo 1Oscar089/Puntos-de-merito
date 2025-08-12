@@ -457,7 +457,7 @@
 
     <!-- Firebase Scripts -->
     <script type="module">
-        // Import Firebase
+        // ✅ Import Firebase (sin espacios en las URLs)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
@@ -477,253 +477,236 @@
         const db = getFirestore(app);
 
         // Variables globales
-        let allOrders = [];
-        let allProducts = []; // Array de productos individuales
-        let filteredProducts = [];
+        let allProducts = []; // Lista de productos individuales
         let searchTerm = '';
 
-        // Cargar órdenes al inicio
+        // Cargar al inicio
         window.addEventListener('load', () => {
             loadOrders();
-            setupRealTimeListener();
-            
-            const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    searchOrders();
-                }
-            });
-
-            searchInput.addEventListener('input', function() {
-                searchTerm = this.value.toLowerCase().trim();
-                applyFilters();
-            });
+            setupSearch();
         });
 
-        // Configurar listener en tiempo real
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', () => {
+                searchTerm = searchInput.value.toLowerCase().trim();
+                applyFilters();
+            });
+        }
+
+        // Cargar órdenes con onSnapshot (tiempo real)
         function setupRealTimeListener() {
             const ordersRef = collection(db, 'orders');
             const q = query(ordersRef, orderBy('orderDate', 'desc'));
-            
+
             onSnapshot(q, (snapshot) => {
-                allOrders = [];
+                allProducts = [];
+                let index = 0;
+
                 snapshot.forEach((doc) => {
-                    const orderData = doc.data();
-                    allOrders.push({
-                        id: doc.id,
-                        ...orderData,
-                        orderDate: orderData.orderDate?.toDate() || new Date()
-                    });
+                    const data = doc.data();
+                    const orderId = doc.id;
+
+                    // Validar que exista orderDate
+                    const orderDate = data.orderDate?.toDate ? data.orderDate.toDate() : new Date();
+
+                    // Validar que existan items
+                    if (data.items && Array.isArray(data.items)) {
+                        data.items.forEach(item => {
+                            for (let i = 0; i < item.quantity; i++) {
+                                allProducts.push({
+                                    id: `${orderId}_${index++}`,
+                                    originalOrderId: orderId,
+                                    studentName: data.studentName || 'Sin nombre',
+                                    studentNie: data.studentNie || 'Sin NIE',
+                                    productName: item.name,
+                                    unitPrice: item.unitPrice,
+                                    totalPrice: item.unitPrice,
+                                    orderDate: orderDate
+                                });
+                            }
+                        });
+                    }
                 });
-                
-                processOrdersToProducts();
+
                 applyFilters();
                 updateStats();
             }, (error) => {
-                console.error('Error en listener de órdenes:', error);
-                showAlert('Error al conectar con la base de datos', 'error');
+                console.error("Error en tiempo real: ", error);
+                showAlert("Error al conectar con Firebase: " + error.message, "error");
             });
         }
 
-        // Procesar órdenes: cada unidad de producto es un ítem individual
-        function processOrdersToProducts() {
-            allProducts = [];
-            let globalIndex = 0;
-
-            allOrders.forEach(order => {
-                if (order.items && order.items.length > 0) {
-                    order.items.forEach((item, itemIndex) => {
-                        for (let i = 0; i < item.quantity; i++) {
-                            allProducts.push({
-                                id: `${order.id}_${globalIndex}`,
-                                originalOrderId: order.id,
-                                itemIndex: itemIndex,
-                                globalIndex: globalIndex,
-                                studentName: order.studentName,
-                                studentNie: order.studentNie,
-                                orderDate: order.orderDate,
-                                productName: item.name,
-                                unitPrice: item.unitPrice,
-                                totalPrice: item.unitPrice
-                            });
-                            globalIndex++;
-                        }
-                    });
-                }
-            });
-        }
-
-        // Cargar órdenes
+        // Cargar órdenes (una vez)
         window.loadOrders = async function() {
             try {
                 const ordersRef = collection(db, 'orders');
                 const q = query(ordersRef, orderBy('orderDate', 'desc'));
                 const querySnapshot = await getDocs(q);
-                
-                allOrders = [];
+
+                allProducts = [];
+                let index = 0;
+
                 querySnapshot.forEach((doc) => {
-                    const orderData = doc.data();
-                    allOrders.push({
-                        id: doc.id,
-                        ...orderData,
-                        orderDate: orderData.orderDate?.toDate() || new Date()
-                    });
+                    const data = doc.data();
+                    const orderId = doc.id;
+
+                    const orderDate = data.orderDate?.toDate ? data.orderDate.toDate() : new Date();
+
+                    if (data.items && Array.isArray(data.items)) {
+                        data.items.forEach(item => {
+                            for (let i = 0; i < item.quantity; i++) {
+                                allProducts.push({
+                                    id: `${orderId}_${index++}`,
+                                    originalOrderId: orderId,
+                                    studentName: data.studentName || 'Sin nombre',
+                                    studentNie: data.studentNie || 'Sin NIE',
+                                    productName: item.name,
+                                    unitPrice: item.unitPrice,
+                                    totalPrice: item.unitPrice,
+                                    orderDate: orderDate
+                                });
+                            }
+                        });
+                    }
                 });
 
-                processOrdersToProducts();
                 applyFilters();
                 updateStats();
-
             } catch (error) {
-                console.error('Error loading orders:', error);
-                showAlert('Error al cargar los productos', 'error');
+                console.error('Error al cargar órdenes:', error);
+                showAlert('❌ Error al cargar órdenes: ' + error.message, 'error');
             }
         };
 
         // Aplicar filtros
         function applyFilters() {
-            filteredProducts = allProducts.filter(product => {
-                const searchMatch = searchTerm === '' ||
-                                  product.studentName.toLowerCase().includes(searchTerm) ||
-                                  product.studentNie.toLowerCase().includes(searchTerm) ||
-                                  product.productName.toLowerCase().includes(searchTerm);
-                return searchMatch;
-            });
+            const filtered = allProducts.filter(p =>
+                !searchTerm ||
+                p.studentName.toLowerCase().includes(searchTerm) ||
+                p.studentNie.toLowerCase().includes(searchTerm) ||
+                p.productName.toLowerCase().includes(searchTerm)
+            );
 
-            renderProducts();
+            renderProducts(filtered);
         }
 
-        // Buscar productos
+        // Buscar
         window.searchOrders = function() {
-            const input = document.getElementById('searchInput');
-            searchTerm = input.value.toLowerCase().trim();
             applyFilters();
         };
 
         // Renderizar productos
-        function renderProducts() {
+        function renderProducts(products) {
             const container = document.getElementById('ordersContainer');
-            
-            if (filteredProducts.length === 0) {
+
+            if (products.length === 0) {
                 container.innerHTML = `
                     <div class="no-orders">
                         <div class="no-orders-icon">📭</div>
                         <h3>No hay productos pendientes</h3>
-                        <p>${searchTerm ? 'No se encontraron productos con ese criterio de búsqueda' : 'No hay productos pendientes'}</p>
+                        <p>${searchTerm ? 'No se encontraron resultados' : 'No hay productos solicitados'}</p>
                     </div>
                 `;
                 return;
             }
 
-            const productsHTML = filteredProducts.map(product => `
+            container.innerHTML = products.map(p => `
                 <div class="order-card">
                     <div class="order-header">
                         <div class="order-info">
-                            <h3>
-                                ${product.studentName}
-                                <span class="order-id-badge">#${product.originalOrderId.slice(-6)}</span>
-                            </h3>
-                            <p><strong>NIE:</strong> ${product.studentNie}</p>
+                            <h3>${p.studentName} <span class="order-id-badge">#${p.originalOrderId.slice(-6)}</span></h3>
+                            <p><strong>NIE:</strong> ${p.studentNie}</p>
                         </div>
                         <div class="order-actions">
                             <div class="order-date">
-                                ${product.orderDate.toLocaleDateString('es-ES', {
+                                ${p.orderDate.toLocaleDateString('es-ES', {
                                     day: '2-digit',
                                     month: '2-digit',
-                                    year: 'numeric',
+                                    year: '2-digit',
                                     hour: '2-digit',
                                     minute: '2-digit'
                                 })}
                             </div>
-                            <div class="order-total">
-                                ${product.totalPrice} puntos
-                            </div>
-                            <button class="complete-btn" onclick="completeIndividualProduct('${product.originalOrderId}', ${product.itemIndex})" 
-                                    title="Eliminar esta unidad del producto">
+                            <div class="order-total">${p.totalPrice} puntos</div>
+                            <button class="complete-btn" onclick="completeProduct('${p.originalOrderId}', '${p.productName}', ${p.unitPrice})">
                                 ✓
                             </button>
                         </div>
                     </div>
-                    
                     <div class="product-info">
-                        <h4>🛍️ Producto solicitado:</h4>
+                        <h4>🛍️ Producto:</h4>
                         <div class="product-details">
-                            <div class="product-name">${product.productName}</div>
-                            <div class="product-price">${product.totalPrice} puntos</div>
+                            <div class="product-name">${p.productName}</div>
+                            <div class="product-price">${p.totalPrice} puntos</div>
                             <div class="quantity-info">
-                                <strong>Precio unitario:</strong> ${product.unitPrice} puntos
+                                <strong>Precio unitario:</strong> ${p.unitPrice} puntos
                             </div>
                         </div>
                     </div>
                 </div>
             `).join('');
-
-            container.innerHTML = productsHTML;
         }
 
-        // Eliminar una unidad de producto de la orden
-        window.completeIndividualProduct = async function(orderId, itemIndex) {
+        // Completar un producto (eliminar una unidad)
+        window.completeProduct = async function(orderId, productName, unitPrice) {
             try {
                 const orderRef = doc(db, 'orders', orderId);
                 const orderDoc = await getDoc(orderRef);
 
                 if (!orderDoc.exists()) {
-                    throw new Error('Orden no encontrada');
+                    showAlert('❌ Orden no encontrada', 'error');
+                    return;
                 }
 
-                const orderData = orderDoc.data();
-                const items = [...orderData.items];
+                const data = orderDoc.data();
+                const items = [...data.items];
 
-                if (!items[itemIndex]) {
-                    throw new Error('Producto no encontrado en la orden');
+                const itemIndex = items.findIndex(i => i.name === productName && i.unitPrice === unitPrice);
+                if (itemIndex === -1) {
+                    showAlert('❌ Producto no encontrado', 'error');
+                    return;
                 }
 
-                // Restar una unidad
                 if (items[itemIndex].quantity > 1) {
                     items[itemIndex].quantity -= 1;
-                } else {
-                    // Si es la última unidad, eliminar el producto del array
-                    items.splice(itemIndex, 1);
-                }
-
-                // Si no quedan productos en la orden, eliminar la orden completa
-                if (items.length === 0) {
-                    await deleteDoc(orderRef);
-                    showAlert('✅ Orden eliminada completamente', 'success');
-                } else {
-                    // Actualizar la orden
                     await updateDoc(orderRef, { items });
-                    showAlert('✅ Producto eliminado de la orden', 'success');
+                } else {
+                    items.splice(itemIndex, 1);
+                    if (items.length === 0) {
+                        await deleteDoc(orderRef);
+                    } else {
+                        await updateDoc(orderRef, { items });
+                    }
                 }
 
+                showAlert('✅ Producto entregado', 'success');
             } catch (error) {
-                console.error('Error eliminando producto:', error);
-                showAlert('Error al eliminar el producto', 'error');
+                console.error('Error al completar producto:', error);
+                showAlert('❌ Error al procesar: ' + error.message, 'error');
             }
         };
 
         // Actualizar estadísticas
         function updateStats() {
             const totalProducts = allProducts.length;
-            const totalPoints = allProducts.reduce((sum, product) => sum + (product.totalPrice || 0), 0);
-
+            const totalPoints = allProducts.reduce((sum, p) => sum + p.totalPrice, 0);
             document.getElementById('totalProducts').textContent = totalProducts;
             document.getElementById('totalPoints').textContent = totalPoints.toLocaleString();
         }
 
         // Mostrar alertas
         function showAlert(message, type) {
-            const alertsContainer = document.getElementById('alerts');
+            const alerts = document.getElementById('alerts');
             const alert = document.createElement('div');
             alert.className = `alert alert-${type}`;
             alert.textContent = message;
-            
-            alertsContainer.appendChild(alert);
-            
-            setTimeout(() => {
-                alert.remove();
-            }, 5000);
+            alerts.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
         }
+
+        // Iniciar escucha en tiempo real
+        setupRealTimeListener();
     </script>
 </body>
 </html>
