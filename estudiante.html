@@ -17,10 +17,9 @@
             min-height: 100vh;
             padding: 10px;
             color: #333;
-            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
 
-        /* CONTENEDOR PRINCIPAL */
         .container {
             max-width: 100%;
             margin: 0 auto;
@@ -298,31 +297,32 @@
             font-size: 16px;
         }
 
-        /* CARRITO - INICIALMENTE OCULTO */
+        /* --- CARRITO: SIEMPRE OCULTO POR DEFECTO --- */
         .cart-sidebar {
             position: fixed;
             top: 0;
             right: 0;
             width: 100%;
-            max-width: 400px;
-            height: 100%;
+            max-width: 420px;
+            height: 100vh;
             background: white;
             box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
-            transform: translateX(100%);
-            transition: transform 0.4s ease;
+            transform: translateX(100%); /* 👈 Fuera de pantalla */
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            border-radius: 0;
         }
 
         .cart-sidebar.open {
-            transform: translateX(0);
+            transform: translateX(0); /* 👈 Entra desde la derecha */
         }
 
         .cart-header {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
-            padding: 18px;
+            padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -395,19 +395,19 @@
             gap: 8px;
         }
 
-        .cart-item-actions .quantity-controls {
+        .quantity-controls {
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .cart-item-actions .quantity-btn {
+        .quantity-btn {
             width: 34px;
             height: 34px;
             font-size: 16px;
         }
 
-        .cart-item-actions .quantity-display {
+        .quantity-display {
             min-width: 44px;
             padding: 6px 8px;
             font-size: 0.95em;
@@ -461,7 +461,7 @@
             opacity: 0.8;
         }
 
-        /* OVERLAY - INICIALMENTE OCULTO */
+        /* OVERLAY: OSCURECE EL FONDO AL ABRIR CARRITO */
         .overlay {
             position: fixed;
             top: 0;
@@ -469,15 +469,12 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.6);
-            display: none;
+            display: none; /* 👈 Oculto por defecto */
             z-index: 999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
         }
 
         .overlay.active {
-            display: block;
-            opacity: 1;
+            display: block; /* 👈 Se muestra al abrir */
         }
 
         /* ALERTAS */
@@ -512,334 +509,6 @@
             font-size: 3em;
             margin-bottom: 12px;
             opacity: 0.5;
-        }
-
-        /* ===== RESPONSIVE DESIGN ===== */
-
-        /* Tablets y dispositivos medianos */
-        @media screen and (max-width: 768px) {
-            body {
-                padding: 5px;
-            }
-
-            .header {
-                padding: 15px;
-            }
-
-            .student-login {
-                margin: 10px;
-                padding: 15px;
-            }
-
-            .login-fields {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .login-fields input {
-                flex: none;
-                width: 100%;
-                min-width: auto;
-                max-width: none;
-            }
-
-            .toggle-password {
-                right: 12px;
-            }
-
-            .products-grid {
-                gap: 12px;
-            }
-
-            .product-card {
-                flex: 1 1 100%;
-                min-width: auto;
-                max-width: none;
-            }
-
-            .cart-sidebar {
-                max-width: 90%;
-                right: 0;
-                left: auto;
-            }
-        }
-
-        /* Móviles */
-        @media screen and (max-width: 480px) {
-            body {
-                padding: 3px;
-            }
-
-            .container {
-                border-radius: 10px;
-            }
-
-            .header {
-                padding: 12px;
-            }
-
-            .cart-icon {
-                width: 42px;
-                height: 42px;
-                font-size: 20px;
-                top: 12px;
-                right: 12px;
-            }
-
-            .header h1 {
-                font-size: clamp(1.4em, 5vw, 1.8em);
-                margin-right: 50px;
-            }
-
-            .header p {
-                font-size: clamp(0.9em, 4vw, 1em);
-                margin-right: 50px;
-            }
-
-            .student-login {
-                margin: 8px;
-                padding: 12px;
-                gap: 12px;
-            }
-
-            .login-btn {
-                padding: 12px;
-                font-size: 15px;
-            }
-
-            .student-info {
-                flex-direction: column;
-                text-align: center;
-                gap: 8px;
-            }
-
-            .points-display {
-                padding: 8px 14px;
-                font-size: 1em;
-            }
-
-            .content {
-                padding: 10px;
-                gap: 15px;
-            }
-
-            .products-grid {
-                gap: 10px;
-            }
-
-            .product-card {
-                padding: 14px;
-            }
-
-            .product-image {
-                height: 120px;
-                font-size: 2.8em;
-            }
-
-            .product-info h3 {
-                font-size: 1.1em;
-            }
-
-            .product-info p {
-                font-size: 0.9em;
-            }
-
-            .product-price {
-                font-size: 1em;
-                padding: 8px 12px;
-            }
-
-            .quantity-btn {
-                width: 36px;
-                height: 36px;
-                font-size: 16px;
-            }
-
-            .quantity-display {
-                font-size: 1em;
-                padding: 8px 12px;
-            }
-
-            .add-to-cart-btn {
-                padding: 12px;
-                font-size: 15px;
-            }
-
-            /* Carrito en móviles */
-            .cart-sidebar {
-                max-width: 100%;
-                width: 100%;
-            }
-
-            .cart-header {
-                padding: 15px;
-            }
-
-            .cart-header h2 {
-                font-size: 1.2em;
-            }
-
-            .cart-content {
-                padding: 12px;
-            }
-
-            .cart-item {
-                padding: 12px;
-                gap: 12px;
-            }
-
-            .cart-item-icon {
-                width: 45px;
-                height: 45px;
-                font-size: 1.2em;
-            }
-
-            .cart-item-info h4 {
-                font-size: 1em;
-            }
-
-            .cart-item-info p {
-                font-size: 0.85em;
-            }
-
-            .cart-footer {
-                padding: 15px;
-            }
-
-            .cart-total {
-                font-size: 1.1em;
-            }
-
-            .purchase-btn {
-                padding: 14px;
-                font-size: 1em;
-            }
-
-            .alert {
-                font-size: 0.9em;
-                padding: 12px;
-                margin: 10px 0;
-            }
-        }
-
-        /* Móviles muy pequeños */
-        @media screen and (max-width: 360px) {
-            .header h1 {
-                font-size: 1.3em;
-            }
-
-            .header p {
-                font-size: 0.85em;
-            }
-
-            .cart-icon {
-                width: 38px;
-                height: 38px;
-                font-size: 18px;
-            }
-
-            .cart-count {
-                width: 18px;
-                height: 18px;
-                font-size: 10px;
-            }
-
-            .product-image {
-                height: 100px;
-                font-size: 2.5em;
-            }
-
-            .quantity-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 14px;
-            }
-
-            .quantity-display {
-                font-size: 0.9em;
-                padding: 6px 10px;
-                min-width: 40px;
-            }
-
-            .cart-item-actions .quantity-btn {
-                width: 30px;
-                height: 30px;
-            }
-
-            .cart-item-actions .quantity-display {
-                min-width: 35px;
-                padding: 4px 6px;
-            }
-
-            .remove-item {
-                width: 24px;
-                height: 24px;
-                font-size: 12px;
-            }
-        }
-
-        /* Pantallas grandes */
-        @media screen and (min-width: 1200px) {
-            .container {
-                max-width: 1200px;
-            }
-
-            .products-grid {
-                gap: 20px;
-            }
-
-            .product-card {
-                flex: 1 1 300px;
-                max-width: 350px;
-            }
-        }
-
-        /* Orientación landscape en móviles */
-        @media screen and (max-height: 500px) and (orientation: landscape) {
-            .header {
-                padding: 10px;
-            }
-
-            .student-login {
-                margin: 5px;
-                padding: 10px;
-            }
-
-            .content {
-                padding: 8px;
-            }
-
-            .product-image {
-                height: 80px;
-                font-size: 2em;
-            }
-
-            .cart-sidebar {
-                width: 50%;
-                max-width: 400px;
-            }
-        }
-
-        /* Ajustes para mejor experiencia táctil */
-        @media (hover: none) and (pointer: coarse) {
-            .cart-icon,
-            .toggle-password,
-            .login-btn,
-            .quantity-btn,
-            .add-to-cart-btn,
-            .close-cart,
-            .remove-item,
-            .purchase-btn {
-                min-height: 44px;
-                min-width: 44px;
-            }
-
-            .quantity-display {
-                min-height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
         }
     </style>
 </head>
@@ -877,9 +546,11 @@
         </div>
     </div>
 
-    <!-- Carrito - INICIALMENTE CERRADO -->
+    <!-- Overlay para cerrar al hacer clic fuera -->
     <div class="overlay" id="overlay" onclick="toggleCart()"></div>
-    <div class="cart-sidebar" id="cartSidebar"> <!-- Sin clase 'open' por defecto -->
+
+    <!-- Carrito: SIEMPRE OCULTO al cargar -->
+    <div class="cart-sidebar" id="cartSidebar">
         <div class="cart-header">
             <h2>🛒 Mi Carrito</h2>
             <button class="close-cart" onclick="toggleCart()">✕</button>
@@ -1016,4 +687,152 @@
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
-                    <div class="product-image
+                    <div class="product-image">${p.icon}</div>
+                    <div class="product-info">
+                        <h3>${p.name}</h3>
+                        <p>${p.description}</p>
+                        <div class="product-price">${p.price} puntos</div>
+                        <div class="product-actions">
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="changeQuantity(${p.id},-1)">−</button>
+                                <div class="quantity-display" id="qty-${p.id}">1</div>
+                                <button class="quantity-btn" onclick="changeQuantity(${p.id},1)">+</button>
+                            </div>
+                            <button class="add-to-cart-btn" onclick="addToCart(${p.id})">Agregar</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        window.changeQuantity = (id, change) => {
+            const el = document.getElementById(`qty-${id}`);
+            let qty = Math.max(1, Math.min(10, parseInt(el.textContent) + change));
+            el.textContent = qty;
+        };
+
+        window.addToCart = (id) => {
+            if (!currentStudent) return showAlert('Inicia sesión', 'error');
+            const p = products.find(x => x.id === id);
+            const qty = parseInt(document.getElementById(`qty-${id}`).textContent);
+            const item = cart.find(x => x.id === id);
+            if (item) {
+                if (item.quantity + qty > 10) return showAlert('Máx 10 unidades', 'error');
+                item.quantity += qty;
+            } else {
+                cart.push({ id: p.id, name: p.name, price: p.price, quantity: qty, icon: p.icon });
+            }
+            updateCartDisplay();
+            document.getElementById(`qty-${id}`).textContent = '1';
+            showAlert(`${p.name} agregado`, 'success');
+        };
+
+        // ✅ TOGGLE PERFECTO: abre y cierra
+        window.toggleCart = function() {
+            if (!currentStudent) {
+                showAlert('Inicia sesión para ver el carrito', 'error');
+                return;
+            }
+            const sidebar = document.getElementById('cartSidebar');
+            const overlay = document.getElementById('overlay');
+            const isOpen = sidebar.classList.contains('open');
+
+            if (isOpen) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            } else {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+            }
+        };
+
+        function updateCartDisplay() {
+            const count = document.getElementById('cartCount');
+            const content = document.getElementById('cartContent');
+            const totalEl = document.getElementById('cartTotal');
+            const btn = document.getElementById('purchaseBtn');
+
+            const totalItems = cart.reduce((a, b) => a + b.quantity, 0);
+            count.textContent = totalItems;
+
+            const total = cart.reduce((a, b) => a + b.price * b.quantity, 0);
+            totalEl.textContent = `${total} puntos`;
+
+            if (cart.length === 0) {
+                content.innerHTML = `<div class="empty-cart">🛒<h3>Vacío</h3><p>Agrega productos</p></div>`;
+                btn.disabled = true;
+            } else {
+                content.innerHTML = cart.map(i => `
+                    <div class="cart-item">
+                        <div class="cart-item-icon">${i.icon}</div>
+                        <div class="cart-item-info">
+                            <h4>${i.name}</h4>
+                            <p>${i.price} × ${i.quantity}</p>
+                        </div>
+                        <div class="cart-item-actions">
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="updateCartQuantity(${i.id},-1)">−</button>
+                                <div class="quantity-display">${i.quantity}</div>
+                                <button class="quantity-btn" onclick="updateCartQuantity(${i.id},1)">+</button>
+                            </div>
+                            <button class="remove-item" onclick="removeFromCart(${i.id})">×</button>
+                        </div>
+                    </div>
+                `).join('');
+                btn.disabled = total > currentStudent.points;
+            }
+        }
+
+        window.updateCartQuantity = (id, change) => {
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            const newQty = item.quantity + change;
+            if (newQty < 1) removeFromCart(id);
+            else if (newQty <= 10) { item.quantity = newQty; updateCartDisplay(); }
+            else showAlert('Máx 10', 'error');
+        };
+
+        window.removeFromCart = (id) => {
+            cart = cart.filter(i => i.id !== id);
+            updateCartDisplay();
+        };
+
+        window.processPurchase = async () => {
+            if (!currentStudent) return;
+            const total = cart.reduce((a, b) => a + b.price * b.quantity, 0);
+            if (total > currentStudent.points) return showAlert('Sin puntos', 'error');
+
+            try {
+                const newPoints = currentStudent.points - total;
+                await updateDoc(doc(db, 'students', currentStudent.id), { points: newPoints });
+                await addDoc(collection(db, 'orders'), {
+                    studentName: currentStudent.name,
+                    studentNie: currentStudent.nie,
+                    items: cart.map(i => ({ name: i.name, qty: i.quantity, price: i.price })),
+                    totalPoints: total,
+                    date: new Date()
+                });
+
+                currentStudent.points = newPoints;
+                document.getElementById('studentPoints').textContent = `${newPoints} puntos`;
+                cart = [];
+                updateCartDisplay();
+                toggleCart(); // cierra
+                showAlert('🎉 ¡Compra realizada!', 'success');
+            } catch (e) {
+                showAlert('Error al comprar', 'error');
+            }
+        };
+
+        function showAlert(msg, type) {
+            const alerts = document.getElementById('alerts');
+            const el = document.createElement('div');
+            el.className = `alert alert-${type}`;
+            el.textContent = msg;
+            alerts.appendChild(el);
+            setTimeout(() => el.remove(), 5000);
+        }
+    </script>
+</body>
+</html>
