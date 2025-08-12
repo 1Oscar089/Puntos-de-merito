@@ -20,6 +20,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-direction: column;
+        }
+
+        .countdown-banner {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            backdrop-filter: blur(10px);
         }
 
         .container {
@@ -288,6 +304,11 @@
     </style>
 </head>
 <body>
+    <!-- ⏰ Temporizador agregado arriba -->
+    <div class="countdown-banner">
+        Nuevas misiones en: <span id="countdownTimer">00:00:00</span>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>🎯 Misiones - Estudiante</h1>
@@ -332,8 +353,8 @@
     <!-- Firebase Scripts -->
     <script type="module">
         // Import Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js  ";
+        import { getFirestore, collection, getDocs, query, where, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js  ";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -363,6 +384,35 @@
         let assignedMissions = [];
         let studentResponses = {};
         let timers = {}; // Cada misión tendrá su propio temporizador
+
+        // ⏰ Temporizador global para nuevas misiones a las 8:30 PM
+        function startDailyCountdown() {
+            const timerEl = document.getElementById('countdownTimer');
+            
+            function updateCountdown() {
+                const now = new Date();
+                let target = new Date();
+                target.setHours(20, 30, 0, 0); // 8:30 PM
+
+                // Si ya pasó hoy, programa para mañana
+                if (now > target) {
+                    target.setDate(target.getDate() + 1);
+                }
+
+                const diff = target - now;
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                timerEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+
+        // Iniciar el temporizador al cargar
+        window.addEventListener('load', startDailyCountdown);
 
         // Función de login
         async function login() {
