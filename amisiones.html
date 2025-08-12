@@ -183,10 +183,18 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
+            transition: all 0.2s ease;
         }
 
-        .btn:hover {
+        .btn:hover:not(:disabled) {
             background: #1558b6;
+        }
+
+        .btn:disabled {
+            background: #ccc !important;
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.8;
         }
 
         .btn-danger {
@@ -291,14 +299,12 @@
         let students = [];
         let studentResponses = {};
 
-        // Mapeo de grados en minúsculas a formato bonito
+        // Mapeo de grados
         const gradeDisplay = {
             'septimo': 'Séptimo',
             'octavo': 'Octavo',
             'noveno': 'Noveno'
         };
-
-        // Orden de grados
         const gradeOrder = { 'septimo': 1, 'octavo': 2, 'noveno': 3 };
 
         // Cargar datos al inicio
@@ -307,7 +313,6 @@
                 await loadStudents();
                 await loadResponses();
 
-                // Cargar misiones asignadas
                 const assigned = await loadAssignedMissions();
                 if (assigned.length > 0) {
                     assignedMissions = assigned;
@@ -334,36 +339,26 @@
             students = [];
             querySnapshot.forEach(doc => {
                 const data = doc.data();
-                // Normalizar el campo grade a minúsculas
                 let grade = (data.grade || '').toLowerCase().trim();
-                // Aseguramos que sea uno de los valores válidos
                 if (!['septimo', 'octavo', 'noveno'].includes(grade)) {
-                    grade = 'noveno'; // valor por defecto
+                    grade = 'noveno';
                 }
                 students.push({ id: doc.id, ...data, grade });
             });
 
-            // Ordenar por grado: septimo → octavo → noveno
-            students.sort((a, b) => {
-                const orderA = gradeOrder[a.grade] || 99;
-                const orderB = gradeOrder[b.grade] || 99;
-                return orderA - orderB;
-            });
+            // Ordenar por grado
+            students.sort((a, b) => (gradeOrder[a.grade] || 99) - (gradeOrder[b.grade] || 99));
         }
 
-        // Cargar respuestas de los estudiantes
+        // Cargar respuestas
         async function loadResponses() {
             const responsesRef = collection(db, 'mission_responses');
             const querySnapshot = await getDocs(responsesRef);
             studentResponses = {};
-
             querySnapshot.forEach(doc => {
                 const data = doc.data();
                 const { missionId, studentNie, response, status } = data;
-
-                if (!studentResponses[missionId]) {
-                    studentResponses[missionId] = {};
-                }
+                if (!studentResponses[missionId]) studentResponses[missionId] = {};
                 studentResponses[missionId][studentNie] = { response, status };
             });
         }
@@ -436,24 +431,21 @@
             const container = document.getElementById(`details-${mission.id}`);
             container.innerHTML = '';
 
-            // Agrupar por grado
             const studentsByGrade = { 'septimo': [], 'octavo': [], 'noveno': [] };
             students.forEach(s => {
-                if (s.grade && studentsByGrade[s.grade] !== undefined) {
+                if (studentsByGrade[s.grade] !== undefined) {
                     studentsByGrade[s.grade].push(s);
                 } else {
-                    studentsByGrade['noveno'].push(s); // por defecto
+                    studentsByGrade['noveno'].push(s);
                 }
             });
 
-            // Renderizar en orden: septimo → octavo → noveno
             Object.keys(studentsByGrade).forEach(gradeKey => {
                 const gradeStudents = studentsByGrade[gradeKey];
                 if (gradeStudents.length === 0) return;
 
                 const gradeGroup = document.createElement('div');
                 gradeGroup.className = 'student-group';
-                // Mostrar nombre bonito
                 gradeGroup.innerHTML = `<div class="grade-title">${gradeDisplay[gradeKey]}</div>`;
                 const studentList = document.createElement('div');
                 studentList.className = 'student-list';
@@ -496,7 +488,11 @@
                             const responseText = `${mission.options[responseObj.response] || 'Opción no válida'} 
                                                   <span class="status-icon">${isCorrect ? '✅' : '❌'}</span>`;
                             responseContent = `<div class="student-response">${responseText}</div>`;
-                            // No se muestra botón en opción múltiple
+                            actionButton = `<button class="btn" 
+                                        ${isCompleted ? 'disabled' : ''} 
+                                        onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
+                                            ${isCompleted ? '✅ Completado' : 'Completar'}
+                                        </button>`;
                         } else if (hasResponded && responseObj.status === 'timeout') {
                             responseContent = `<div class="student-response">⏰ Sin respuesta</div>`;
                         } else {
@@ -516,13 +512,12 @@
                 container.appendChild(gradeGroup);
             });
 
-            // Si no hay estudiantes
             if (container.children.length === 0) {
                 container.innerHTML = '<div class="no-items">No hay estudiantes</div>';
             }
         }
 
-        // Marcar como correcta y sumar puntos
+        // Marcar como correcta
         window.markAsCorrect = async function(btn, studentId, missionId, points, isGamePoints) {
             try {
                 const studentRef = doc(db, 'students', studentId);
@@ -535,7 +530,7 @@
                     completedMissions: [...(studentData.completedMissions || []), missionId]
                 });
 
-                // Actualizar botón
+                // ✅ Deshabilitar y cambiar texto del botón
                 btn.textContent = '✅ Completado';
                 btn.disabled = true;
 
