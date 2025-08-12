@@ -291,8 +291,15 @@
         let students = [];
         let studentResponses = {};
 
+        // Mapeo de grados en minúsculas a formato bonito
+        const gradeDisplay = {
+            'septimo': 'Séptimo',
+            'octavo': 'Octavo',
+            'noveno': 'Noveno'
+        };
+
         // Orden de grados
-        const gradeOrder = { 'Séptimo': 1, 'Octavo': 2, 'Noveno': 3 };
+        const gradeOrder = { 'septimo': 1, 'octavo': 2, 'noveno': 3 };
 
         // Cargar datos al inicio
         window.addEventListener('load', async () => {
@@ -327,12 +334,16 @@
             students = [];
             querySnapshot.forEach(doc => {
                 const data = doc.data();
-                // Aseguramos que el campo 'grade' exista
-                const grade = data.grade || 'Sin grado';
+                // Normalizar el campo grade a minúsculas
+                let grade = (data.grade || '').toLowerCase().trim();
+                // Aseguramos que sea uno de los valores válidos
+                if (!['septimo', 'octavo', 'noveno'].includes(grade)) {
+                    grade = 'noveno'; // valor por defecto
+                }
                 students.push({ id: doc.id, ...data, grade });
             });
 
-            // Ordenar por grado: Séptimo → Octavo → Noveno
+            // Ordenar por grado: septimo → octavo → noveno
             students.sort((a, b) => {
                 const orderA = gradeOrder[a.grade] || 99;
                 const orderB = gradeOrder[b.grade] || 99;
@@ -425,28 +436,25 @@
             const container = document.getElementById(`details-${mission.id}`);
             container.innerHTML = '';
 
-            // Asegurar todos los grados en orden
-            const grades = ['Séptimo', 'Octavo', 'Noveno'];
-            const studentsByGrade = { 'Séptimo': [], 'Octavo': [], 'Noveno': [] };
-
-            // Agrupar estudiantes
+            // Agrupar por grado
+            const studentsByGrade = { 'septimo': [], 'octavo': [], 'noveno': [] };
             students.forEach(s => {
-                const grade = s.grade || 'Sin grado';
-                if (grades.includes(grade)) {
-                    studentsByGrade[grade].push(s);
+                if (s.grade && studentsByGrade[s.grade] !== undefined) {
+                    studentsByGrade[s.grade].push(s);
                 } else {
-                    studentsByGrade['Noveno'].push(s); // Por defecto
+                    studentsByGrade['noveno'].push(s); // por defecto
                 }
             });
 
-            // Renderizar cada grado
-            grades.forEach(grade => {
-                const gradeStudents = studentsByGrade[grade];
+            // Renderizar en orden: septimo → octavo → noveno
+            Object.keys(studentsByGrade).forEach(gradeKey => {
+                const gradeStudents = studentsByGrade[gradeKey];
                 if (gradeStudents.length === 0) return;
 
                 const gradeGroup = document.createElement('div');
                 gradeGroup.className = 'student-group';
-                gradeGroup.innerHTML = `<div class="grade-title">${grade}</div>`;
+                // Mostrar nombre bonito
+                gradeGroup.innerHTML = `<div class="grade-title">${gradeDisplay[gradeKey]}</div>`;
                 const studentList = document.createElement('div');
                 studentList.className = 'student-list';
 
@@ -508,7 +516,7 @@
                 container.appendChild(gradeGroup);
             });
 
-            // Si no se agregó ningún grupo
+            // Si no hay estudiantes
             if (container.children.length === 0) {
                 container.innerHTML = '<div class="no-items">No hay estudiantes</div>';
             }
