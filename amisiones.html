@@ -437,95 +437,95 @@
         }
 
         // Renderizar estudiantes por grado
-        function renderStudentsForMission(mission) {
-            const container = document.getElementById(`details-${mission.id}`);
-            container.innerHTML = '';
-
-            const studentsByGrade = { 'septimo': [], 'octavo': [], 'noveno': [] };
-            students.forEach(s => {
-                if (studentsByGrade[s.grade] !== undefined) {
-                    studentsByGrade[s.grade].push(s);
-                } else {
-                    studentsByGrade['noveno'].push(s);
-                }
-            });
-
-            Object.keys(studentsByGrade).forEach(gradeKey => {
-                const gradeStudents = studentsByGrade[gradeKey];
-                if (gradeStudents.length === 0) return;
-
-                const gradeGroup = document.createElement('div');
-                gradeGroup.className = 'student-group';
-                gradeGroup.innerHTML = `<div class="grade-title">${gradeDisplay[gradeKey]}</div>`;
-                const studentList = document.createElement('div');
-                studentList.className = 'student-list';
-
-                gradeStudents.forEach(student => {
-                    const responseObj = (studentResponses[mission.id] || {})[student.nie];
-                    const hasResponded = !!responseObj;
-                    const isCompleted = student.completedMissions?.includes(mission.id);
-
-                    const row = document.createElement('div');
-                    row.className = 'student-row';
-
-                    let responseContent = '';
-                    let actionButton = '';
-
-                    if (mission.type === 'normal') {
+        // Renderizar estudiantes por grado
+    function renderStudentsForMission(mission) {
+        const container = document.getElementById(`details-${mission.id}`);
+        container.innerHTML = '';
+    
+        const studentsByGrade = { 'septimo': [], 'octavo': [], 'noveno': [] };
+        students.forEach(s => {
+            if (studentsByGrade[s.grade] !== undefined) {
+                studentsByGrade[s.grade].push(s);
+            } else {
+                studentsByGrade['noveno'].push(s);
+            }
+        });
+    
+        Object.keys(studentsByGrade).forEach(gradeKey => {
+            const gradeStudents = studentsByGrade[gradeKey];
+            if (gradeStudents.length === 0) return;
+    
+            const gradeGroup = document.createElement('div');
+            gradeGroup.className = 'student-group';
+            gradeGroup.innerHTML = `<div class="grade-title">${gradeDisplay[gradeKey]}</div>`;
+            const studentList = document.createElement('div');
+            studentList.className = 'student-list';
+    
+            gradeStudents.forEach(student => {
+                const responseObj = (studentResponses[mission.id] || {})[student.nie];
+                const hasResponded = !!responseObj;
+                const isCompleted = student.completedMissions?.includes(mission.id);
+    
+                const row = document.createElement('div');
+                row.className = 'student-row';
+    
+                let responseContent = '';
+                let actionButton = '';
+    
+                if (mission.type === 'normal') {
+                    actionButton = `<button class="btn" 
+                                ${isCompleted ? 'disabled' : ''} 
+                                onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
+                                    ${isCompleted ? '✅ Completado' : 'Completar'}
+                                </button>`;
+                } 
+                else if (mission.type === 'question') {
+                    if (hasResponded && responseObj.status !== 'timeout') {
+                        responseContent = `<div class="student-response">${responseObj.response}</div>`;
                         actionButton = `<button class="btn" 
                                     ${isCompleted ? 'disabled' : ''} 
                                     onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
                                         ${isCompleted ? '✅ Completado' : 'Completar'}
                                     </button>`;
-                    } 
-                    else if (mission.type === 'question') {
-                        if (hasResponded && responseObj.status !== 'timeout') {
-                            responseContent = `<div class="student-response">${responseObj.response}</div>`;
-                            actionButton = `<button class="btn" 
-                                        ${isCompleted ? 'disabled' : ''} 
-                                        onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
-                                            ${isCompleted ? '✅ Completado' : 'Completar'}
-                                        </button>`;
-                        } else if (hasResponded && responseObj.status === 'timeout') {
-                            responseContent = `<div class="student-response">⏰ Sin respuesta</div>`;
-                        } else {
-                            responseContent = `<div class="student-response">Sin responder</div>`;
-                        }
-                    } 
-                    else if (mission.type === 'mcq') {
-                        if (hasResponded && responseObj.status !== 'timeout') {
-                            const isCorrect = responseObj.response === mission.correctIndex;
-                            const responseText = `${mission.options[responseObj.response] || 'Opción no válida'} 
-                                                  <span class="status-icon">${isCorrect ? '✅' : '❌'}</span>`;
-                            responseContent = `<div class="student-response">${responseText}</div>`;
-                            actionButton = `<button class="btn" 
-                                        ${isCompleted ? 'disabled' : ''} 
-                                        onclick="markAsCorrect(this, '${student.id}', '${mission.id}', ${mission.points}, ${mission.isGamePoints})">
-                                            ${isCompleted ? '✅ Completado' : 'Completar'}
-                                        </button>`;
-                        } else if (hasResponded && responseObj.status === 'timeout') {
-                            responseContent = `<div class="student-response">⏰ Sin respuesta</div>`;
-                        } else {
-                            responseContent = `<div class="student-response">Sin responder</div>`;
-                        }
+                    } else if (hasResponded && responseObj.status === 'timeout') {
+                        responseContent = `<div class="student-response">⏰ Sin respuesta</div>`;
+                    } else {
+                        responseContent = `<div class="student-response">Sin responder</div>`;
                     }
-
-                    row.innerHTML = `
-                        <div class="student-name">${student.name}</div>
-                        ${responseContent}
-                        ${actionButton}
-                    `;
-                    studentList.appendChild(row);
-                });
-
-                gradeGroup.appendChild(studentList);
-                container.appendChild(gradeGroup);
+                } 
+                else if (mission.type === 'mcq') {
+                    if (hasResponded && responseObj.status !== 'timeout') {
+                        const isCorrect = responseObj.response === mission.correctIndex;
+                        const responseText = `${mission.options[responseObj.response] || 'Opción no válida'} 
+                                              <span class="status-icon">${isCorrect ? '✅' : '❌'}</span>`;
+                        responseContent = `<div class="student-response">${responseText}</div>`;
+                        // ❌ No se muestra botón en opción múltiple
+                        actionButton = '';
+                    } else if (hasResponded && responseObj.status === 'timeout') {
+                        responseContent = `<div class="student-response">⏰ Sin respuesta</div>`;
+                        actionButton = '';
+                    } else {
+                        responseContent = `<div class="student-response">Sin responder</div>`;
+                        actionButton = '';
+                    }
+                }
+    
+                row.innerHTML = `
+                    <div class="student-name">${student.name}</div>
+                    ${responseContent}
+                    ${actionButton}
+                `;
+                studentList.appendChild(row);
             });
-
-            if (container.children.length === 0) {
-                container.innerHTML = '<div class="no-items">No hay estudiantes</div>';
-            }
+    
+            gradeGroup.appendChild(studentList);
+            container.appendChild(gradeGroup);
+        });
+    
+        if (container.children.length === 0) {
+            container.innerHTML = '<div class="no-items">No hay estudiantes</div>';
         }
+    }
 
         // Marcar como correcta
         window.markAsCorrect = async function(btn, studentId, missionId, points, isGamePoints) {
