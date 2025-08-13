@@ -385,7 +385,7 @@
             return missions;
         }
 
-        // Renderizar misiones asignadas
+        // ✅ Renderizar misiones asignadas (corregido: ahora muestra la descripción en misiones normales)
         function renderAssignedMissions() {
             assignedMissionsList.innerHTML = '';
             if (assignedMissions.length === 0) {
@@ -396,13 +396,15 @@
             assignedMissions.forEach(mission => {
                 const missionEl = document.createElement('div');
                 missionEl.className = 'mission-item';
-                missionEl.innerHTML = `
-                    <div class="mission-header">
-                        <span class="mission-name">${mission.name}</span>
-                        <span class="points-info">${mission.points} ${mission.isGamePoints ? 'puntos de juego' : 'puntos'}</span>
-                    </div>
-                    ${mission.type === 'question' ? `<p class="question-text">${mission.question}</p>` : ''}
-                    ${mission.type === 'mcq' ? `
+
+                // ✅ Añadido: mostrar descripción para misiones normales
+                let extraContent = '';
+                if (mission.type === 'normal') {
+                    extraContent = `<p>${mission.description}</p>`;
+                } else if (mission.type === 'question') {
+                    extraContent = `<p class="question-text">${mission.question}</p>`;
+                } else if (mission.type === 'mcq') {
+                    extraContent = `
                         <p class="question-text">${mission.question}</p>
                         <ul class="options-list">
                             ${mission.options.map((opt, i) => 
@@ -411,7 +413,15 @@
                                 </li>`
                             ).join('')}
                         </ul>
-                    ` : ''}
+                    `;
+                }
+
+                missionEl.innerHTML = `
+                    <div class="mission-header">
+                        <span class="mission-name">${mission.name}</span>
+                        <span class="points-info">${mission.points} ${mission.isGamePoints ? 'puntos de juego' : 'puntos'}</span>
+                    </div>
+                    ${extraContent}
                     <div class="mission-details" id="details-${mission.id}"></div>
                 `;
                 assignedMissionsList.appendChild(missionEl);
