@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎟️ Lotería Estudiantil</title>
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a73e8 0%, #4facfe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 4px solid #1a73e8;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        /* Temporizador */
+        .countdown-banner {
+            background: #28a745;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        /* Tablas */
+        .table-container {
+            margin: 25px 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .table-container h3 {
+            background: #1a73e8;
+            color: white;
+            padding: 15px 20px;
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 20px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Recuadro de compra */
+        .purchase-box {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .purchase-box h3 {
+            color: #1a73e8;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.4em;
+        }
+
+        .form-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            min-width: 150px;
+        }
+
+        .form-group input {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .form-group input:disabled {
+            background: #f1f1f1;
+            color: #666;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Podio */
+        .podium {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .podium h3 {
+            color: #1a73e8;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+
+        .winner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 12px;
+            background: #fff3cd;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 1px solid #ffeaa7;
+        }
+
+        .place {
+            width: 36px;
+            height: 36px;
+            background: #ffc107;
+            color: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .winner-1 .place {
+            background: #ffd700;
+        }
+
+        .winner-2 .place {
+            background: #c0c0c0;
+        }
+
+        .winner-3 .place {
+            background: #cd7f32;
+        }
+
+        .no-winners {
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .alert {
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .login-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎟️ Lotería Estudiantil</h1>
+            <p>Gana puntos con tu suerte</p>
+        </div>
+
+        <div class="content">
+            <!-- Login -->
+            <div id="loginForm" class="login-form">
+                <h2>🔐 Iniciar Sesión</h2>
+                <input type="text" id="nie" class="form-input" placeholder="Ingresa tu NIE">
+                <input type="password" id="password" class="form-input" placeholder="Contraseña">
+                <button class="btn-primary" onclick="login()">Ingresar</button>
+                <div id="loginAlerts"></div>
+            </div>
+
+            <!-- Panel de usuario -->
+            <div id="userPanel" style="display: none;">
+                <!-- Temporizador -->
+                <div class="countdown-banner">
+                    Próxima rifa en: <span id="countdown">Cargando...</span>
+                </div>
+
+                <!-- Premios actuales -->
+                <div class="table-container">
+                    <h3>💰 Premios Actuales</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Lugar</th>
+                                <th>Premio (puntos)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prizesTable">
+                            <tr><td colspan="2">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Estadísticas del estudiante -->
+                <div class="table-container">
+                    <h3>📊 Tu Estado</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tu Tickets</th>
+                                <th>Total Vendidos</th>
+                                <th>Probabilidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statsTable">
+                            <tr><td colspan="3">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Compra de tickets -->
+                <div class="purchase-box">
+                    <h3>🛒 Comprar Tickets</h3>
+                    <div class="form-group">
+                        <label for="ticketCount">Cantidad</label>
+                        <input type="number" id="ticketCount" min="1" value="1" oninput="updateTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Unitario</label>
+                        <input type="text" value="1 punto" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Total a pagar</label>
+                        <input type="text" id="totalCost" value="1" disabled>
+                    </div>
+                    <button class="btn" onclick="buyTickets()">Comprar</button>
+                </div>
+
+                <!-- Podio anterior -->
+                <div class="podium">
+                    <h3>🏆 Ganadores Anteriores</h3>
+                    <div id="previousWinners">
+                        <p class="no-winners">No hay ganadores aún.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="alerts"></div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import {
+            getFirestore, collection, getDocs, query, where, addDoc, updateDoc, doc,
+            getDoc, deleteDoc, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
+            authDomain: "puntos-de-merito.firebaseapp.com",
+            projectId: "puntos-de-merito",
+            storageBucket: "puntos-de-merito.firebasestorage.app",
+            messagingSenderId: "793336144671",
+            appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
+            measurementId: "G-CZ340GE3T7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Elementos
+        const loginForm = document.getElementById('loginForm');
+        const userPanel = document.getElementById('userPanel');
+        const loginAlerts = document.getElementById('loginAlerts');
+        const alerts = document.getElementById('alerts');
+        const countdownEl = document.getElementById('countdown');
+        const prizesTable = document.getElementById('prizesTable');
+        const statsTable = document.getElementById('statsTable');
+        const previousWinners = document.getElementById('previousWinners');
+
+        // Variables globales
+        let currentStudent = null;
+        let commonFund = 0;
+        let totalTickets = 0;
+        let myTickets = 0;
+
+        // Login
+        async function login() {
+            const nie = document.getElementById('nie').value.trim().toUpperCase();
+            const password = document.getElementById('password').value.trim();
+
+            if (!nie || !password) {
+                showAlert('Completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const q = query(collection(db, 'students'), where('nie', '==', nie));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    showAlert('NIE no encontrado', 'error');
+                    return;
+                }
+
+                const docSnap = querySnapshot.docs[0];
+                const data = docSnap.data();
+                const pwd = parseInt(password);
+
+                if (isNaN(pwd) || data.password !== pwd) {
+                    showAlert('Contraseña incorrecta', 'error');
+                    return;
+                }
+
+                currentStudent = { id: docSnap.id, nie, ...data };
+                loginForm.style.display = 'none';
+                userPanel.style.display = 'block';
+
+                await loadData();
+                startCountdown();
+                renderPrizes();
+                renderStats();
+                renderPreviousWinners();
+
+            } catch (error) {
+                console.error('Error login:', error);
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        // Cargar datos
+        async function loadData() {
+            try {
+                // Fondo común
+                const settingsRef = doc(db, 'lottery_settings', 'current');
+                const settingsSnap = await getDoc(settingsRef);
+                commonFund = settingsSnap.exists() ? settingsSnap.data().commonFund || 20 : 20;
+
+                // Tickets
+                const ticketsRef = collection(db, 'tickets');
+                const ticketsSnap = await getDocs(ticketsRef);
+                totalTickets = ticketsSnap.size;
+
+                // Mis tickets
+                const myTicketsRef = collection(db, 'student_tickets');
+                const myQuery = query(myTicketsRef, where('studentNie', '==', currentStudent.nie));
+                const mySnap = await getDocs(myQuery);
+                myTickets = mySnap.empty ? 0 : mySnap.docs[0].data().count || 0;
+
+            } catch (error) {
+                console.error('Error cargar datos:', error);
+            }
+        }
+
+        // Temporizador: Viernes a las 12:00 PM
+        function startCountdown() {
+            const interval = setInterval(() => {
+                const now = new Date();
+                let target = new Date(now);
+                target.setHours(12, 0, 0, 0);
+
+                // Ajustar al próximo viernes
+                const day = now.getDay(); // 0 = domingo, 5 = viernes
+                const daysUntilFriday = (5 - day + 7) % 7;
+                if (day === 5 && now.getHours() >= 12) daysUntilFriday = 7;
+                target.setDate(now.getDate() + daysUntilFriday);
+
+                const diff = target - now;
+                if (diff <= 0) {
+                    clearInterval(interval);
+                    location.reload(); // Reinicia para nueva rifa
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+                countdownEl.textContent = `${days}d ${hours}h ${mins}m ${secs}s`;
+            }, 1000);
+        }
+
+        // Renderizar premios
+        function renderPrizes() {
+            const prizes = calculatePrizes(commonFund);
+            prizesTable.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${i}° Lugar</td>
+                    <td>${prizes[i]} puntos</td>
+                `;
+                prizesTable.appendChild(tr);
+            }
+        }
+
+        // Calcular premios (piso)
+        function calculatePrizes(fund) {
+            return {
+                1: Math.floor(fund * 0.35),
+                2: Math.floor(fund * 0.20),
+                3: Math.floor(fund * 0.15),
+                4: Math.floor(fund * 0.10),
+                5: Math.floor(fund * 0.05)
+            };
+        }
+
+        // Renderizar estadísticas
+        function renderStats() {
+            const probability = totalTickets > 0 ? ((myTickets / totalTickets) * 100).toFixed(2) + '%' : '0%';
+            statsTable.innerHTML = `
+                <tr>
+                    <td><strong>${myTickets}</strong></td>
+                    <td><strong>${totalTickets}</strong></td>
+                    <td><strong>${probability}</strong></td>
+                </tr>
+            `;
+        }
+
+        // Actualizar total
+        function updateTotal() {
+            const count = parseInt(document.getElementById('ticketCount').value) || 1;
+            document.getElementById('totalCost').value = count;
+        }
+
+        // Comprar tickets
+        async function buyTickets() {
+            const countInput = document.getElementById('ticketCount');
+            const count = parseInt(countInput.value) || 1;
+            const totalCost = count;
+
+            if (count < 1) {
+                showAlert('Cantidad inválida', 'error');
+                return;
+            }
+
+            if (currentStudent.points < totalCost) {
+                showAlert('No tienes suficientes puntos', 'error');
+                return;
+            }
+
+            try {
+                // Restar puntos del estudiante
+                const studentRef = doc(db, 'students', currentStudent.id);
+                await updateDoc(studentRef, { points: currentStudent.points - totalCost });
+
+                // Actualizar contador de tickets del estudiante
+                const myTicketsRef = collection(db, 'student_tickets');
+                const q = query(myTicketsRef, where('studentNie', '==', currentStudent.nie));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    const docRef = doc(db, 'student_tickets', snap.docs[0].id);
+                    await updateDoc(docRef, { count: snap.docs[0].data().count + count });
+                } else {
+                    await addDoc(myTicketsRef, { studentNie: currentStudent.nie, count });
+                }
+
+                // Agregar cada ticket
+                const ticketsRef = collection(db, 'tickets');
+                for (let i = 0; i < count; i++) {
+                    await addDoc(ticketsRef, {
+                        studentNie: currentStudent.nie,
+                        timestamp: serverTimestamp()
+                    });
+                }
+
+                // Actualizar estado local
+                currentStudent.points -= totalCost;
+                myTickets += count;
+                totalTickets += count;
+                commonFund += totalCost;
+
+                // Guardar nuevo fondo común
+                const settingsRef = doc(db, 'lottery_settings', 'current');
+                await updateDoc(settingsRef, { commonFund });
+
+                // Actualizar UI
+                renderStats();
+                renderPrizes();
+                showAlert(`✅ Compraste ${count} ticket(s)`, 'success');
+
+            } catch (error) {
+                console.error('Error compra:', error);
+                showAlert('Error al comprar', 'error');
+            }
+        }
+
+        // Mostrar ganadores anteriores
+        async function renderPreviousWinners() {
+            previousWinners.innerHTML = '';
+            try {
+                const winnersRef = collection(db, 'previous_winners');
+                const q = query(winnersRef);
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    previousWinners.innerHTML = '<p class="no-winners">No hay ganadores aún.</p>';
+                    return;
+                }
+
+                const sorted = [...snap.docs].sort((a, b) => a.data().place - b.data().place);
+                sorted.forEach(doc => {
+                    const data = doc.data();
+                    const winnerEl = document.createElement('div');
+                    winnerEl.className = `winner winner-${data.place}`;
+                    winnerEl.innerHTML = `
+                        <div class="place">${data.place}</div>
+                        <div><strong>${data.name}</strong> - ${data.points} puntos</div>
+                    `;
+                    previousWinners.appendChild(winnerEl);
+                });
+            } catch (error) {
+                previousWinners.innerHTML = '<p class="no-winners">Error al cargar ganadores.</p>';
+            }
+        }
+
+        // Mostrar alertas
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alerts.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        // Exponer funciones
+        window.login = login;
+        window.updateTotal = updateTotal;
+        window.buyTickets = buyTickets;
+    </script>
+</body>
+</html>
