@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acuerdos de Convivencia - Aula</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #1a73e8 0%, #4facfe 100%);
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+        }
+
+        .category {
+            background: white;
+            border-radius: 14px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e0e0e0;
+        }
+
+        .category h2 {
+            color: #1a73e8;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #1a73e8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category.respeto h2 { background: #4facfe; }
+        .category.responsabilidad h2 { background: #11998e; }
+        .category.convivencia h2 { background: #f0932b; }
+        .category.aprendizaje h2 { background: #6c5ce7; }
+        .category.inclusion h2 { background: #fd79a8; }
+
+        .agreements {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .agreement {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 1.05em;
+            padding: 10px 0;
+        }
+
+        .number {
+            background: #e0e0e0;
+            color: #333;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .text {
+            flex: 1;
+        }
+
+        .icon {
+            font-size: 1.2em;
+            margin-right: 8px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Íconos por categoría */
+        .respeto .icon { color: #4facfe; }
+        .responsabilidad .icon { color: #11998e; }
+        .convivencia .icon { color: #f0932b; }
+        .aprendizaje .icon { color: #6c5ce7; }
+        .inclusion .icon { color: #fd79a8; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .categories {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .category h2 {
+                font-size: 1.3em;
+            }
+
+            .agreement {
+                font-size: 0.95em;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: white;
+            font-size: 1em;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤝 Acuerdos de Convivencia</h1>
+            <p>Normas que construimos juntos para vivir, aprender y crecer en armonía</p>
+        </div>
+
+        <div class="categories">
+
+            <!-- RESPECTO Y COMUNICACIÓN -->
+            <div class="category respeto">
+                <h2>🗣️ Respeto y Comunicación</h2>
+                <div class="agreements">
+                    <div class="agreement">
+                        <span class="number">1</span>
+                        <div class="text"><span class="icon">👂</span> Escuchar con atención cuando habla el profesor o un compañero.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">2</span>
+                        <div class="text"><span class="icon">✋</span> Levantar la mano para participar y esperar el turno de palabra.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">3</span>
+                        <div class="text"><span class="icon">🔇</span> No interrumpir a los demás durante explicaciones o actividades.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">4</span>
+                        <div class="text"><span class="icon">💬</span> Usar un tono de voz adecuado (no gritar ni murmurar).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">5</span>
+                        <div class="text"><span class="icon">🚫</span> Evitar lenguaje ofensivo, burlas o apodos que puedan herir a otros.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">6</span>
+                        <div class="text"><span class="icon">🌍</span> Respetar las diferencias (culturales, físicas, de género, etc.).</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESPONSABILIDAD Y ORGANIZACIÓN -->
+            <div class="category responsabilidad">
+                <h2>📅 Responsabilidad y Organización</h2>
+                <div class="agreements">
+                    <div class="agreement">
+                        <span class="number">7</span>
+                        <div class="text"><span class="icon">⏰</span> Llegar puntual a clases y cumplir con los horarios.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">8</span>
+                        <div class="text"><span class="icon">📚</span> Traer el material necesario (libros, cuadernos, útiles).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">9</span>
+                        <div class="text"><span class="icon">🧹</span> Mantener el espacio de trabajo limpio y ordenado (mesa, silla, zona común).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">10</span>
+                        <div class="text"><span class="icon">✅</span> Entregar tareas y trabajos en los plazos establecidos.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">11</span>
+                        <div class="text"><span class="icon">🛠️</span> Cuidar los recursos del aula (libros, equipos, instalaciones).</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONVIVENCIA Y SEGURIDAD -->
+            <div class="category convivencia">
+                <h2>🛡️ Convivencia y Seguridad</h2>
+                <div class="agreements">
+                    <div class="agreement">
+                        <span class="number">12</span>
+                        <div class="text"><span class="icon">📵</span> No usar el celular durante clases sin permiso del profesor.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">13</span>
+                        <div class="text"><span class="icon">🥤</span> Prohibido el consumo de alimentos o bebidas en el aula (excepto agua).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">14</span>
+                        <div class="text"><span class="icon">✋</span> Respetar el espacio personal de los demás (no empujar, no invadir).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">15</span>
+                        <div class="text"><span class="icon">🗣️</span> Resolver conflictos mediante el diálogo, sin agresividad física o verbal.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">16</span>
+                        <div class="text"><span class="icon">❌</span> No promover ni participar en bullying (ni físico ni psicológico).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">17</span>
+                        <div class="text"><span class="icon">📢</span> Reportar al profesor cualquier situación de riesgo o conflicto.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APRENDIZAJE Y COLABORACIÓN -->
+            <div class="category aprendizaje">
+                <h2>🧠 Aprendizaje y Colaboración</h2>
+                <div class="agreements">
+                    <div class="agreement">
+                        <span class="number">18</span>
+                        <div class="text"><span class="icon">👥</span> Participar activamente en actividades grupales y debates.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">19</span>
+                        <div class="text"><span class="icon">✍️</span> Ser honesto en tareas, exámenes y proyectos (no copiar ni plagiar).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">20</span>
+                        <div class="text"><span class="icon">🤝</span> Apoyar a los compañeros que lo necesiten (trabajo en equipo).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">21</span>
+                        <div class="text"><span class="icon">🎯</span> Seguir las indicaciones del profesor en actividades y dinámicas.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">22</span>
+                        <div class="text"><span class="icon">😊</span> Mantener una actitud positiva hacia el aprendizaje.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INCLUSIÓN Y VALORES -->
+            <div class="category inclusion">
+                <h2>🌈 Inclusión y Valores</h2>
+                <div class="agreements">
+                    <div class="agreement">
+                        <span class="number">23</span>
+                        <div class="text"><span class="icon">🗣️</span> Usar lenguaje inclusivo y evitar discriminación.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">24</span>
+                        <div class="text"><span class="icon">🎲</span> Respetar las reglas de juegos y actividades en clase.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">25</span>
+                        <div class="text"><span class="icon">💭</span> Cuidar la diversidad de ideas en debates (no ridiculizar opiniones).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">26</span>
+                        <div class="text"><span class="icon">🗑️</span> Ayudar a mantener la limpieza del aula (recoger basura, organizar).</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">27</span>
+                        <div class="text"><span class="icon">📅</span> Ser puntuales en entregas de trabajos y cumplir plazos.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">28</span>
+                        <div class="text"><span class="icon">🙏</span> Pedir disculpas si se hace un daño a un compañero o al profesor.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">29</span>
+                        <div class="text"><span class="icon">🚪</span> No salir del aula sin autorización durante la clase.</div>
+                    </div>
+                    <div class="agreement">
+                        <span class="number">30</span>
+                        <div class="text"><span class="icon">✨</span> Fomentar un ambiente positivo con actitud colaborativa.</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <p>Construido con respeto, responsabilidad y amor por el aprendizaje.</p>
+        </div>
+    </div>
+</body>
+</html>
