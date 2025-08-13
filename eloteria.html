@@ -350,7 +350,7 @@
                     </div>
                     <div class="form-group">
                         <label>Total a pagar</label>
-                        <input type="text" id="totalCost" value="1" disabled>
+                        <input type="text" id="totalCost" value="1 punto" disabled>
                     </div>
                     <button class="btn" onclick="buyTickets()">Comprar</button>
                 </div>
@@ -373,8 +373,8 @@
         // Import Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
         import {
-            getFirestore, collection, getDocs, query, where, addDoc, updateDoc, doc,
-            getDoc, deleteDoc, serverTimestamp
+            getFirestore, collection, getDocs, query, where, addDoc, setDoc, doc,
+            getDoc, onSnapshot, serverTimestamp
         } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Firebase config
@@ -403,7 +403,7 @@
 
         // Variables globales
         let currentStudent = null;
-        let commonFund = 0;
+        let commonFund = 20; // Valor inicial
         let totalTickets = 0;
         let myTickets = 0;
 
@@ -439,11 +439,9 @@
                 loginForm.style.display = 'none';
                 userPanel.style.display = 'block';
 
-                await loadData();
+                // Iniciar escucha en tiempo real
+                setupRealTimeListeners();
                 startCountdown();
-                renderPrizes();
-                renderStats();
-                renderPreviousWinners();
 
             } catch (error) {
                 console.error('Error login:', error);
@@ -451,28 +449,41 @@
             }
         }
 
-        // Cargar datos
-        async function loadData() {
-            try {
-                // Fondo común
-                const settingsRef = doc(db, 'lottery_settings', 'current');
-                const settingsSnap = await getDoc(settingsRef);
-                commonFund = settingsSnap.exists() ? settingsSnap.data().commonFund || 20 : 20;
+        // Escucha en tiempo real
+        function setupRealTimeListeners() {
+            // Fondo común
+            const settingsRef = doc(db, 'lottery_settings', 'current');
+            onSnapshot(settingsRef, (snap) => {
+                if (snap.exists()) {
+                    commonFund = snap.data().commonFund || 20;
+                } else {
+                    // Si no existe, crearlo con 20
+                    setDoc(settingsRef, { commonFund: 20 }, { merge: true });
+                    commonFund = 20;
+                }
+                renderPrizes();
+            });
 
-                // Tickets
-                const ticketsRef = collection(db, 'tickets');
-                const ticketsSnap = await getDocs(ticketsRef);
-                totalTickets = ticketsSnap.size;
+            // Tickets totales
+            const ticketsRef = collection(db, 'tickets');
+            onSnapshot(ticketsRef, (snap) => {
+                totalTickets = snap.size;
+                renderStats();
+            });
 
-                // Mis tickets
-                const myTicketsRef = collection(db, 'student_tickets');
-                const myQuery = query(myTicketsRef, where('studentNie', '==', currentStudent.nie));
-                const mySnap = await getDocs(myQuery);
-                myTickets = mySnap.empty ? 0 : mySnap.docs[0].data().count || 0;
+            // Mis tickets
+            const myTicketsRef = collection(db, 'student_tickets');
+            const myQuery = query(myTicketsRef, where('studentNie', '==', currentStudent.nie));
+            onSnapshot(myQuery, (snap) => {
+                myTickets = snap.empty ? 0 : (snap.docs[0].data().count || 0);
+                renderStats();
+            });
 
-            } catch (error) {
-                console.error('Error cargar datos:', error);
-            }
+            // Ganadores anteriores
+            const winnersRef = collection(db, 'previous_winners');
+            onSnapshot(winnersRef, () => {
+                renderPreviousWinners();
+            });
         }
 
         // Temporizador: Viernes a las 12:00 PM
@@ -482,16 +493,18 @@
                 let target = new Date(now);
                 target.setHours(12, 0, 0, 0);
 
-                // Ajustar al próximo viernes
-                const day = now.getDay(); // 0 = domingo, 5 = viernes
+                const day = now.getDay();
                 const daysUntilFriday = (5 - day + 7) % 7;
-                if (day === 5 && now.getHours() >= 12) daysUntilFriday = 7;
-                target.setDate(now.getDate() + daysUntilFriday);
+                if (day === 5 && now.getHours() >= 12) {
+                    target.setDate(now.getDate() + 7);
+                } else {
+                    target.setDate(now.getDate() + daysUntilFriday);
+                }
 
                 const diff = target - now;
                 if (diff <= 0) {
                     clearInterval(interval);
-                    location.reload(); // Reinicia para nueva rifa
+                    location.reload();
                     return;
                 }
 
@@ -544,13 +557,13 @@
         // Actualizar total
         function updateTotal() {
             const count = parseInt(document.getElementById('ticketCount').value) || 1;
-            document.getElementById('totalCost').value = count + " " + (count === 1 ? "punto" : "puntos");
+            const puntosText = count === 1 ? "punto" : "puntos";
+            document.getElementById('totalCost').value = count + " " + puntosText;
         }
 
         // Comprar tickets
         async function buyTickets() {
-            const countInput = document.getElementById('ticketCount');
-            const count = parseInt(countInput.value) || 1;
+            const count = parseInt(document.getElementById('ticketCount').value) || 1;
             const totalCost = count;
 
             if (count < 1) {
@@ -564,23 +577,26 @@
             }
 
             try {
-                // Restar puntos del estudiante
-                const studentRef = doc(db, 'students', currentStudent.id);
-                await updateDoc(studentRef, { points: currentStudent.points - totalCost });
-
-                // Actualizar contador de tickets del estudiante
+                const settingsRef = doc(db, 'lottery_settings', 'current');
+                const ticketsRef = collection(db, 'tickets');
                 const myTicketsRef = collection(db, 'student_tickets');
+                const studentRef = doc(db, 'students', currentStudent.id);
+
+                // 1. Restar puntos al estudiante
+                await setDoc(studentRef, { points: currentStudent.points - totalCost }, { merge: true });
+                currentStudent.points -= totalCost;
+
+                // 2. Actualizar contador de tickets del estudiante
                 const q = query(myTicketsRef, where('studentNie', '==', currentStudent.nie));
                 const snap = await getDocs(q);
                 if (!snap.empty) {
                     const docRef = doc(db, 'student_tickets', snap.docs[0].id);
-                    await updateDoc(docRef, { count: snap.docs[0].data().count + count });
+                    await setDoc(docRef, { count: snap.docs[0].data().count + count }, { merge: true });
                 } else {
                     await addDoc(myTicketsRef, { studentNie: currentStudent.nie, count });
                 }
 
-                // Agregar cada ticket
-                const ticketsRef = collection(db, 'tickets');
+                // 3. Agregar tickets
                 for (let i = 0; i < count; i++) {
                     await addDoc(ticketsRef, {
                         studentNie: currentStudent.nie,
@@ -588,24 +604,17 @@
                     });
                 }
 
-                // Actualizar estado local
-                currentStudent.points -= totalCost;
-                myTickets += count;
-                totalTickets += count;
-                commonFund += totalCost;
+                // 4. Actualizar fondo común (sumar 1 por ticket)
+                const settingsSnap = await getDoc(settingsRef);
+                const currentFund = settingsSnap.exists() ? settingsSnap.data().commonFund || 20 : 20;
+                await setDoc(settingsRef, { commonFund: currentFund + totalCost }, { merge: true });
 
-                // Guardar nuevo fondo común
-                const settingsRef = doc(db, 'lottery_settings', 'current');
-                await updateDoc(settingsRef, { commonFund });
-
-                // Actualizar UI
-                renderStats();
-                renderPrizes();
+                // 5. Actualizar UI
                 showAlert(`✅ Compraste ${count} ticket(s)`, 'success');
 
             } catch (error) {
                 console.error('Error compra:', error);
-                showAlert('Error al comprar', 'error');
+                showAlert('❌ Error al procesar la compra', 'error');
             }
         }
 
