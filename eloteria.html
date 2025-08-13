@@ -64,6 +64,33 @@
             box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
         }
 
+        /* Puntos del estudiante */
+        .student-points-banner {
+            text-align: center;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .student-points-banner.low {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .student-points-banner.empty {
+            background: #dc3545;
+            color: white;
+        }
+
+        .student-points-banner.normal {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
         /* Tablas */
         .table-container {
             margin: 25px 0;
@@ -304,6 +331,11 @@
                     Próxima rifa en: <span id="countdown">Cargando...</span>
                 </div>
 
+                <!-- ✅ Puntos del estudiante en tiempo real -->
+                <div class="student-points-banner" id="pointsBanner">
+                    🔢 <strong>Tus puntos:</strong> <span id="studentPoints">0</span>
+                </div>
+
                 <!-- Premios actuales -->
                 <div class="table-container">
                     <h3>💰 Premios Actuales</h3>
@@ -400,10 +432,12 @@
         const prizesTable = document.getElementById('prizesTable');
         const statsTable = document.getElementById('statsTable');
         const previousWinners = document.getElementById('previousWinners');
+        const studentPointsEl = document.getElementById('studentPoints');
+        const pointsBanner = document.getElementById('pointsBanner');
 
         // Variables globales
         let currentStudent = null;
-        let commonFund = 20; // Valor inicial
+        let commonFund = 20;
         let totalTickets = 0;
         let myTickets = 0;
 
@@ -451,13 +485,30 @@
 
         // Escucha en tiempo real
         function setupRealTimeListeners() {
+            // ✅ Escuchar cambios en el estudiante
+            const studentRef = doc(db, 'students', currentStudent.id);
+            onSnapshot(studentRef, (snap) => {
+                if (snap.exists()) {
+                    currentStudent.points = snap.data().points || 0;
+                    studentPointsEl.textContent = currentStudent.points + " puntos";
+
+                    // ✅ Cambiar estilo según puntos
+                    if (currentStudent.points === 0) {
+                        pointsBanner.className = 'student-points-banner empty';
+                    } else if (currentStudent.points < 5) {
+                        pointsBanner.className = 'student-points-banner low';
+                    } else {
+                        pointsBanner.className = 'student-points-banner normal';
+                    }
+                }
+            });
+
             // Fondo común
             const settingsRef = doc(db, 'lottery_settings', 'current');
             onSnapshot(settingsRef, (snap) => {
                 if (snap.exists()) {
                     commonFund = snap.data().commonFund || 20;
                 } else {
-                    // Si no existe, crearlo con 20
                     setDoc(settingsRef, { commonFund: 20 }, { merge: true });
                     commonFund = 20;
                 }
@@ -584,7 +635,6 @@
 
                 // 1. Restar puntos al estudiante
                 await setDoc(studentRef, { points: currentStudent.points - totalCost }, { merge: true });
-                currentStudent.points -= totalCost;
 
                 // 2. Actualizar contador de tickets del estudiante
                 const q = query(myTicketsRef, where('studentNie', '==', currentStudent.nie));
@@ -604,12 +654,11 @@
                     });
                 }
 
-                // 4. Actualizar fondo común (sumar 1 por ticket)
+                // 4. Actualizar fondo común
                 const settingsSnap = await getDoc(settingsRef);
                 const currentFund = settingsSnap.exists() ? settingsSnap.data().commonFund || 20 : 20;
                 await setDoc(settingsRef, { commonFund: currentFund + totalCost }, { merge: true });
 
-                // 5. Actualizar UI
                 showAlert(`✅ Compraste ${count} ticket(s)`, 'success');
 
             } catch (error) {
