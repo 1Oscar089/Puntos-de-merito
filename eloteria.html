@@ -544,7 +544,7 @@
         // Actualizar total
         function updateTotal() {
             const count = parseInt(document.getElementById('ticketCount').value) || 1;
-            document.getElementById('totalCost').value = count;
+            document.getElementById('totalCost').value = count + " " + (count === 1 ? "punto" : "puntos");
         }
 
         // Comprar tickets
