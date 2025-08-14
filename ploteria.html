@@ -466,27 +466,48 @@
                 const prizes = calculatePrizes(commonFund);
                 const winners = [];
 
-                // Determinar cuántos premios entregar (1 a 5, según cantidad de NIEs distintos)
-                const numPrizes = Math.min(uniqueNIEs.length, 5);
-
-                // Seleccionar ganadores del último al primero (evita sesgo)
-                const selectedNIEs = new Set();
-                for (let place = numPrizes; place >= 1; place--) {
-                    let candidate;
-                    do {
-                        const randomIndex = Math.floor(Math.random() * allTickets.length);
-                        candidate = allTickets[randomIndex];
-                    } while (selectedNIEs.has(candidate));
-
-                    selectedNIEs.add(candidate);
-                    const student = studentsMap[candidate];
+                // Caso 1: Solo un estudiante participó
+                if (uniqueNIEs.length === 1) {
+                    const nie = uniqueNIEs[0];
+                    const student = studentsMap[nie];
                     if (student) {
                         winners.push({
-                            place,
-                            studentNie: candidate,
+                            place: 1,
+                            studentNie: nie,
                             name: student.name,
-                            points: prizes[place]
+                            points: prizes[1]
                         });
+                    }
+                    // Los premios 2° al 5° se quedan en el fondo
+                }
+                // Caso 2: Múltiples estudiantes
+                else {
+                    if (uniqueNIEs.length < 5) {
+                        showAlert('No hay al menos 5 estudiantes diferentes.', 'error');
+                        endLotteryBtn.disabled = false;
+                        return;
+                    }
+
+                    const selectedNIEs = new Set();
+
+                    // Del 5° al 1° lugar (evita sesgo por orden)
+                    for (let place = 5; place >= 1; place--) {
+                        let candidate;
+                        do {
+                            const randomIndex = Math.floor(Math.random() * allTickets.length);
+                            candidate = allTickets[randomIndex];
+                        } while (selectedNIEs.has(candidate));
+
+                        selectedNIEs.add(candidate);
+                        const student = studentsMap[candidate];
+                        if (student) {
+                            winners.push({
+                                place,
+                                studentNie: candidate,
+                                name: student.name,
+                                points: prizes[place]
+                            });
+                        }
                     }
                 }
 
@@ -506,7 +527,7 @@
                     }
                 }
 
-                // Actualizar fondo común al 15% del fondo original (piso)
+                // Actualizar fondo común al 15% del fondo original
                 const newCommonFund = Math.floor(commonFund * 0.15);
                 const settingsRef = doc(db, 'lottery_settings', 'current');
                 await setDoc(settingsRef, { commonFund: newCommonFund });
