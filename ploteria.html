@@ -326,7 +326,7 @@
 
         // Variables globales
         let commonFund = 20;
-        let studentTicketsMap = {}; // Para guardar cuántos tickets compró cada estudiante
+        let studentTicketsMap = {};
 
         // Cargar datos al inicio
         window.addEventListener('load', async () => {
@@ -522,7 +522,7 @@
                 oldWinnersSnap.docs.forEach(doc => deletePromises.push(deleteDoc(doc.ref)));
                 await Promise.all(deletePromises);
 
-                // Guardar nuevos ganadores
+                // Guardar nuevos ganadores y sumar puntos
                 for (const winner of winners) {
                     await addDoc(winnersRef, {
                         ...winner,
@@ -537,8 +537,17 @@
                     }
                 }
 
-                // Actualizar fondo común al 15% del fondo original
-                const newCommonFund = Math.floor(commonFund * 0.15);
+                // Calcular premios no entregados
+                let unclaimedPoints = 0;
+                for (let i = numPrizes + 1; i <= 5; i++) {
+                    unclaimedPoints += prizes[i];
+                }
+
+                // Nuevo fondo = 15% del original + premios no entregados
+                const baseContribution = Math.floor(commonFund * 0.15);
+                const newCommonFund = baseContribution + unclaimedPoints;
+
+                // Actualizar fondo común
                 const settingsRef = doc(db, 'lottery_settings', 'current');
                 await setDoc(settingsRef, { commonFund: newCommonFund });
 
@@ -554,7 +563,7 @@
                 studentTicketsSnap.docs.forEach(doc => deleteStudentTicketsPromises.push(deleteDoc(doc.ref)));
                 await Promise.all(deleteStudentTicketsPromises);
 
-                showAlert(`✅ Sorteo completado. ${winners.length} ganador(es). Nueva rifa iniciada.`, 'success');
+                showAlert(`✅ Sorteo completado. ${winners.length} ganador(es). Nuevo fondo: ${newCommonFund} puntos.`, 'success');
                 setTimeout(() => location.reload(), 3000);
 
             } catch (error) {
@@ -573,7 +582,7 @@
             setTimeout(() => alert.remove(), 5000);
         }
 
-        // ✅ Expone la función globalmente para el onclick
+        // ✅ Expone la función globalmente
         window.endLottery = endLottery;
     </script>
 </body>
