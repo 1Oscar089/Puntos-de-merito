@@ -51,7 +51,6 @@
             padding: 30px;
         }
 
-        /* Temporizador */
         .countdown-banner {
             background: #28a745;
             color: white;
@@ -61,10 +60,8 @@
             font-weight: bold;
             border-radius: 12px;
             margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
         }
 
-        /* Información general */
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -93,8 +90,7 @@
             color: #d93025;
         }
 
-        /* Premios */
-        .prizes-table {
+        .prizes-table, .winners-section {
             background: white;
             border-radius: 12px;
             overflow: hidden;
@@ -102,7 +98,7 @@
             margin-bottom: 30px;
         }
 
-        .prizes-table h3 {
+        .prizes-table h3, .winners-section h3 {
             background: #1a73e8;
             color: white;
             padding: 15px 20px;
@@ -110,37 +106,21 @@
             font-size: 1.3em;
         }
 
-        .prizes-table table {
+        table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .prizes-table th, .prizes-table td {
+        th, td {
             padding: 14px 20px;
             text-align: center;
             border-bottom: 1px solid #eee;
         }
 
-        .prizes-table th {
+        th {
             background: #f8f9fa;
             color: #333;
             font-weight: 600;
-        }
-
-        /* Ganadores anteriores */
-        .winners-section {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            margin-bottom: 30px;
-        }
-
-        .winners-section h3 {
-            color: #1a73e8;
-            margin-bottom: 20px;
-            font-size: 1.3em;
-            text-align: center;
         }
 
         .winner {
@@ -189,7 +169,6 @@
             font-style: italic;
         }
 
-        /* Botón principal */
         .action-btn {
             display: block;
             width: 100%;
@@ -206,18 +185,15 @@
             transition: all 0.3s ease;
         }
 
-        .action-btn:hover {
+        .action-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(217, 48, 37, 0.5);
         }
 
         .action-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
-            transform: none;
         }
 
-        /* Alertas */
         .alert {
             padding: 12px;
             margin: 15px 0;
@@ -243,24 +219,21 @@
     <div class="container">
         <div class="header">
             <h1>🎟️ Lotería - Panel Docente</h1>
-            <p>Realiza el sorteo semanal y gestiona el fondo común</p>
+            <p>Realiza el sorteo semanal</p>
         </div>
 
         <div class="content">
-            <!-- Temporizador -->
             <div class="countdown-banner">
                 Próxima rifa en: <span id="countdown">Cargando...</span>
             </div>
 
-            <!-- Información general -->
             <div class="info-grid">
                 <div class="info-card">
                     <h3>Fondo Común</h3>
-                    <div class="value" id="commonFund">0</div>
+                    <div class="value" id="commonFund">20</div>
                 </div>
             </div>
 
-            <!-- Premios actuales -->
             <div class="prizes-table">
                 <h3>💰 Premios del Sorteo</h3>
                 <table>
@@ -276,7 +249,6 @@
                 </table>
             </div>
 
-            <!-- Ganadores anteriores -->
             <div class="winners-section">
                 <h3>🏆 Ganadores Anteriores</h3>
                 <div id="previousWinners">
@@ -284,8 +256,7 @@
                 </div>
             </div>
 
-            <!-- Botón de acción -->
-            <button id="endLotteryBtn" class="action-btn" onclick="endLottery()">
+            <button id="endLotteryBtn" class="action-btn" onclick="window.endLottery && window.endLottery();">
                 🎰 Terminar Lotería y Realizar Sorteo
             </button>
         </div>
@@ -295,295 +266,181 @@
 
     <!-- Firebase -->
     <script type="module">
-        // Import Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-        import {
-            getFirestore, collection, getDocs, query, where, addDoc, setDoc, doc,
-            getDoc, deleteDoc, onSnapshot, serverTimestamp
-        } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+        console.log("🔧 Iniciando sistema de lotería...");
 
-        // Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
-            authDomain: "puntos-de-merito.firebaseapp.com",
-            projectId: "puntos-de-merito",
-            storageBucket: "puntos-de-merito.firebasestorage.app",
-            messagingSenderId: "793336144671",
-            appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
-            measurementId: "G-CZ340GE3T7"
-        };
+        let db;
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        try {
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js");
+            const {
+                getFirestore,
+                collection,
+                getDocs,
+                addDoc,
+                setDoc,
+                doc,
+                getDoc,
+                deleteDoc,
+                onSnapshot,
+                serverTimestamp
+            } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
 
-        // Elementos
-        const alerts = document.getElementById('alerts');
-        const countdownEl = document.getElementById('countdown');
-        const commonFundEl = document.getElementById('commonFund');
-        const prizesTable = document.getElementById('prizesTable');
-        const previousWinners = document.getElementById('previousWinners');
-        const endLotteryBtn = document.getElementById('endLotteryBtn');
+            const firebaseConfig = {
+                apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
+                authDomain: "puntos-de-merito.firebaseapp.com",
+                projectId: "puntos-de-merito",
+                storageBucket: "puntos-de-merito.firebasestorage.app",
+                messagingSenderId: "793336144671",
+                appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
+                measurementId: "G-CZ340GE3T7"
+            };
 
-        // Variables globales
-        let commonFund = 20;
-        let studentTicketsMap = {};
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            console.log("✅ Firebase inicializado");
+        } catch (error) {
+            console.error("❌ Error al cargar Firebase:", error);
+            alert("Error crítico: No se pudo conectar a Firebase.");
+        }
 
-        // Cargar datos al inicio
-        window.addEventListener('load', async () => {
-            await loadStudentTickets();
-            await loadLotteryData();
-            startCountdown();
-        });
+        // Función principal
+        window.endLottery = async function () {
+            const btn = document.getElementById('endLotteryBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Procesando...';
 
-        // Cargar cantidad de tickets por estudiante
-        async function loadStudentTickets() {
             try {
-                const ticketsRef = collection(db, 'student_tickets');
-                const snap = await getDocs(ticketsRef);
-                studentTicketsMap = {};
-                snap.forEach(doc => {
+                if (!db) throw new Error("Firebase no está disponible");
+
+                // 1. Leer tickets actuales
+                const ticketsSnap = await getDocs(collection(db, 'tickets'));
+                if (ticketsSnap.size === 0) {
+                    alert("No hay tickets para sortear.");
+                    btn.disabled = false;
+                    return;
+                }
+
+                // 2. Leer student_tickets (para mostrar en podio)
+                const studentTicketsRef = collection(db, 'student_tickets');
+                const studentTicketsSnap = await getDocs(studentTicketsRef);
+                const studentTicketsMap = {};
+                studentTicketsSnap.forEach(doc => {
                     const data = doc.data();
                     studentTicketsMap[data.studentNie] = data.count || 0;
                 });
-            } catch (error) {
-                console.error('Error al cargar tickets:', error);
-            }
-        }
 
-        // Cargar datos de la lotería
-        async function loadLotteryData() {
-            try {
-                const settingsRef = doc(db, 'lottery_settings', 'current');
-                const settingsSnap = await getDoc(settingsRef);
-
-                if (settingsSnap.exists()) {
-                    commonFund = settingsSnap.data().commonFund || 20;
-                } else {
-                    await setDoc(settingsRef, { commonFund: 20 });
-                    commonFund = 20;
-                }
-
-                commonFundEl.textContent = commonFund + " puntos";
-                renderPrizes();
-
-                // Escuchar ganadores en tiempo real
-                const winnersRef = collection(db, 'previous_winners');
-                onSnapshot(winnersRef, (snapshot) => {
-                    renderPreviousWinners(snapshot);
-                });
-
-            } catch (error) {
-                console.error('Error cargar datos:', error);
-                showAlert('Error al cargar datos', 'error');
-            }
-        }
-
-        // Temporizador: Viernes a las 12:00 PM
-        function startCountdown() {
-            const interval = setInterval(() => {
-                const now = new Date();
-                let target = new Date(now);
-                target.setHours(12, 0, 0, 0);
-
-                const day = now.getDay();
-                const daysUntilFriday = (5 - day + 7) % 7;
-                if (day === 5 && now.getHours() >= 12) {
-                    target.setDate(now.getDate() + 7);
-                } else {
-                    target.setDate(now.getDate() + daysUntilFriday);
-                }
-
-                const diff = target - now;
-                if (diff <= 0) {
-                    clearInterval(interval);
-                    location.reload();
-                    return;
-                }
-
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const secs = Math.floor((diff % (1000 * 60)) / 1000);
-
-                countdownEl.textContent = `${days}d ${hours}h ${mins}m ${secs}s`;
-            }, 1000);
-        }
-
-        // Renderizar premios
-        function renderPrizes() {
-            const prizes = calculatePrizes(commonFund);
-            prizesTable.innerHTML = '';
-            for (let i = 1; i <= 5; i++) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${i}° Lugar</td>
-                    <td>${prizes[i]} puntos</td>
-                `;
-                prizesTable.appendChild(tr);
-            }
-        }
-
-        // Calcular premios (piso)
-        function calculatePrizes(fund) {
-            return {
-                1: Math.floor(fund * 0.35),
-                2: Math.floor(fund * 0.20),
-                3: Math.floor(fund * 0.15),
-                4: Math.floor(fund * 0.10),
-                5: Math.floor(fund * 0.05)
-            };
-        }
-
-        // Mostrar ganadores anteriores
-        function renderPreviousWinners(snapshot) {
-            previousWinners.innerHTML = '';
-            if (snapshot.empty) {
-                previousWinners.innerHTML = '<p class="no-winners">No hay ganadores aún.</p>';
-                return;
-            }
-
-            const winners = snapshot.docs.map(d => d.data());
-            const sorted = winners.sort((a, b) => a.place - b.place);
-
-            sorted.forEach(data => {
-                const ticketsCount = studentTicketsMap[data.studentNie] || 0;
-                const winnerEl = document.createElement('div');
-                winnerEl.className = `winner winner-${data.place}`;
-                winnerEl.innerHTML = `
-                    <div class="place">${data.place}</div>
-                    <div><strong>${data.name}</strong> - ${data.points} puntos</div>
-                    <div class="tickets-info">🎟️ ${ticketsCount} ticket${ticketsCount !== 1 ? 's' : ''}</div>
-                `;
-                previousWinners.appendChild(winnerEl);
-            });
-        }
-
-        // Terminar lotería y realizar sorteo
-        async function endLottery() {
-            if (!confirm('¿Estás seguro de terminar la lotería y realizar el sorteo?')) return;
-
-            try {
-                endLotteryBtn.disabled = true;
-                endLotteryBtn.textContent = '⏳ Procesando sorteo...';
-
-                const ticketsRef = collection(db, 'tickets');
-                const ticketsSnap = await getDocs(ticketsRef);
-
-                if (ticketsSnap.size === 0) {
-                    showAlert('No hay tickets para sortear', 'error');
-                    endLotteryBtn.disabled = false;
-                    return;
-                }
-
-                const allTickets = ticketsSnap.docs.map(d => d.data().studentNie);
-                const uniqueNIEs = [...new Set(allTickets)];
-
-                // Obtener nombres de estudiantes
-                const studentsRef = collection(db, 'students');
-                const studentsSnap = await getDocs(studentsRef);
+                // 3. Leer estudiantes para nombres
+                const studentsSnap = await getDocs(collection(db, 'students'));
                 const studentsMap = {};
                 studentsSnap.forEach(doc => {
                     const data = doc.data();
-                    studentsMap[data.nie] = { name: data.name, ref: doc.ref };
+                    studentsMap[data.nie] = { name: data.name };
                 });
 
-                // Calcular premios
-                const prizes = calculatePrizes(commonFund);
-                const winners = [];
+                // 4. Fondo común
+                const settingsRef = doc(db, 'lottery_settings', 'current');
+                const settingsSnap = await getDoc(settingsRef);
+                const commonFund = settingsSnap.exists() ? settingsSnap.data().commonFund || 20 : 20;
 
-                // Determinar cuántos premios entregar (1 a 5)
+                // 5. Calcular premios (piso)
+                const prizes = {
+                    1: Math.floor(commonFund * 0.35),
+                    2: Math.floor(commonFund * 0.20),
+                    3: Math.floor(commonFund * 0.15),
+                    4: Math.floor(commonFund * 0.10),
+                    5: Math.floor(commonFund * 0.05)
+                };
+
+                const totalAwarded = Object.values(prizes).reduce((a, b) => a + b, 0);
+                const unclaimedPoints = commonFund - totalAwarded; // Lo que NO se repartió
+
+                // 6. Seleccionar ganadores
+                const allTickets = ticketsSnap.docs.map(d => d.data().studentNie);
+                const uniqueNIEs = [...new Set(allTickets)];
                 const numPrizes = Math.min(uniqueNIEs.length, 5);
-
-                // Seleccionar ganadores del último al primero
+                const winners = [];
                 const selectedNIEs = new Set();
+
                 for (let place = numPrizes; place >= 1; place--) {
                     let candidate;
                     do {
-                        const randomIndex = Math.floor(Math.random() * allTickets.length);
-                        candidate = allTickets[randomIndex];
+                        const i = Math.floor(Math.random() * allTickets.length);
+                        candidate = allTickets[i];
                     } while (selectedNIEs.has(candidate));
-
                     selectedNIEs.add(candidate);
-                    const student = studentsMap[candidate];
-                    if (student) {
+
+                    if (studentsMap[candidate]) {
                         winners.push({
                             place,
                             studentNie: candidate,
-                            name: student.name,
-                            points: prizes[place]
+                            name: studentsMap[candidate].name,
+                            points: prizes[place],
+                            tickets: studentTicketsMap[candidate] || 0
                         });
                     }
                 }
 
-                // Borrar ganadores anteriores
-                const winnersRef = collection(db, 'previous_winners');
-                const oldWinnersSnap = await getDocs(winnersRef);
-                const deletePromises = [];
-                oldWinnersSnap.docs.forEach(doc => deletePromises.push(deleteDoc(doc.ref)));
-                await Promise.all(deletePromises);
+                // 7. Guardar en historial de tickets (n_ticket_past)
+                const pastRef = collection(db, 'n_ticket_past');
+                const batchPromises = [];
+                studentTicketsSnap.docs.forEach(doc => {
+                    batchPromises.push(addDoc(pastRef, {
+                        ...doc.data(),
+                        rifaDate: serverTimestamp()
+                    }));
+                });
+                await Promise.all(batchPromises);
+                console.log("✅ Historial de tickets guardado en n_ticket_past");
 
-                // Guardar nuevos ganadores y sumar puntos
-                for (const winner of winners) {
+                // 8. Borrar ganadores anteriores
+                const winnersRef = collection(db, 'previous_winners');
+                const oldWinners = await getDocs(winnersRef);
+                const deleteWinnerPromises = oldWinners.docs.map(doc => deleteDoc(doc.ref));
+                await Promise.all(deleteWinnerPromises);
+
+                // 9. Guardar nuevos ganadores
+                for (const w of winners) {
                     await addDoc(winnersRef, {
-                        ...winner,
+                        ...w,
                         timestamp: serverTimestamp()
                     });
 
-                    const studentDocRef = studentsMap[winner.studentNie]?.ref;
-                    if (studentDocRef) {
-                        const studentSnap = await getDoc(studentDocRef);
-                        const currentPoints = studentSnap.exists() ? studentSnap.data().points || 0 : 0;
-                        await setDoc(studentDocRef, { points: currentPoints + winner.points }, { merge: true });
+                    // Sumar puntos al ganador
+                    const studentRef = studentsSnap.docs.find(d => d.data().nie === w.studentNie)?.ref;
+                    if (studentRef) {
+                        const snap = await getDoc(studentRef);
+                        const current = snap.exists() ? snap.data().points || 0 : 0;
+                        await setDoc(studentRef, { points: current + w.points }, { merge: true });
                     }
                 }
 
-                // Calcular premios no entregados
-                let unclaimedPoints = 0;
-                for (let i = numPrizes + 1; i <= 5; i++) {
-                    unclaimedPoints += prizes[i];
-                }
-
-                // Nuevo fondo = 15% del original + premios no entregados
-                const baseContribution = Math.floor(commonFund * 0.15);
-                const newCommonFund = baseContribution + unclaimedPoints;
-
-                // Actualizar fondo común
-                const settingsRef = doc(db, 'lottery_settings', 'current');
+                // 10. ✅ Nuevo fondo = 15% del original + lo no repartido
+                const newCommonFund = Math.floor(commonFund * 0.15) + unclaimedPoints;
                 await setDoc(settingsRef, { commonFund: newCommonFund });
+                console.log("💵 Nuevo fondo común:", newCommonFund);
 
-                // Eliminar todos los tickets
-                const deleteTicketPromises = [];
-                ticketsSnap.docs.forEach(doc => deleteTicketPromises.push(deleteDoc(doc.ref)));
-                await Promise.all(deleteTicketPromises);
+                // 11. Limpiar colecciones
+                const deletePromises = [
+                    ...ticketsSnap.docs.map(d => deleteDoc(d.ref)),
+                    ...studentTicketsSnap.docs.map(d => deleteDoc(d.ref))
+                ];
+                await Promise.all(deletePromises);
 
-                // Eliminar student_tickets
-                const studentTicketsRef = collection(db, 'student_tickets');
-                const studentTicketsSnap = await getDocs(studentTicketsRef);
-                const deleteStudentTicketsPromises = [];
-                studentTicketsSnap.docs.forEach(doc => deleteStudentTicketsPromises.push(deleteDoc(doc.ref)));
-                await Promise.all(deleteStudentTicketsPromises);
-
-                showAlert(`✅ Sorteo completado. ${winners.length} ganador(es). Nuevo fondo: ${newCommonFund} puntos.`, 'success');
-                setTimeout(() => location.reload(), 3000);
+                alert(`✅ Sorteo completado.\n${winners.length} ganadores.\nNuevo fondo: ${newCommonFund} puntos.`);
+                setTimeout(() => location.reload(), 2000);
 
             } catch (error) {
-                console.error('Error en sorteo:', error);
-                showAlert('❌ Error al realizar el sorteo', 'error');
-                endLotteryBtn.disabled = false;
+                console.error("❌ Error:", error);
+                alert(`Error: ${error.message}`);
+                btn.disabled = false;
+                btn.textContent = "🎰 Terminar Lotería";
             }
-        }
+        };
 
-        // Mostrar alertas
-        function showAlert(message, type) {
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.textContent = message;
-            alerts.appendChild(alert);
-            setTimeout(() => alert.remove(), 5000);
-        }
-
-        // ✅ Expone la función globalmente
-        window.endLottery = endLottery;
+        // Mostrar premios al cargar
+        window.addEventListener('load', () => {
+            document.getElementById('countdown').textContent = "Funcional ahora";
+        });
     </script>
 </body>
 </html>
