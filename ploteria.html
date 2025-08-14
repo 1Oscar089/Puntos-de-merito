@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f0f2f5;
             min-height: 100vh;
             padding: 20px;
             color: #333;
@@ -23,28 +23,22 @@
         .container {
             max-width: 900px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            backdrop-filter: blur(10px);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         .header {
-            background: linear-gradient(135deg, #d93025 0%, #ea4335 100%);
+            background: #d93025;
             color: white;
             padding: 30px;
             text-align: center;
-            border-bottom: 4px solid #c5221f;
+            border-radius: 12px 12px 0 0;
         }
 
         .header h1 {
             font-size: 2.2em;
             margin-bottom: 10px;
-        }
-
-        .header p {
-            opacity: 0.9;
         }
 
         .content {
@@ -58,86 +52,51 @@
             padding: 15px;
             font-size: 1.2em;
             font-weight: bold;
-            border-radius: 12px;
-            margin-bottom: 25px;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
 
         .info-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            border: 2px solid #e0e0e0;
-        }
-
-        .info-card h3 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-
-        .info-card .value {
-            font-size: 1.5em;
+            font-size: 1.2em;
             font-weight: bold;
             color: #d93025;
-        }
-
-        .prizes-table, .winners-section {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            margin-bottom: 30px;
-        }
-
-        .prizes-table h3, .winners-section h3 {
-            background: #1a73e8;
-            color: white;
-            padding: 15px 20px;
-            margin: 0;
-            font-size: 1.3em;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            margin: 20px 0;
         }
 
         th, td {
-            padding: 14px 20px;
+            padding: 12px;
             text-align: center;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #ddd;
         }
 
         th {
-            background: #f8f9fa;
-            color: #333;
-            font-weight: 600;
+            background: #1a73e8;
+            color: white;
         }
 
         .winner {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 15px;
-            padding: 12px;
+            gap: 10px;
+            padding: 10px;
             background: #fff3cd;
-            border-radius: 10px;
-            margin: 10px 0;
-            border: 1px solid #ffeaa7;
+            margin: 5px 0;
+            border-radius: 6px;
         }
 
         .place {
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
             background: #ffc107;
             color: #333;
             border-radius: 50%;
@@ -145,73 +104,52 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 1.1em;
         }
-
-        .winner-1 .place { background: #ffd700; }
-        .winner-2 .place { background: #c0c0c0; }
-        .winner-3 .place { background: #cd7f32; }
-        .winner-4 .place { background: #b8b8b8; }
-        .winner-5 .place { background: #b0bec5; }
 
         .tickets-info {
             font-size: 0.9em;
-            color: #555;
             background: #e9ecef;
             padding: 4px 8px;
-            border-radius: 6px;
-        }
-
-        .no-winners {
-            text-align: center;
-            color: #666;
-            padding: 20px;
-            font-style: italic;
+            border-radius: 4px;
         }
 
         .action-btn {
             display: block;
             width: 100%;
-            background: linear-gradient(135deg, #d93025 0%, #ea4335 100%);
+            background: #d93025;
             color: white;
             border: none;
-            padding: 16px;
-            border-radius: 12px;
-            cursor: pointer;
+            padding: 15px;
             font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            box-shadow: 0 6px 20px rgba(217, 48, 37, 0.4);
-            transition: all 0.3s ease;
-        }
-
-        .action-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-        }
-
-        .action-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
         }
 
         .alert {
             padding: 12px;
             margin: 15px 0;
-            border-radius: 8px;
-            font-weight: 500;
+            border-radius: 6px;
             text-align: center;
+            font-weight: 500;
         }
 
         .alert-success {
             background: #d4edda;
             color: #155724;
-            border: 1px solid #c3e6cb;
         }
 
         .alert-error {
             background: #f8d7da;
             color: #721c24;
-            border: 1px solid #f5c6cb;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
         }
     </style>
 </head>
@@ -219,128 +157,208 @@
     <div class="container">
         <div class="header">
             <h1>🎟️ Lotería - Panel Docente</h1>
-            <p>Realiza el sorteo semanal</p>
         </div>
 
         <div class="content">
+            <!-- Temporizador -->
             <div class="countdown-banner">
                 Próxima rifa en: <span id="countdown">Cargando...</span>
             </div>
 
-            <div class="info-grid">
-                <div class="info-card">
-                    <h3>Fondo Común</h3>
-                    <div class="value" id="commonFund">20</div>
-                </div>
+            <!-- Fondo común -->
+            <div class="info-card">
+                Fondo Común: <span id="commonFund">Cargando...</span> puntos
             </div>
 
-            <div class="prizes-table">
-                <h3>💰 Premios del Sorteo</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Lugar</th>
-                            <th>Premio (puntos)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="prizesTable">
-                        <tr><td colspan="2">Cargando...</td></tr>
-                    </tbody>
-                </table>
+            <!-- Premios -->
+            <h3>💰 Premios</h3>
+            <table id="prizesTable">
+                <thead>
+                    <tr>
+                        <th>Lugar</th>
+                        <th>Premio (puntos)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="2" class="no-data">Cargando...</td></tr>
+                </tbody>
+            </table>
+
+            <!-- Ganadores anteriores -->
+            <h3>🏆 Ganadores Anteriores</h3>
+            <div id="previousWinners">
+                <p class="no-data">Cargando ganadores...</p>
             </div>
 
-            <div class="winners-section">
-                <h3>🏆 Ganadores Anteriores</h3>
-                <div id="previousWinners">
-                    <p class="no-winners">No hay ganadores aún.</p>
-                </div>
-            </div>
-
-            <button id="endLotteryBtn" class="action-btn" onclick="window.endLottery && window.endLottery();">
-                🎰 Terminar Lotería y Realizar Sorteo
+            <!-- Botón -->
+            <button id="endLotteryBtn" class="action-btn" onclick="endLottery()">
+                🎰 Terminar Lotería
             </button>
-        </div>
 
-        <div id="alerts"></div>
+            <!-- Alertas -->
+            <div id="alerts"></div>
+        </div>
     </div>
 
-    <!-- Firebase -->
-    <script type="module">
+    <!-- Firebase CDN (compatible y estable) -->
+    <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore-compat.js"></script>
+
+    <script>
         console.log("🔧 Iniciando sistema de lotería...");
 
-        let db;
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
+            authDomain: "puntos-de-merito.firebaseapp.com",
+            projectId: "puntos-de-merito",
+            storageBucket: "puntos-de-merito.firebasestorage.app",
+            messagingSenderId: "793336144671",
+            appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
+            measurementId: "G-CZ340GE3T7"
+        };
 
         try {
-            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js");
-            const {
-                getFirestore,
-                collection,
-                getDocs,
-                addDoc,
-                setDoc,
-                doc,
-                getDoc,
-                deleteDoc,
-                onSnapshot,
-                serverTimestamp
-            } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js");
-
-            const firebaseConfig = {
-                apiKey: "AIzaSyAuFtWGdyj-h8LtNLMyQruEdhWNC76kouE",
-                authDomain: "puntos-de-merito.firebaseapp.com",
-                projectId: "puntos-de-merito",
-                storageBucket: "puntos-de-merito.firebasestorage.app",
-                messagingSenderId: "793336144671",
-                appId: "1:793336144671:web:a7a31c5cb6cd4e5474862a",
-                measurementId: "G-CZ340GE3T7"
-            };
-
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
             console.log("✅ Firebase inicializado");
+            loadData(db);
+            startCountdown();
         } catch (error) {
-            console.error("❌ Error al cargar Firebase:", error);
-            alert("Error crítico: No se pudo conectar a Firebase.");
+            console.error("❌ Error al inicializar Firebase:", error);
+            document.getElementById('alerts').innerHTML = 
+                `<div class="alert alert-error">Firebase no se pudo cargar: ${error.message}</div>`;
         }
 
-        // Función principal
-        window.endLottery = async function () {
+        // Cargar datos iniciales
+        async function loadData(db) {
+            try {
+                // Fondo común
+                const settingsDoc = await db.collection('lottery_settings').doc('current').get();
+                const commonFund = settingsDoc.exists ? (settingsDoc.data().commonFund || 20) : 20;
+                document.getElementById('commonFund').textContent = commonFund;
+
+                // Premios
+                const prizes = {
+                    1: Math.floor(commonFund * 0.35),
+                    2: Math.floor(commonFund * 0.20),
+                    3: Math.floor(commonFund * 0.15),
+                    4: Math.floor(commonFund * 0.10),
+                    5: Math.floor(commonFund * 0.05)
+                };
+
+                const prizesTable = document.getElementById('prizesTable').querySelector('tbody');
+                prizesTable.innerHTML = '';
+                for (let i = 1; i <= 5; i++) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${i}° Lugar</td><td>${prizes[i]}</td>`;
+                    prizesTable.appendChild(tr);
+                }
+
+                // Ganadores anteriores
+                const winnersSnapshot = await db.collection('previous_winners').get();
+                const winnersContainer = document.getElementById('previousWinners');
+                winnersContainer.innerHTML = '';
+
+                if (winnersSnapshot.empty) {
+                    winnersContainer.innerHTML = '<p class="no-data">No hay ganadores aún.</p>';
+                } else {
+                    const sorted = winnersSnapshot.docs
+                        .map(d => d.data())
+                        .sort((a, b) => a.place - b.place);
+
+                    sorted.forEach(w => {
+                        const div = document.createElement('div');
+                        div.className = 'winner';
+                        div.innerHTML = `
+                            <div class="place">${w.place}</div>
+                            <div><strong>${w.name}</strong> - ${w.points} puntos</div>
+                            <div class="tickets-info">🎟️ ${w.tickets || '?'}</div>
+                        `;
+                        winnersContainer.appendChild(div);
+                    });
+                }
+
+            } catch (error) {
+                console.error("❌ Error al cargar datos:", error);
+                document.getElementById('alerts').innerHTML += 
+                    `<div class="alert alert-error">Error al cargar datos: ${error.message}</div>`;
+            }
+        }
+
+        // Temporizador: viernes a las 12:00 PM
+        function startCountdown() {
+            const interval = setInterval(() => {
+                const now = new Date();
+                let target = new Date(now);
+                target.setHours(12, 0, 0, 0);
+
+                const day = now.getDay();
+                const daysUntilFriday = (5 - day + 7) % 7;
+                if (day === 5 && now.getHours() >= 12) {
+                    target.setDate(now.getDate() + 7);
+                } else {
+                    target.setDate(now.getDate() + daysUntilFriday);
+                }
+
+                const diff = target - now;
+                if (diff <= 0) {
+                    clearInterval(interval);
+                    location.reload();
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('countdown').textContent = 
+                    `${days}d ${hours}h ${mins}m ${secs}s`;
+            }, 1000);
+        }
+
+        // Terminar lotería
+        async function endLottery() {
+            if (!confirm('¿Estás seguro de terminar la lotería y realizar el sorteo?')) return;
+
             const btn = document.getElementById('endLotteryBtn');
             btn.disabled = true;
             btn.textContent = '⏳ Procesando...';
 
             try {
-                if (!db) throw new Error("Firebase no está disponible");
+                const db = firebase.firestore();
 
-                // 1. Leer tickets actuales
-                const ticketsSnap = await getDocs(collection(db, 'tickets'));
-                if (ticketsSnap.size === 0) {
+                // 1. Leer tickets
+                const ticketsSnapshot = await db.collection('tickets').get();
+                if (ticketsSnapshot.size === 0) {
                     alert("No hay tickets para sortear.");
                     btn.disabled = false;
                     return;
                 }
 
-                // 2. Leer student_tickets (para mostrar en podio)
-                const studentTicketsRef = collection(db, 'student_tickets');
-                const studentTicketsSnap = await getDocs(studentTicketsRef);
+                const allTickets = ticketsSnapshot.docs.map(d => d.data().studentNie);
+                const uniqueNIEs = [...new Set(allTickets)];
+
+                // 2. Leer student_tickets (para historial)
+                const studentTicketsSnapshot = await db.collection('student_tickets').get();
                 const studentTicketsMap = {};
-                studentTicketsSnap.forEach(doc => {
+                studentTicketsSnapshot.forEach(doc => {
                     const data = doc.data();
                     studentTicketsMap[data.studentNie] = data.count || 0;
                 });
 
-                // 3. Leer estudiantes para nombres
-                const studentsSnap = await getDocs(collection(db, 'students'));
+                // 3. Leer nombres de estudiantes
+                const studentsSnapshot = await db.collection('students').get();
                 const studentsMap = {};
-                studentsSnap.forEach(doc => {
+                studentsSnapshot.forEach(doc => {
                     const data = doc.data();
-                    studentsMap[data.nie] = { name: data.name };
+                    studentsMap[data.nie] = { name: data.name, ref: doc.ref };
                 });
 
                 // 4. Fondo común
-                const settingsRef = doc(db, 'lottery_settings', 'current');
-                const settingsSnap = await getDoc(settingsRef);
-                const commonFund = settingsSnap.exists() ? settingsSnap.data().commonFund || 20 : 20;
+                const settingsDoc = await db.collection('lottery_settings').doc('current').get();
+                const commonFund = settingsDoc.exists ? settingsDoc.data().commonFund || 20 : 20;
 
                 // 5. Calcular premios (piso)
                 const prizes = {
@@ -352,11 +370,9 @@
                 };
 
                 const totalAwarded = Object.values(prizes).reduce((a, b) => a + b, 0);
-                const unclaimedPoints = commonFund - totalAwarded; // Lo que NO se repartió
+                const unclaimedPoints = commonFund - totalAwarded;
 
                 // 6. Seleccionar ganadores
-                const allTickets = ticketsSnap.docs.map(d => d.data().studentNie);
-                const uniqueNIEs = [...new Set(allTickets)];
                 const numPrizes = Math.min(uniqueNIEs.length, 5);
                 const winners = [];
                 const selectedNIEs = new Set();
@@ -380,67 +396,60 @@
                     }
                 }
 
-                // 7. Guardar en historial de tickets (n_ticket_past)
-                const pastRef = collection(db, 'n_ticket_past');
-                const batchPromises = [];
-                studentTicketsSnap.docs.forEach(doc => {
-                    batchPromises.push(addDoc(pastRef, {
+                // 7. Guardar en n_ticket_past
+                const batch1 = db.batch();
+                studentTicketsSnapshot.forEach(doc => {
+                    batch1.set(db.collection('n_ticket_past').doc(), {
                         ...doc.data(),
-                        rifaDate: serverTimestamp()
-                    }));
+                        rifaDate: new Date()
+                    });
                 });
-                await Promise.all(batchPromises);
-                console.log("✅ Historial de tickets guardado en n_ticket_past");
+                await batch1.commit();
 
-                // 8. Borrar ganadores anteriores
-                const winnersRef = collection(db, 'previous_winners');
-                const oldWinners = await getDocs(winnersRef);
-                const deleteWinnerPromises = oldWinners.docs.map(doc => deleteDoc(doc.ref));
-                await Promise.all(deleteWinnerPromises);
+                // 8. Borrar previous_winners
+                const oldWinners = await db.collection('previous_winners').get();
+                const batch2 = db.batch();
+                oldWinners.docs.forEach(doc => batch2.delete(doc.ref));
+                await batch2.commit();
 
                 // 9. Guardar nuevos ganadores
                 for (const w of winners) {
-                    await addDoc(winnersRef, {
+                    await db.collection('previous_winners').add({
                         ...w,
-                        timestamp: serverTimestamp()
+                        timestamp: new Date()
                     });
 
-                    // Sumar puntos al ganador
-                    const studentRef = studentsSnap.docs.find(d => d.data().nie === w.studentNie)?.ref;
+                    // Sumar puntos al estudiante
+                    const studentRef = studentsMap[w.studentNie]?.ref;
                     if (studentRef) {
-                        const snap = await getDoc(studentRef);
-                        const current = snap.exists() ? snap.data().points || 0 : 0;
-                        await setDoc(studentRef, { points: current + w.points }, { merge: true });
+                        const snap = await studentRef.get();
+                        const current = snap.exists() ? (snap.data().points || 0) : 0;
+                        await studentRef.update({ points: current + w.points });
                     }
                 }
 
-                // 10. ✅ Nuevo fondo = 15% del original + lo no repartido
+                // 10. Nuevo fondo: 15% + no repartidos
                 const newCommonFund = Math.floor(commonFund * 0.15) + unclaimedPoints;
-                await setDoc(settingsRef, { commonFund: newCommonFund });
-                console.log("💵 Nuevo fondo común:", newCommonFund);
+                await db.collection('lottery_settings').doc('current').set({ commonFund: newCommonFund });
 
                 // 11. Limpiar colecciones
-                const deletePromises = [
-                    ...ticketsSnap.docs.map(d => deleteDoc(d.ref)),
-                    ...studentTicketsSnap.docs.map(d => deleteDoc(d.ref))
-                ];
-                await Promise.all(deletePromises);
+                const batch3 = db.batch();
+                ticketsSnapshot.docs.forEach(doc => batch3.delete(doc.ref));
+                studentTicketsSnapshot.docs.forEach(doc => batch3.delete(doc.ref));
+                await batch3.commit();
 
+                // 12. Éxito
                 alert(`✅ Sorteo completado.\n${winners.length} ganadores.\nNuevo fondo: ${newCommonFund} puntos.`);
-                setTimeout(() => location.reload(), 2000);
+                location.reload();
 
             } catch (error) {
-                console.error("❌ Error:", error);
-                alert(`Error: ${error.message}`);
+                console.error("❌ Error en sorteo:", error);
+                document.getElementById('alerts').innerHTML += 
+                    `<div class="alert alert-error">Error: ${error.message}</div>`;
                 btn.disabled = false;
                 btn.textContent = "🎰 Terminar Lotería";
             }
-        };
-
-        // Mostrar premios al cargar
-        window.addEventListener('load', () => {
-            document.getElementById('countdown').textContent = "Funcional ahora";
-        });
+        }
     </script>
 </body>
 </html>
