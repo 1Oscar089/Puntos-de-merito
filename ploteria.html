@@ -174,6 +174,14 @@
         .winner-4 .place { background: #b8b8b8; }
         .winner-5 .place { background: #b0bec5; }
 
+        .tickets-info {
+            font-size: 0.9em;
+            color: #555;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
         .no-winners {
             text-align: center;
             color: #666;
@@ -277,7 +285,7 @@
             </div>
 
             <!-- Botón de acción -->
-            <button id="endLotteryBtn" class="action-btn" onclick="endLottery()">
+            <button id="endLotteryBtn" class="action-btn">
                 🎰 Terminar Lotería y Realizar Sorteo
             </button>
         </div>
@@ -291,7 +299,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
         import {
             getFirestore, collection, getDocs, query, where, addDoc, setDoc, doc,
-            getDoc, deleteDoc, serverTimestamp
+            getDoc, deleteDoc, onSnapshot, serverTimestamp
         } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
         // Firebase config
@@ -318,12 +326,29 @@
 
         // Variables globales
         let commonFund = 20;
+        let studentTicketsMap = {}; // Para guardar cuántos tickets compró cada estudiante
 
         // Cargar datos al inicio
         window.addEventListener('load', async () => {
+            await loadStudentTickets();
             await loadLotteryData();
             startCountdown();
         });
+
+        // Cargar cantidad de tickets por estudiante
+        async function loadStudentTickets() {
+            try {
+                const ticketsRef = collection(db, 'student_tickets');
+                const snap = await getDocs(ticketsRef);
+                studentTicketsMap = {};
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    studentTicketsMap[data.studentNie] = data.count || 0;
+                });
+            } catch (error) {
+                console.error('Error al cargar tickets:', error);
+            }
+        }
 
         // Cargar datos de la lotería
         async function loadLotteryData() {
@@ -340,7 +365,12 @@
 
                 commonFundEl.textContent = commonFund + " puntos";
                 renderPrizes();
-                await renderPreviousWinners();
+
+                // Escuchar ganadores en tiempo real
+                const winnersRef = collection(db, 'previous_winners');
+                onSnapshot(winnersRef, (snapshot) => {
+                    renderPreviousWinners(snapshot);
+                });
 
             } catch (error) {
                 console.error('Error cargar datos:', error);
@@ -355,7 +385,7 @@
                 let target = new Date(now);
                 target.setHours(12, 0, 0, 0);
 
-                const day = now.getDay(); // 0 = domingo, 5 = viernes
+                const day = now.getDay();
                 const daysUntilFriday = (5 - day + 7) % 7;
                 if (day === 5 && now.getHours() >= 12) {
                     target.setDate(now.getDate() + 7);
@@ -405,32 +435,27 @@
         }
 
         // Mostrar ganadores anteriores
-        async function renderPreviousWinners() {
+        function renderPreviousWinners(snapshot) {
             previousWinners.innerHTML = '';
-            try {
-                const winnersRef = collection(db, 'previous_winners');
-                const q = query(winnersRef);
-                const snap = await getDocs(q);
-
-                if (snap.empty) {
-                    previousWinners.innerHTML = '<p class="no-winners">No hay ganadores aún.</p>';
-                    return;
-                }
-
-                const sorted = [...snap.docs].sort((a, b) => a.data().place - b.data().place);
-                sorted.forEach(doc => {
-                    const data = doc.data();
-                    const winnerEl = document.createElement('div');
-                    winnerEl.className = `winner winner-${data.place}`;
-                    winnerEl.innerHTML = `
-                        <div class="place">${data.place}</div>
-                        <div><strong>${data.name}</strong> - ${data.points} puntos</div>
-                    `;
-                    previousWinners.appendChild(winnerEl);
-                });
-            } catch (error) {
-                previousWinners.innerHTML = '<p class="no-winners">Error al cargar ganadores.</p>';
+            if (snapshot.empty) {
+                previousWinners.innerHTML = '<p class="no-winners">No hay ganadores aún.</p>';
+                return;
             }
+
+            const winners = snapshot.docs.map(d => d.data());
+            const sorted = winners.sort((a, b) => a.place - b.place);
+
+            sorted.forEach(data => {
+                const ticketsCount = studentTicketsMap[data.studentNie] || 0;
+                const winnerEl = document.createElement('div');
+                winnerEl.className = `winner winner-${data.place}`;
+                winnerEl.innerHTML = `
+                    <div class="place">${data.place}</div>
+                    <div><strong>${data.name}</strong> - ${data.points} puntos</div>
+                    <div class="tickets-info">🎟️ ${ticketsCount} ticket${ticketsCount !== 1 ? 's' : ''}</div>
+                `;
+                previousWinners.appendChild(winnerEl);
+            });
         }
 
         // Terminar lotería y realizar sorteo
@@ -466,53 +491,38 @@
                 const prizes = calculatePrizes(commonFund);
                 const winners = [];
 
-                // Caso 1: Solo un estudiante participó
-                if (uniqueNIEs.length === 1) {
-                    const nie = uniqueNIEs[0];
-                    const student = studentsMap[nie];
+                // Determinar cuántos premios entregar (1 a 5)
+                const numPrizes = Math.min(uniqueNIEs.length, 5);
+
+                // Seleccionar ganadores del último al primero
+                const selectedNIEs = new Set();
+                for (let place = numPrizes; place >= 1; place--) {
+                    let candidate;
+                    do {
+                        const randomIndex = Math.floor(Math.random() * allTickets.length);
+                        candidate = allTickets[randomIndex];
+                    } while (selectedNIEs.has(candidate));
+
+                    selectedNIEs.add(candidate);
+                    const student = studentsMap[candidate];
                     if (student) {
                         winners.push({
-                            place: 1,
-                            studentNie: nie,
+                            place,
+                            studentNie: candidate,
                             name: student.name,
-                            points: prizes[1]
+                            points: prizes[place]
                         });
                     }
-                    // Los premios 2° al 5° se quedan en el fondo
-                }
-                // Caso 2: Múltiples estudiantes
-                else {
-                    if (uniqueNIEs.length < 5) {
-                        showAlert('No hay al menos 5 estudiantes diferentes.', 'error');
-                        endLotteryBtn.disabled = false;
-                        return;
-                    }
-
-                    const selectedNIEs = new Set();
-
-                    // Del 5° al 1° lugar (evita sesgo por orden)
-                    for (let place = 5; place >= 1; place--) {
-                        let candidate;
-                        do {
-                            const randomIndex = Math.floor(Math.random() * allTickets.length);
-                            candidate = allTickets[randomIndex];
-                        } while (selectedNIEs.has(candidate));
-
-                        selectedNIEs.add(candidate);
-                        const student = studentsMap[candidate];
-                        if (student) {
-                            winners.push({
-                                place,
-                                studentNie: candidate,
-                                name: student.name,
-                                points: prizes[place]
-                            });
-                        }
-                    }
                 }
 
-                // Guardar ganadores y sumar puntos
+                // Borrar ganadores anteriores
                 const winnersRef = collection(db, 'previous_winners');
+                const oldWinnersSnap = await getDocs(winnersRef);
+                const deletePromises = [];
+                oldWinnersSnap.docs.forEach(doc => deletePromises.push(deleteDoc(doc.ref)));
+                await Promise.all(deletePromises);
+
+                // Guardar nuevos ganadores
                 for (const winner of winners) {
                     await addDoc(winnersRef, {
                         ...winner,
@@ -533,16 +543,16 @@
                 await setDoc(settingsRef, { commonFund: newCommonFund });
 
                 // Eliminar todos los tickets
-                const deletePromises = [];
-                ticketsSnap.docs.forEach(doc => deletePromises.push(deleteDoc(doc.ref)));
-                await Promise.all(deletePromises);
+                const deleteTicketPromises = [];
+                ticketsSnap.docs.forEach(doc => deleteTicketPromises.push(deleteDoc(doc.ref)));
+                await Promise.all(deleteTicketPromises);
 
                 // Eliminar student_tickets
                 const studentTicketsRef = collection(db, 'student_tickets');
                 const studentTicketsSnap = await getDocs(studentTicketsRef);
-                const deleteTicketPromises = [];
-                studentTicketsSnap.docs.forEach(doc => deleteTicketPromises.push(deleteDoc(doc.ref)));
-                await Promise.all(deleteTicketPromises);
+                const deleteStudentTicketsPromises = [];
+                studentTicketsSnap.docs.forEach(doc => deleteStudentTicketsPromises.push(deleteDoc(doc.ref)));
+                await Promise.all(deleteStudentTicketsPromises);
 
                 showAlert(`✅ Sorteo completado. ${winners.length} ganador(es). Nueva rifa iniciada.`, 'success');
                 setTimeout(() => location.reload(), 3000);
@@ -562,6 +572,9 @@
             alerts.appendChild(alert);
             setTimeout(() => alert.remove(), 5000);
         }
+
+        // ✅ Expone la función globalmente para el onclick
+        window.endLottery = endLottery;
     </script>
 </body>
 </html>
